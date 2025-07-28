@@ -137,34 +137,34 @@ module RailsLens
 
         # Check each loaded gem for RailsLens extensions
 
-          Gem.loaded_specs.each_key do |gem_name|
-            # Try to find extension in the gem
-            gem_constant_name = gem_name.gsub('-', '_').split('_').map(&:capitalize).join
-            extension_constant_name = "#{gem_constant_name}::RailsLensExtension"
+        Gem.loaded_specs.each_key do |gem_name|
+          # Try to find extension in the gem
+          gem_constant_name = gem_name.gsub('-', '_').split('_').map(&:capitalize).join
+          extension_constant_name = "#{gem_constant_name}::RailsLensExtension"
 
-            # Skip gems that are likely to cause autoload issues
-            next if %w[digest openssl uri net json].include?(gem_name)
+          # Skip gems that are likely to cause autoload issues
+          next if %w[digest openssl uri net json].include?(gem_name)
 
-            # First check if the gem constant exists without triggering autoload
-            next unless Object.const_defined?(gem_constant_name, false)
+          # First check if the gem constant exists without triggering autoload
+          next unless Object.const_defined?(gem_constant_name, false)
 
-            gem_constant = Object.const_get(gem_constant_name)
-            next unless gem_constant.is_a?(Module)
+          gem_constant = Object.const_get(gem_constant_name)
+          next unless gem_constant.is_a?(Module)
 
-            # Then check if it has a RailsLensExtension without triggering autoload
-            next unless gem_constant.const_defined?('RailsLensExtension', false)
+          # Then check if it has a RailsLensExtension without triggering autoload
+          next unless gem_constant.const_defined?('RailsLensExtension', false)
 
-            extension_class = gem_constant.const_get('RailsLensExtension')
-            if valid_extension?(extension_class)
-              extensions << extension_class
-            else
-              log_extension_error("Gem extension #{extension_constant_name} failed validation", gem_name)
-            end
-          rescue NameError
-            # No extension found in this gem - this is normal, not an error
-          rescue StandardError => e
-            log_extension_error("Error loading gem extension: #{e.message}", gem_name)
+          extension_class = gem_constant.const_get('RailsLensExtension')
+          if valid_extension?(extension_class)
+            extensions << extension_class
+          else
+            log_extension_error("Gem extension #{extension_constant_name} failed validation", gem_name)
           end
+        rescue NameError
+          # No extension found in this gem - this is normal, not an error
+        rescue StandardError => e
+          log_extension_error("Error loading gem extension: #{e.message}", gem_name)
+        end
 
         extensions
       end
