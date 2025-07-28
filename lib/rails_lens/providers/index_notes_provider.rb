@@ -1,0 +1,20 @@
+# frozen_string_literal: true
+
+module RailsLens
+  module Providers
+    class IndexNotesProvider < Base
+      def type
+        :notes
+      end
+
+      def applicable?(model_class)
+        model_has_table?(model_class)
+      end
+
+      def process(model_class)
+        analyzer = Analyzers::IndexAnalyzer.new(model_class)
+        analyzer.analyze
+      end
+    end
+  end
+end

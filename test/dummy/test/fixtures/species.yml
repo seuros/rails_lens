@@ -1,0 +1,50 @@
+# SQLite3 Species Fixtures
+
+tyrannosaurus_rex:
+  name: "Tyrannosaurus rex"
+  scientific_name: "Tyrannosaurus rex"
+  first_discovered_year: 1905
+  locomotion: "bipedal"
+  family: t_rex
+
+allosaurus_fragilis:
+  name: "Allosaurus fragilis"
+  scientific_name: "Allosaurus fragilis"
+  first_discovered_year: 1877
+  locomotion: "bipedal"
+  family: a_fragilis
+
+diplodocus_carnegii:
+  name: "Diplodocus carnegii"
+  scientific_name: "Diplodocus carnegii"
+  first_discovered_year: 1901
+  locomotion: "quadrupedal"
+  family: d_carnegii
+
+stegosaurus_ungulatus:
+  name: "Stegosaurus ungulatus"
+  scientific_name: "Stegosaurus ungulatus"
+  first_discovered_year: 1879
+  locomotion: "quadrupedal"
+  family: s_ungulatus
+
+triceratops_horridus:
+  name: "Triceratops horridus"
+  scientific_name: "Triceratops horridus"
+  first_discovered_year: 1889
+  locomotion: "quadrupedal"
+  family: t_horridus
+
+pteranodon_longiceps:
+  name: "Pteranodon longiceps"
+  scientific_name: "Pteranodon longiceps"
+  first_discovered_year: 1876
+  locomotion: "flying"
+  family: pterodactylidae
+
+plesiosaur_dolichodeirus:
+  name: "Plesiosaurus dolichodeirus"
+  scientific_name: "Plesiosaurus dolichodeirus"
+  first_discovered_year: 1824
+  locomotion: "swimming"
+  family: plesiosauria

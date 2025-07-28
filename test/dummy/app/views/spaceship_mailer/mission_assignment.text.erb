@@ -1,0 +1,16 @@
+Mission Assignment
+
+Dear <%= @crew_member.name %>,
+
+You have been assigned to the <%= @spaceship.name %> for the following mission:
+
+Mission Details:
+<%= @mission_details.description %>
+
+Duration: <%= @mission_details.duration %>
+Destination: <%= @mission_details.destination %>
+
+Please report to the ship's bridge at 0800 hours on <%= @mission_details.departure_date %>.
+
+Live long and prosper,
+Starfleet Command

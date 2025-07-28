@@ -1,0 +1,15 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+Gemfile.lock
+.env
+
+# Dummy app databases
+/test/dummy/db/*.sqlite3
+/test/dummy/db/*.sqlite3-*
+/test/dummy/log/*.log

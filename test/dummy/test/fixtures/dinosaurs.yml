@@ -1,0 +1,57 @@
+# SQLite3 Dinosaur Fixtures
+
+sue_trex:
+  name: "Sue"
+  estimated_length_meters: 12.3
+  estimated_weight_kg: 8870
+  period: "cretaceous"
+  diet: "carnivore"
+  species: tyrannosaurus_rex
+
+big_al:
+  name: "Big Al"
+  estimated_length_meters: 8.5
+  estimated_weight_kg: 1400
+  period: "jurassic"
+  diet: "carnivore"
+  species: allosaurus_fragilis
+
+dippy:
+  name: "Dippy"
+  estimated_length_meters: 26.0
+  estimated_weight_kg: 15000
+  period: "jurassic"
+  diet: "herbivore"
+  species: diplodocus_carnegii
+
+spike:
+  name: "Spike"
+  estimated_length_meters: 9.0
+  estimated_weight_kg: 5000
+  period: "jurassic"
+  diet: "herbivore"
+  species: stegosaurus_ungulatus
+
+trike:
+  name: "Trike"
+  estimated_length_meters: 8.0
+  estimated_weight_kg: 6000
+  period: "cretaceous"
+  diet: "herbivore"
+  species: triceratops_horridus
+
+terry:
+  name: "Terry the Pteranodon"
+  estimated_length_meters: 7.0
+  estimated_weight_kg: 25
+  period: "cretaceous"
+  diet: "piscivore"
+  species: pteranodon_longiceps
+
+nessy:
+  name: "Nessy"
+  estimated_length_meters: 15.0
+  estimated_weight_kg: 2000
+  period: "jurassic"
+  diet: "piscivore"
+  species: plesiosaur_dolichodeirus

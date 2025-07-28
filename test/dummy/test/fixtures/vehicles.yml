@@ -1,0 +1,51 @@
+# MySQL Vehicle Fixtures
+
+jeep_wrangler:
+  make: "Jeep"
+  model: "Wrangler"
+  year: 2023
+  vin: "1C4HJXEG5NW123456"
+  license_plate: "JEP-2023"
+  vehicle_type: "suv"
+  status: "active"
+  manufacturer: jeep
+
+peugeot_208:
+  make: "Peugeot"
+  model: "208"
+  year: 2022
+  vin: "VF3CCHMZ6MS123456"
+  license_plate: "PEU-208"
+  vehicle_type: "car"
+  status: "active"
+  manufacturer: peugeot
+
+dodge_challenger:
+  make: "Dodge"
+  model: "Challenger"
+  year: 2021
+  vin: "2C3CDZAG1MH123456"
+  license_plate: "CHLNGR"
+  vehicle_type: "car"
+  status: "active"
+  manufacturer: dodge
+
+fiat_500:
+  make: "Fiat"
+  model: "500"
+  year: 2020
+  vin: "3C3CFFER4LT123456"
+  license_plate: "FIAT500"
+  vehicle_type: "car"
+  status: "maintenance"
+  manufacturer: fiat
+
+ram_1500:
+  make: "Ram"
+  model: "1500"
+  year: 2024
+  vin: "1C6SRFFT9PN123456"
+  license_plate: "RAM-1500"
+  vehicle_type: "truck"
+  status: "active"
+  manufacturer: ram

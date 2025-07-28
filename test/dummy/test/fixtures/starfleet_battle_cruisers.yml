@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  registry: MyString
+  captain: MyString
+  battle_status: MyString
+
+two:
+  name: MyString
+  registry: MyString
+  captain: MyString
+  battle_status: MyString

@@ -1,0 +1,57 @@
+# SQLite3 ForgottenWar Fixtures (The Zombie Table!)
+
+great_extinction_war:
+  name: "The Great Extinction War"
+  start_year: -66000000
+  end_year: -65000000
+  region: "Global"
+  war_type: "extinction"
+  outcome: "extinction"
+
+carnivore_herbivore_conflict:
+  name: "The Carnivore-Herbivore Territorial Wars"
+  start_year: -150000000
+  end_year: -145000000
+  region: "Laurasia"
+  war_type: "territorial"
+  outcome: "stalemate"
+
+triassic_migration_war:
+  name: "The Great Triassic Migration Conflict"
+  start_year: -210000000
+  end_year: -200000000
+  region: "Pangaea"
+  war_type: "migration"
+  outcome: "victory"
+
+jurassic_resource_war:
+  name: "The Jurassic Fern Prairie Wars"
+  start_year: -160000000
+  end_year: -155000000
+  region: "Gondwana"
+  war_type: "resource"
+  outcome: "defeat"
+
+climate_adaptation_war:
+  name: "The Climate Adaptation Struggle"
+  start_year: -180000000
+  end_year: -170000000
+  region: "Global"
+  war_type: "climate"
+  outcome: "unknown"
+
+marine_invasion:
+  name: "The Marine Reptile Invasion"
+  start_year: -200000000
+  end_year: -190000000
+  region: "Tethys Ocean"
+  war_type: "territorial"
+  outcome: "victory"
+
+pterosaur_dominance_war:
+  name: "The Sky Dominance War"
+  start_year: -140000000
+  end_year: -130000000
+  region: "Global Airspace"
+  war_type: "territorial"
+  outcome: "victory"

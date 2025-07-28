@@ -1,0 +1,540 @@
+erDiagram
+
+  %% Theme Configuration
+  %%{init: {
+    "theme": "default",
+    "themeVariables": {
+      "primaryColor": "#F0F0F0",
+      "primaryTextColor": "#333",
+      "primaryBorderColor": "#666",
+      "lineColor": "#666",
+      "secondaryColor": "#E6F3FF",
+      "tertiaryColor": "#FFE6E6"
+    }
+  }}%%
+
+  Alert {
+    int id PK
+    varchar severity
+    varchar alert_type
+    varchar description
+    boolean resolved
+    datetime created_at
+    datetime updated_at
+  }
+
+  Announcement {
+    int id PK
+    varchar body
+    varchar audience
+    datetime scheduled_at
+    datetime created_at
+    datetime updated_at
+  }
+
+  CargoVessel {
+    int id PK
+    varchar name
+    varchar class_type
+    boolean warp_capability
+    varchar status
+    datetime created_at
+    datetime updated_at
+    varchar type
+    int cargo_capacity
+    varchar cargo_type
+    varchar battle_status
+  }
+
+  Entry {
+    int id PK
+    varchar title
+    boolean published
+    varchar entryable_type
+    int entryable_id FK
+    datetime created_at
+    datetime updated_at
+  }
+
+  ForgottenWar {
+    int id PK
+    varchar name
+    int start_year
+    int end_year
+    varchar region
+    varchar war_type
+    varchar outcome
+    datetime created_at
+    datetime updated_at
+  }
+
+  Message {
+    int id PK
+    varchar content
+    varchar recipient
+    int priority
+    datetime created_at
+    datetime updated_at
+  }
+
+  OrderLineItem {
+    int order_id UK
+    int line_number UK
+    int quantity
+    decimal unit_price
+    decimal total_price
+    varchar product_name
+    varchar notes
+    datetime created_at
+    datetime updated_at
+  }
+
+  Product {
+    int id PK
+    varchar name
+    varchar description
+    decimal price
+    varchar category
+    boolean active
+    varchar sku UK
+    int stock_quantity
+    datetime created_at
+    datetime updated_at
+  }
+
+  ProductMetric {
+    int id PK
+    int product_id FK
+    int views
+    int purchases
+    decimal revenue
+    datetime created_at
+    datetime updated_at
+    decimal conversion_rate
+    decimal average_order_value
+  }
+
+  TenantSetting {
+    int tenant_id
+    varchar key
+    varchar value
+    varchar description
+    boolean encrypted
+    datetime created_at
+    datetime updated_at
+  }
+
+  %% Prehistoric Domain
+  DietRelationship {
+    int id PK
+    int predator_id FK
+    int prey_id FK
+    varchar relationship_type
+    int intensity
+    datetime created_at
+    datetime updated_at
+    varchar evidence_type
+  }
+
+  Dinosaur {
+    int id PK
+    varchar name
+    varchar species
+    varchar period
+    varchar diet
+    decimal length
+    decimal weight
+    date discovered_at
+    date extinction_date
+    int fossil_count
+    datetime created_at
+    datetime updated_at
+  }
+
+  ExcavationSite {
+    int id PK
+    varchar name
+    varchar location
+    varchar coordinates
+    decimal depth
+    varchar soil_type
+    date discovered_at
+    boolean active
+    datetime created_at
+    datetime updated_at
+    varchar rock_formation
+    varchar climate_ancient
+  }
+
+  Family {
+    int id PK
+    varchar name
+    varchar classification
+    varchar taxonomic_rank
+    int parent_id FK
+    varchar description
+    datetime created_at
+    datetime updated_at
+  }
+
+  FamilyHierarchy {
+    int id PK
+    int ancestor_id FK
+    int descendant_id FK
+    int generations
+    datetime created_at
+    datetime updated_at
+  }
+
+  FossilDiscovery {
+    int id PK
+    int dinosaur_id FK
+    int excavation_site_id FK
+    date discovered_at
+    varchar condition
+    decimal completeness
+    varchar notes
+    datetime created_at
+    datetime updated_at
+    varchar preservation_quality
+    varchar fossil_type
+  }
+
+  Species {
+    int id PK
+    varchar name
+    int family_id FK
+    int average_lifespan
+    varchar habitat
+    int danger_level
+    datetime created_at
+    datetime updated_at
+    varchar locomotion
+  }
+
+  %% Space Domain
+  CrewMember {
+    int id PK
+    varchar name
+    varchar rank
+    varchar species
+    varchar birth_planet
+    varchar service_record
+    boolean active
+    datetime joined_starfleet_at
+    datetime created_at
+    datetime updated_at
+    varchar status
+    varchar specialization
+  }
+
+  HomePlanet {
+    int id PK
+    varchar name
+    varchar galaxy
+    st_geometry coordinates
+    decimal habitability_score
+    varchar climate_type
+    int population
+    date established_at
+    datetime created_at
+    datetime updated_at
+    varchar classification
+    varchar hierarchy_type
+  }
+
+  HomePlanetHierarchy {
+    int id PK
+    int ancestor_id FK
+    int descendant_id FK
+    int generations
+    datetime created_at
+    datetime updated_at
+  }
+
+  Mission {
+    int id PK
+    varchar name
+    varchar objective
+    varchar status
+    int priority
+    date start_date
+    date end_date
+    interval estimated_duration
+    varchar classification_level
+    datetime created_at
+    datetime updated_at
+    varchar classification
+  }
+
+  MissionWaypoint {
+    int id PK
+    int mission_id FK
+    int sequence
+    varchar coordinates
+    datetime eta
+    varchar notes
+    datetime created_at
+    datetime updated_at
+    varchar waypoint_type
+    varchar status
+  }
+
+  Spaceship {
+    int id PK
+    varchar name
+    varchar class_type
+    boolean warp_capability
+    varchar status
+    datetime created_at
+    datetime updated_at
+    varchar type
+    int cargo_capacity
+    varchar cargo_type
+    varchar battle_status
+  }
+
+  SpaceshipCrewMember {
+    int id PK
+    int spaceship_id FK
+    int crew_member_id FK
+    varchar position
+    datetime assigned_at
+    boolean active
+    datetime created_at
+    datetime updated_at
+  }
+
+  SpatialCoordinate {
+    int id PK
+    st_geometry location
+    st_point coordinates
+    jsonb sensor_data
+    json metadata
+    inet ip_address
+    uuid tracking_id
+    decimal altitude
+    decimal longitude
+    decimal latitude
+    datetime recorded_at
+    datetime created_at
+    datetime updated_at
+    int spaceship_id FK
+  }
+
+  StarfleetBattleCruiser {
+    int id PK
+    varchar name
+    varchar class_type
+    boolean warp_capability
+    varchar status
+    datetime created_at
+    datetime updated_at
+    varchar type
+    int cargo_capacity
+    varchar cargo_type
+    varchar battle_status
+  }
+
+  %% User Domain
+  Comment {
+    int id PK
+    varchar body
+    int user_id FK
+    int post_id FK
+    datetime created_at
+    datetime updated_at
+    varchar commentable_type
+    int commentable_id FK
+  }
+
+  Post {
+    int id PK
+    varchar title
+    varchar content
+    int user_id FK
+    boolean published
+    datetime created_at
+    datetime updated_at
+  }
+
+  User {
+    int id PK
+    varchar email UK
+    varchar name
+    varchar status
+    datetime created_at
+    datetime updated_at
+  }
+
+  %% Vehicle Domain
+  MaintenanceRecord {
+    int id PK
+    int vehicle_id FK
+    varchar service_type
+    decimal cost
+    date service_date
+    varchar notes
+    datetime created_at
+    datetime updated_at
+  }
+
+  Manufacturer {
+    int id PK
+    varchar name
+    varchar country
+    int founded_year
+    varchar headquarters
+    varchar website
+    decimal annual_revenue
+    boolean active
+    varchar logo_url
+    datetime created_at
+    datetime updated_at
+    varchar status
+    varchar company_type
+  }
+
+  ManufacturerHierarchy {
+    int id PK
+    int ancestor_id FK
+    int descendant_id FK
+    int generations
+    datetime created_at
+    datetime updated_at
+  }
+
+  Owner {
+    int id PK
+    varchar name
+    varchar email
+    varchar phone
+    varchar address
+    date date_of_birth
+    varchar license_number
+    int credit_score
+    decimal net_worth
+    datetime created_at
+    datetime updated_at
+    varchar license_class
+  }
+
+  Trip {
+    int id PK
+    int vehicle_id FK
+    int owner_id
+    date start_date
+    date end_date
+    decimal distance
+    varchar purpose
+    datetime created_at
+    datetime updated_at
+    varchar trip_type
+  }
+
+  Vehicle {
+    int id PK
+    varchar name
+    varchar model
+    int year
+    decimal price
+    int mileage
+    varchar fuel_type
+    varchar transmission
+    varchar color
+    varchar vin
+    varchar description
+    boolean available
+    date purchase_date
+    time service_time
+    blob image_data
+    varchar condition
+    datetime created_at
+    datetime updated_at
+    varchar vehicle_type
+    varchar status
+  }
+
+  VehicleOwner {
+    int id PK
+    int vehicle_id FK
+    int owner_id FK
+    date ownership_start
+    date ownership_end
+    datetime created_at
+    datetime updated_at
+  }
+
+  %% Relationships
+  Alert ||--o| Entry : "entry"
+  Announcement ||--o| Entry : "entry"
+  CargoVessel ||--o{ SpaceshipCrewMember : "spaceship_crew_members"
+  CargoVessel ||--o{ Mission : "missions"
+  CargoVessel ||--o{ SpatialCoordinate : "spatial_coordinates"
+  CargoVessel ||--o{ Comment : "comments"
+  Comment }o--|| User : "user"
+  Comment }o--|| Post : "post"
+  CrewMember ||--o{ SpaceshipCrewMember : "spaceship_crew_members"
+  CrewMember }o--|| HomePlanet : "home_planet"
+  DietRelationship }o--|| Species : "predator"
+  DietRelationship }o--|| Species : "prey"
+  Dinosaur ||--o{ FossilDiscovery : "fossil_discoveries"
+  ExcavationSite ||--o{ FossilDiscovery : "fossil_discoveries"
+  Family }o--|| Family : "parent"
+  Family ||--o{ Family : "children"
+  Family ||--o{ FamilyHierarchy : "ancestor_hierarchies"
+  Family ||--o{ FamilyHierarchy : "descendant_hierarchies"
+  Family ||--o{ Species : "species"
+  Family }o--o{ Family : "closure_tree"
+  FamilyHierarchy }o--|| Family : "ancestor"
+  FamilyHierarchy }o--|| Family : "descendant"
+  FossilDiscovery }o--|| Dinosaur : "dinosaur"
+  FossilDiscovery }o--|| ExcavationSite : "excavation_site"
+  HomePlanet }o--|| HomePlanet : "parent"
+  HomePlanet ||--o{ HomePlanet : "children"
+  HomePlanet ||--o{ HomePlanetHierarchy : "ancestor_hierarchies"
+  HomePlanet ||--o{ HomePlanetHierarchy : "descendant_hierarchies"
+  HomePlanet ||--o{ CrewMember : "crew_members"
+  HomePlanet }o--o{ HomePlanet : "closure_tree"
+  HomePlanetHierarchy }o--|| HomePlanet : "ancestor"
+  HomePlanetHierarchy }o--|| HomePlanet : "descendant"
+  MaintenanceRecord }o--|| Vehicle : "vehicle"
+  Manufacturer }o--|| Manufacturer : "parent"
+  Manufacturer ||--o{ Manufacturer : "children"
+  Manufacturer ||--o{ ManufacturerHierarchy : "ancestor_hierarchies"
+  Manufacturer ||--o{ ManufacturerHierarchy : "descendant_hierarchies"
+  Manufacturer ||--o{ Vehicle : "vehicles"
+  Manufacturer }o--o{ Manufacturer : "closure_tree"
+  ManufacturerHierarchy }o--|| Manufacturer : "ancestor"
+  ManufacturerHierarchy }o--|| Manufacturer : "descendant"
+  Message ||--o| Entry : "entry"
+  Mission }o--|| Spaceship : "spaceship"
+  Mission ||--o{ MissionWaypoint : "mission_waypoints"
+  MissionWaypoint }o--|| Mission : "mission"
+  Owner ||--o{ VehicleOwner : "vehicle_owners"
+  Post }o--|| User : "user"
+  Post ||--o{ Comment : "comments"
+  Product ||--o{ ProductMetric : "product_metrics"
+  ProductMetric }o--|| Product : "product"
+  Spaceship ||--o{ SpaceshipCrewMember : "spaceship_crew_members"
+  Spaceship ||--o{ Mission : "missions"
+  Spaceship ||--o{ SpatialCoordinate : "spatial_coordinates"
+  Spaceship ||--o{ Comment : "comments"
+  SpaceshipCrewMember }o--|| Spaceship : "spaceship"
+  SpaceshipCrewMember }o--|| CrewMember : "crew_member"
+  SpatialCoordinate }o--|| Spaceship : "spaceship"
+  Species }o--|| Family : "family"
+  Species ||--o{ Dinosaur : "dinosaurs"
+  StarfleetBattleCruiser ||--o{ SpaceshipCrewMember : "spaceship_crew_members"
+  StarfleetBattleCruiser ||--o{ Mission : "missions"
+  StarfleetBattleCruiser ||--o{ SpatialCoordinate : "spatial_coordinates"
+  StarfleetBattleCruiser ||--o{ Comment : "comments"
+  Trip }o--|| Vehicle : "vehicle"
+  User ||--o{ Post : "posts"
+  User ||--o{ Comment : "comments"
+  Vehicle }o--|| Manufacturer : "manufacturer"
+  Vehicle ||--o{ VehicleOwner : "vehicle_owners"
+  Vehicle ||--o{ MaintenanceRecord : "maintenance_records"
+  Vehicle ||--o{ Trip : "trips"
+  VehicleOwner }o--|| Vehicle : "vehicle"
+  VehicleOwner }o--|| Owner : "owner"

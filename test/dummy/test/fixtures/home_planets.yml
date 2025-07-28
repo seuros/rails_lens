@@ -1,0 +1,113 @@
+# PostgreSQL HomePlanet Galactic Hierarchy Fixtures
+
+# Galaxy Level
+milky_way:
+  name: "Milky Way Galaxy"
+  sector: "Local Group"
+  classification: "artificial"
+  hierarchy_type: "galaxy"
+  parent: null
+
+# Quadrant Level
+alpha_quadrant:
+  name: "Alpha Quadrant"
+  sector: "Alpha"
+  classification: "artificial"
+  hierarchy_type: "quadrant"
+  parent: milky_way
+
+beta_quadrant:
+  name: "Beta Quadrant"
+  sector: "Beta"
+  classification: "artificial"
+  hierarchy_type: "quadrant"
+  parent: milky_way
+
+# Sector Level
+sector_001:
+  name: "Sector 001"
+  sector: "Sol Sector"
+  classification: "artificial"
+  hierarchy_type: "sector"
+  parent: alpha_quadrant
+
+klingon_sector:
+  name: "Klingon Sector"
+  sector: "Qo'noS Sector"
+  classification: "artificial"
+  hierarchy_type: "sector"
+  parent: beta_quadrant
+
+# System Level
+sol_system:
+  name: "Sol System"
+  sector: "Sol"
+  classification: "artificial"
+  hierarchy_type: "system"
+  parent: sector_001
+
+qonos_system:
+  name: "Qo'noS System"
+  sector: "Klingon"
+  classification: "artificial"
+  hierarchy_type: "system"
+  parent: klingon_sector
+
+vulcan_system:
+  name: "40 Eridani System"
+  sector: "Vulcan"
+  classification: "artificial"
+  hierarchy_type: "system"
+  parent: sector_001
+
+# Planet Level
+earth:
+  name: "Earth"
+  sector: "Sol"
+  classification: "class_m"
+  hierarchy_type: "planet"
+  parent: sol_system
+
+vulcan:
+  name: "Vulcan"
+  sector: "40 Eridani"
+  classification: "class_m"
+  hierarchy_type: "planet"
+  parent: vulcan_system
+
+qonos:
+  name: "Qo'noS"
+  sector: "Klingon"
+  classification: "class_m"
+  hierarchy_type: "planet"
+  parent: qonos_system
+
+risa:
+  name: "Risa"
+  sector: "Risian"
+  classification: "class_m"
+  hierarchy_type: "planet"
+  parent: alpha_quadrant
+
+# Moon Level
+luna:
+  name: "Luna"
+  sector: "Sol"
+  classification: "class_l"
+  hierarchy_type: "moon"
+  parent: earth
+
+# Station Level
+deep_space_nine:
+  name: "Deep Space Nine"
+  sector: "Bajoran"
+  classification: "artificial"
+  hierarchy_type: "station"
+  parent: alpha_quadrant
+
+starbase_74:
+  name: "Starbase 74"
+  sector: "Sol"
+  classification: "artificial"
+  hierarchy_type: "station"
+  parent: sol_system

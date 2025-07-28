@@ -1,0 +1,151 @@
+# MySQL Manufacturer Corporate Hierarchy Fixtures
+
+# Conglomerate Level
+stellantis:
+  name: "Stellantis N.V."
+  country: "Netherlands"
+  founded_year: 2021
+  status: "active"
+  company_type: "conglomerate"
+  parent: null
+
+toyota_group:
+  name: "Toyota Motor Corporation"
+  country: "Japan"
+  founded_year: 1937
+  status: "active"
+  company_type: "conglomerate"
+  parent: null
+
+# Parent Company Level
+fca:
+  name: "Fiat Chrysler Automobiles"
+  country: "Italy"
+  founded_year: 1899
+  status: "acquired"
+  company_type: "parent_company"
+  parent: stellantis
+
+psa_group:
+  name: "PSA Group"
+  country: "France"
+  founded_year: 1976
+  status: "acquired"
+  company_type: "parent_company"
+  parent: stellantis
+
+# Subsidiary Level
+chrysler:
+  name: "Chrysler"
+  country: "USA"
+  founded_year: 1925
+  status: "active"
+  company_type: "subsidiary"
+  parent: fca
+
+fiat:
+  name: "Fiat"
+  country: "Italy"
+  founded_year: 1899
+  status: "active"
+  company_type: "subsidiary"
+  parent: fca
+
+peugeot:
+  name: "Peugeot"
+  country: "France"
+  founded_year: 1810
+  status: "active"
+  company_type: "subsidiary"
+  parent: psa_group
+
+citroen:
+  name: "Citroën"
+  country: "France"
+  founded_year: 1919
+  status: "active"
+  company_type: "subsidiary"
+  parent: psa_group
+
+lexus:
+  name: "Lexus"
+  country: "Japan"
+  founded_year: 1989
+  status: "active"
+  company_type: "subsidiary"
+  parent: toyota_group
+
+# Division Level
+jeep:
+  name: "Jeep"
+  country: "USA"
+  founded_year: 1941
+  status: "active"
+  company_type: "division"
+  parent: chrysler
+
+dodge:
+  name: "Dodge"
+  country: "USA"
+  founded_year: 1900
+  status: "active"
+  company_type: "division"
+  parent: chrysler
+
+ram:
+  name: "Ram Trucks"
+  country: "USA"
+  founded_year: 2010
+  status: "active"
+  company_type: "division"
+  parent: chrysler
+
+# Brand Level
+abarth:
+  name: "Abarth"
+  country: "Italy"
+  founded_year: 1949
+  status: "active"
+  company_type: "brand"
+  parent: fiat
+
+alfa_romeo:
+  name: "Alfa Romeo"
+  country: "Italy"
+  founded_year: 1910
+  status: "active"
+  company_type: "brand"
+  parent: fca
+
+srt:
+  name: "SRT (Street & Racing Technology)"
+  country: "USA"
+  founded_year: 2003
+  status: "active"
+  company_type: "brand"
+  parent: dodge
+
+# Factory Level
+sterling_heights:
+  name: "Sterling Heights Assembly Plant"
+  country: "USA"
+  founded_year: 1953
+  status: "active"
+  company_type: "factory"
+  parent: chrysler
+
+melfi_plant:
+  name: "Melfi Plant"
+  country: "Italy"
+  founded_year: 1993
+  status: "active"
+  company_type: "factory"
+  parent: fiat
+
+sochaux_plant:
+  name: "Sochaux Plant"
+  country: "France"
+  founded_year: 1912
+  status: "active"
+  company_type: "factory"
+  parent: peugeot

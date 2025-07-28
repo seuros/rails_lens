@@ -1,0 +1,34 @@
+erDiagram
+
+  User {
+    INTEGER id PK
+    varchar email UK
+    varchar name
+    varchar status
+    datetime(6) created_at
+    datetime(6) updated_at
+  }
+  Post {
+    INTEGER id PK
+    varchar title
+    TEXT content
+    INTEGER user_id FK
+    boolean published
+    datetime(6) created_at
+    datetime(6) updated_at
+  }
+  Comment {
+    INTEGER id PK
+    TEXT body
+    INTEGER user_id FK
+    INTEGER post_id FK
+    datetime(6) created_at
+    datetime(6) updated_at
+  }
+
+  User ||..}o Post : "posts"
+  User ||..}o Comment : "comments"
+  Post |o..|| User : "user"
+  Post ||..}o Comment : "comments"
+  Comment |o..|| User : "user"
+  Comment |o..|| Post : "post"

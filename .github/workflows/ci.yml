@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Run RuboCop
+        run: bundle exec rubocop --parallel
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test (Rails ${{ matrix.rails }})
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        rails: ['7.2', '8.0']
+    
+    services:
+      postgres:
+        image: ghcr.io/seuros/postgis-with-extensions:17-4
+        env:
+          POSTGRES_USER: rails_lens_user
+          POSTGRES_PASSWORD: galactic_spaceships_2025
+          POSTGRES_DB: rails_lens_test
+        options: >-
+          --health-cmd "pg_isready -U rails_lens_user -d rails_lens_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: terrestrial_vehicles_2025
+          MYSQL_DATABASE: rails_lens_vehicles_test
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 3306:3306
+
+    env:
+      RAILS_ENV: test
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: rails_lens_user
+      POSTGRES_PASSWORD: galactic_spaceships_2025
+      POSTGRES_PORT: 5432
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_USER: root
+      MYSQL_PASSWORD: terrestrial_vehicles_2025
+      MYSQL_PORT: 3306
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpq-dev \
+            libmysqlclient-dev \
+            libsqlite3-dev \
+            postgresql-client \
+            mysql-client
+      
+      - name: Set up test databases
+        run: |
+          cd test/dummy
+          # Wait for MySQL to be ready
+          until mysqladmin ping -h"127.0.0.1" -u"root" -p"terrestrial_vehicles_2025" --silent; do
+            echo 'Waiting for MySQL...'
+            sleep 2
+          done
+          # Create and migrate all databases in multi-database setup
+          bundle exec rails db:create:all RAILS_ENV=test
+          bundle exec rails db:migrate RAILS_ENV=test
+      
+      - name: Run tests
+        run: bundle exec rake test
+      
+      - name: Test CLI commands
+        run: |
+          cd test/dummy
+          
+          # Test annotation commands
+          bundle exec rails_lens annotate --all
+          bundle exec rails_lens remove --all
+          
+          # Test ERD generation
+          bundle exec rails_lens erd --output tmp/test_erd
+          
+          # Test version command
+          bundle exec rails_lens version
+
+

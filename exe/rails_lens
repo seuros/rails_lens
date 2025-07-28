@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+abort 'Please run rails_lens from the root of the project.' if !File.exist?('./Rakefile') && !File.exist?('./Gemfile')
+
+begin
+  require 'bundler'
+  Bundler.setup
+rescue Bundler::GemNotFound => e
+  warn "Missing gem dependency: #{e.message}"
+  warn 'Try running: bundle install'
+  exit 1
+rescue LoadError => e
+  warn "Could not load Bundler: #{e.message}"
+  # Continue without Bundler - may work if gems are installed system-wide
+rescue Bundler::BundlerError => e
+  warn "Bundler error: #{e.message}"
+  exit 1
+end
+
+$LOAD_PATH.unshift("#{__dir__}/../lib")
+
+require 'rails_lens'
+
+_exit_status = RailsLens::CLI.start(ARGV)

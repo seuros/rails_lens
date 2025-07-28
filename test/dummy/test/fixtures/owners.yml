@@ -1,0 +1,46 @@
+# MySQL Owner Fixtures
+
+john_doe:
+  first_name: "John"
+  last_name: "Doe"
+  email: "john.doe@example.com"
+  phone: "+1-555-0123"
+  license_number: "D123456789"
+  license_class: "class_c"
+  state: "California"
+
+jane_smith:
+  first_name: "Jane"
+  last_name: "Smith"
+  email: "jane.smith@example.com"
+  phone: "+1-555-0124"
+  license_number: "S987654321"
+  license_class: "class_c"
+  state: "Texas"
+
+mike_johnson:
+  first_name: "Mike"
+  last_name: "Johnson"
+  email: "mike.johnson@example.com"
+  phone: "+1-555-0125"
+  license_number: "J456789123"
+  license_class: "cdl"
+  state: "Michigan"
+
+sarah_wilson:
+  first_name: "Sarah"
+  last_name: "Wilson"
+  email: "sarah.wilson@example.com"
+  phone: "+1-555-0126"
+  license_number: "W789123456"
+  license_class: "motorcycle"
+  state: "Florida"
+
+bob_martinez:
+  first_name: "Bob"
+  last_name: "Martinez"
+  email: "bob.martinez@example.com"
+  phone: "+1-555-0127"
+  license_number: "M321654987"
+  license_class: "class_a"
+  state: "New York"

@@ -1,0 +1,47 @@
+development:
+  primary:
+    adapter: postgresql
+    database: rails_lens_development
+    host: <%= ENV['POSTGRES_HOST'] || 'hamster.home' %>
+    username: <%= ENV['POSTGRES_USER'] || 'rails_lens_user' %>
+    password: <%= ENV['POSTGRES_PASSWORD'] || 'galactic_spaceships_2025' %>
+    port: <%= ENV['POSTGRES_PORT'] || 15432 %>
+  
+  vehicles:
+    adapter: mysql2
+    database: rails_lens_vehicles_development
+    host: <%= ENV['MYSQL_HOST'] || 'hamster.home' %>
+    username: <%= ENV['MYSQL_USER'] || 'root' %>
+    password: <%= ENV['MYSQL_PASSWORD'] || 'terrestrial_vehicles_2025' %>
+    port: <%= ENV['MYSQL_PORT'] || 13306 %>
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+    sslmode: disabled
+  
+  prehistoric:
+    adapter: sqlite3
+    database: db/prehistoric_development.sqlite3
+
+test:
+  primary:
+    adapter: postgresql
+    database: rails_lens_test
+    host: <%= ENV['POSTGRES_HOST'] || 'localhost' %>
+    username: <%= ENV['POSTGRES_USER'] || 'rails_lens_user' %>
+    password: <%= ENV['POSTGRES_PASSWORD'] || 'galactic_spaceships_2025' %>
+    port: <%= ENV['POSTGRES_PORT'] || 5432 %>
+  
+  vehicles:
+    adapter: mysql2
+    database: rails_lens_vehicles_test
+    host: <%= ENV['MYSQL_HOST'] || 'localhost' %>
+    username: <%= ENV['MYSQL_USER'] || 'root' %>
+    password: <%= ENV['MYSQL_PASSWORD'] || 'terrestrial_vehicles_2025' %>
+    port: <%= ENV['MYSQL_PORT'] || 3306 %>
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+    sslmode: disabled
+  
+  prehistoric:
+    adapter: sqlite3
+    database: db/prehistoric_test.sqlite3

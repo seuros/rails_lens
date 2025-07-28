@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mission Assignment</title>
+</head>
+<body>
+  <h1>Mission Assignment</h1>
+
+  <p>Dear <%= @crew_member.name %>,</p>
+
+  <p>You have been assigned to the <strong><%= @spaceship.name %></strong> for the following mission:</p>
+
+  <div class="mission-details">
+    <h2>Mission Details</h2>
+    <p><%= @mission_details.description %></p>
+    <p><strong>Duration:</strong> <%= @mission_details.duration %></p>
+    <p><strong>Destination:</strong> <%= @mission_details.destination %></p>
+  </div>
+
+  <p>Please report to the ship's bridge at 0800 hours on <%= @mission_details.departure_date %>.</p>
+
+  <p>Live long and prosper,<br>
+  Starfleet Command</p>
+</body>
+</html>

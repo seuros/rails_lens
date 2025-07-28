@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to Starfleet</title>
+</head>
+<body>
+  <h1>Welcome to Starfleet!</h1>
+
+  <p>Dear <%= @crew_member.name %>,</p>
+
+  <p>Welcome to Starfleet! We are pleased to have you join our ranks as a <%= @crew_member.rank %> in the <%= @crew_member.specialization %> division.</p>
+
+  <p>Your service record indicates you are from <%= @crew_member.birth_planet %>, and we look forward to the unique perspective you'll bring to our diverse crew.</p>
+
+  <p>Please find attached your Starfleet handbook which contains important information about:</p>
+  <ul>
+    <li>Starfleet regulations and protocols</li>
+    <li>Emergency procedures</li>
+    <li>Ship assignments and rotations</li>
+    <li>Career development opportunities</li>
+  </ul>
+
+  <p>Your first assignment will be communicated to you shortly.</p>
+
+  <p>Once again, welcome aboard!</p>
+
+  <p>Live long and prosper,<br>
+  Starfleet Personnel Command</p>
+</body>
+</html>

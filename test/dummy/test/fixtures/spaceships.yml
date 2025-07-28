@@ -1,0 +1,36 @@
+# PostgreSQL Spaceship Fixtures
+
+enterprise_d:
+  name: "USS Enterprise NCC-1701-D"
+  class_type: "Galaxy Class"
+  registry: "NCC-1701-D"
+  warp_capability: true
+  status: "active"
+
+voyager:
+  name: "USS Voyager NCC-74656"
+  class_type: "Intrepid Class"
+  registry: "NCC-74656"
+  warp_capability: true
+  status: "active"
+
+defiant:
+  name: "USS Defiant NX-74205"
+  class_type: "Defiant Class"
+  registry: "NX-74205"
+  warp_capability: true
+  status: "active"
+
+bird_of_prey:
+  name: "IKS Rotarran"
+  class_type: "B'rel Class"
+  registry: "IKS-001"
+  warp_capability: true
+  status: "maintenance"
+
+freighter:
+  name: "SS Xhosa"
+  class_type: "Antares Class"
+  registry: "SS-001"
+  warp_capability: false
+  status: "decommissioned"

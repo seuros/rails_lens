@@ -1,0 +1,50 @@
+# PostgreSQL CrewMember Fixtures
+
+picard:
+  name: "Jean-Luc Picard"
+  rank: "Captain"
+  species: "Human"
+  status: "active"
+  home_planet: earth
+
+janeway:
+  name: "Kathryn Janeway"
+  rank: "Captain"
+  species: "Human"
+  status: "active"
+  home_planet: earth
+
+sisko:
+  name: "Benjamin Sisko"
+  rank: "Captain"
+  species: "Human"
+  status: "active"
+  home_planet: earth
+
+spock:
+  name: "S'chn T'gai Spock"
+  rank: "Commander"
+  species: "Vulcan"
+  status: "active"
+  home_planet: vulcan
+
+worf:
+  name: "Worf"
+  rank: "Lieutenant Commander"
+  species: "Klingon"
+  status: "active"
+  home_planet: qonos
+
+data:
+  name: "Data"
+  rank: "Lieutenant Commander"
+  species: "Android"
+  status: "active"
+  home_planet: null
+
+odo:
+  name: "Odo"
+  rank: "Constable"
+  species: "Changeling"
+  status: "active"
+  home_planet: null

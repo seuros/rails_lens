@@ -1,0 +1,186 @@
+# SQLite3 Family Taxonomic Hierarchy Fixtures
+
+# Kingdom Level
+animalia:
+  name: "Animalia"
+  description: "Kingdom of multicellular eukaryotic organisms"
+  classification: "theropod"
+  taxonomic_rank: "kingdom"
+  parent: null
+
+# Phylum Level
+chordata:
+  name: "Chordata"
+  description: "Animals with a notochord and dorsal neural tube"
+  classification: "theropod"
+  taxonomic_rank: "phylum"
+  parent: animalia
+
+# Class Level
+reptilia:
+  name: "Reptilia"
+  description: "Cold-blooded vertebrates with scales"
+  classification: "theropod"
+  taxonomic_rank: "class_rank"
+  parent: chordata
+
+# Order Level
+saurischia:
+  name: "Saurischia"
+  description: "Lizard-hipped dinosaurs"
+  classification: "theropod"
+  taxonomic_rank: "order"
+  parent: reptilia
+
+ornithischia:
+  name: "Ornithischia"
+  description: "Bird-hipped dinosaurs"
+  classification: "ornithopod"
+  taxonomic_rank: "order"
+  parent: reptilia
+
+# Family Level - Saurischia Branch
+tyrannosauridae:
+  name: "Tyrannosauridae"
+  description: "Large bipedal predatory dinosaurs"
+  classification: "theropod"
+  taxonomic_rank: "family"
+  parent: saurischia
+
+allosauridae:
+  name: "Allosauridae"
+  description: "Medium to large theropod dinosaurs"
+  classification: "theropod"
+  taxonomic_rank: "family"
+  parent: saurischia
+
+diplodocidae:
+  name: "Diplodocidae"
+  description: "Long-necked sauropod dinosaurs"
+  classification: "sauropod"
+  taxonomic_rank: "family"
+  parent: saurischia
+
+# Family Level - Ornithischia Branch
+stegosauridae:
+  name: "Stegosauridae"
+  description: "Armored dinosaurs with back plates"
+  classification: "stegosaur"
+  taxonomic_rank: "family"
+  parent: ornithischia
+
+ceratopsidae:
+  name: "Ceratopsidae"
+  description: "Horned dinosaurs with frilled skulls"
+  classification: "ceratopsian"
+  taxonomic_rank: "family"
+  parent: ornithischia
+
+hadrosauridae:
+  name: "Hadrosauridae"
+  description: "Duck-billed herbivorous dinosaurs"
+  classification: "ornithopod"
+  taxonomic_rank: "family"
+  parent: ornithischia
+
+# Genus Level
+tyrannosaurus:
+  name: "Tyrannosaurus"
+  description: "Large theropod predator genus"
+  classification: "theropod"
+  taxonomic_rank: "genus"
+  parent: tyrannosauridae
+
+allosaurus:
+  name: "Allosaurus"
+  description: "Large theropod predator genus"
+  classification: "theropod"
+  taxonomic_rank: "genus"
+  parent: allosauridae
+
+diplodocus:
+  name: "Diplodocus"
+  description: "Long-necked sauropod genus"
+  classification: "sauropod"
+  taxonomic_rank: "genus"
+  parent: diplodocidae
+
+stegosaurus:
+  name: "Stegosaurus"
+  description: "Plated dinosaur genus"
+  classification: "stegosaur"
+  taxonomic_rank: "genus"
+  parent: stegosauridae
+
+triceratops:
+  name: "Triceratops"
+  description: "Three-horned ceratopsian genus"
+  classification: "ceratopsian"
+  taxonomic_rank: "genus"
+  parent: ceratopsidae
+
+# Species Level
+t_rex:
+  name: "Tyrannosaurus rex"
+  description: "King of the tyrant lizards"
+  classification: "theropod"
+  taxonomic_rank: "species"
+  parent: tyrannosaurus
+
+a_fragilis:
+  name: "Allosaurus fragilis"
+  description: "Different or strange lizard"
+  classification: "theropod"
+  taxonomic_rank: "species"
+  parent: allosaurus
+
+d_carnegii:
+  name: "Diplodocus carnegii"
+  description: "Double beam lizard"
+  classification: "sauropod"
+  taxonomic_rank: "species"
+  parent: diplodocus
+
+s_ungulatus:
+  name: "Stegosaurus ungulatus"
+  description: "Roof lizard with hoofed feet"
+  classification: "stegosaur"
+  taxonomic_rank: "species"
+  parent: stegosaurus
+
+t_horridus:
+  name: "Triceratops horridus"
+  description: "Three-horned face with horrible appearance"
+  classification: "ceratopsian"
+  taxonomic_rank: "species"
+  parent: triceratops
+
+# Marine Branch
+marine_reptiles:
+  name: "Marine Reptiles"
+  description: "Aquatic reptiles of the Mesozoic"
+  classification: "marine"
+  taxonomic_rank: "order"
+  parent: reptilia
+
+plesiosauria:
+  name: "Plesiosauria"
+  description: "Long-necked marine reptiles"
+  classification: "marine"
+  taxonomic_rank: "family"
+  parent: marine_reptiles
+
+# Flying Branch
+pterosauria:
+  name: "Pterosauria"
+  description: "Flying reptiles"
+  classification: "pterosaur"
+  taxonomic_rank: "order"
+  parent: reptilia
+
+pterodactylidae:
+  name: "Pterodactylidae"
+  description: "Wing finger flying reptiles"
+  classification: "pterosaur"
+  taxonomic_rank: "family"
+  parent: pterosauria
