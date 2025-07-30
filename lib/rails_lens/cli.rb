@@ -15,6 +15,7 @@ module RailsLens
 
     desc 'annotate', 'Annotate Rails models with schema information'
     option :models, type: :array, desc: 'Specific models to annotate'
+    option :include_abstract, type: :boolean, desc: 'Include abstract classes'
     option :position, type: :string, enum: %w[before after top bottom], desc: 'Annotation position'
     option :routes, type: :boolean, desc: 'Annotate controller routes'
     option :mailers, type: :boolean, desc: 'Annotate mailer methods'
