@@ -17,7 +17,12 @@ module RailsLens
 
         lines << "Type Column: #{delegated_type_info[:type_column]}"
         lines << "ID Column: #{delegated_type_info[:id_column]}"
-        lines << "Types: #{delegated_type_info[:types].join(', ')}"
+        types_list = if delegated_type_info[:types].respond_to?(:keys)
+                       delegated_type_info[:types].keys
+                     else
+                       Array(delegated_type_info[:types])
+                     end
+        lines << "Types: #{types_list.join(', ')}"
 
         lines.join("\n")
       end
