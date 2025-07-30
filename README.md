@@ -1,5 +1,10 @@
 # Rails Lens 🔍
 
+![Gem Version](https://img.shields.io/gem/v/rails_lens)
+![GitHub stars](https://img.shields.io/github/stars/seuros/rails_lens)
+![Downloads](https://img.shields.io/gem/dt/rails_lens)
+![License](https://img.shields.io/github/license/seuros/rails_lens)
+
 > **Precision optics for the Rails universe** - Where every model has perfect clarity through spacetime
 
 Rails Lens provides intelligent model annotations and ERD generation for Rails applications with database-specific adapters, multi-database support, and advanced code analysis.
@@ -25,6 +30,71 @@ Rails Lens provides intelligent model annotations and ERD generation for Rails a
 
 **✨ Advanced Features:**
 - STI hierarchy mapping • Delegated types • Polymorphic associations • Enum analysis • LRDL-optimized output
+
+## Showcase: Real-World Example
+
+Rescued from AWS limbo, Rails Lens delivers cosmic schema clarity. See this `Announcement` model:
+
+```ruby
+# frozen_string_literal: true
+
+# <rails-lens:schema:begin>
+# table = "announcements"
+# database_dialect = "PostgreSQL"
+#
+# columns = [
+#   { name = "id", type = "integer", primary_key = true, nullable = false },
+#   { name = "body", type = "text", nullable = true },
+#   { name = "audience", type = "string", nullable = true },
+#   { name = "scheduled_at", type = "datetime", nullable = true },
+#   { name = "created_at", type = "datetime", nullable = false },
+#   { name = "updated_at", type = "datetime", nullable = false }
+# ]
+#
+# == Polymorphic Associations
+# Polymorphic Targets:
+# - entry (as: :entryable)
+#
+# == Enums
+# - audience: { all_users: "all_users", crew_only: "crew_only", officers_only: "officers_only", command_staff: "command_staff" } (string)
+#
+# == Notes
+# - Column 'body' should probably have NOT NULL constraint
+# - Column 'audience' should probably have NOT NULL constraint
+# - String column 'audience' has no length limit - consider adding one
+# - Large text column 'body' is frequently queried - consider separate storage
+# <rails-lens:schema:end>
+class Announcement < ApplicationRecord
+  enum :audience, { all_users: 'all_users', crew_only: 'crew_only', officers_only: 'officers_only', command_staff: 'command_staff' }, suffix: true
+  has_one :entry, as: :entryable, dependent: :destroy
+  validates :audience, presence: true
+  validates :body, presence: true
+  scope :recent, -> { order(created_at: :desc) }
+end
+```
+
+**ERD Visualization:**
+```mermaid
+erDiagram
+    Announcement ||--o{ Entry : entryable
+    Announcement {
+        integer id PK
+        text body
+        string audience
+        datetime scheduled_at
+        datetime created_at
+        datetime updated_at
+    }
+    Entry {
+        integer id PK
+        string entryable_type
+        integer entryable_id
+        datetime created_at
+        datetime updated_at
+    }
+```
+
+**No grepping, no LLM hallucinations. Try it:** `gem install rails_lens`
 
 ## Requirements
 
