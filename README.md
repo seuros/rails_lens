@@ -6,7 +6,7 @@ Rails Lens provides intelligent model annotations and ERD generation for Rails a
 
 **Why I Built This:**
 - **Grepping becomes surgical** - Find schema info with simple text searches, no more hunting through migrations
-- **LLMs get perfect context** - Structured annotations eliminate AI hallucinations about your database schema  
+- **LLMs get perfect context** - Structured annotations eliminate AI hallucinations about your database schema
 - **Change tracking is atomic** - Column change = 1 line update in annotation, not 2, not 43 scattered lines
 
 **Part of the LRDL (LLM Requirements Definition Language) ecosystem** - optimized for neurodivergent developers and digital entities who demand structure over ambiguity. 🤖✨
@@ -77,6 +77,8 @@ bundle exec rails_lens erd --verbose
 ```
 
 *All examples and features are demonstrated in the AI testimonials below! Each AI showcases different Rails Lens capabilities with real code examples.* ⬇️
+
+**📊 [How does Rails Lens compare to existing tools?](COMPARISON.md)** - We know you're going to ask, so we answered it directly.
 
 ## Configuration
 
