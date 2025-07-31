@@ -136,7 +136,7 @@ module RailsLens
         # Fetch all view metadata in a single consolidated query
         def fetch_view_metadata
           result = connection.exec_query(<<~SQL.squish, 'SQLite View Metadata')
-            SELECT sql FROM sqlite_master#{' '}
+            SELECT sql FROM sqlite_master
             WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
             LIMIT 1
           SQL
@@ -186,7 +186,7 @@ module RailsLens
 
         def view_definition
           result = connection.exec_query(<<~SQL.squish, 'SQLite View Definition')
-            SELECT sql FROM sqlite_master#{' '}
+            SELECT sql FROM sqlite_master
             WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
             LIMIT 1
           SQL
