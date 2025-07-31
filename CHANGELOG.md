@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.3](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.2...rails_lens/v0.2.3) (2025-07-31)
+
+
+### Features
+
+* add database view annotation support ([#7](https://github.com/seuros/rails_lens/issues/7)) ([a42fdcd](https://github.com/seuros/rails_lens/commit/a42fdcdfe4da9e2a086488e0c5e0c72d2f3c5d3d))
+
+
+### Bug Fixes
+
+* centralize connection management to prevent "too many clients" errors ([#9](https://github.com/seuros/rails_lens/issues/9)) ([c5d85c7](https://github.com/seuros/rails_lens/commit/c5d85c7239d1eff49494a05582cb00a8e7402618))
+
 ## [0.2.2](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.1...rails_lens/v0.2.2) (2025-07-31)
 
 
