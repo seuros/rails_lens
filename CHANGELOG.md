@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.1...rails_lens/v0.2.2) (2025-07-31)
+
+
+### Bug Fixes
+
+* remove from format from the erd visualize ([#5](https://github.com/seuros/rails_lens/issues/5)) ([c2efdc7](https://github.com/seuros/rails_lens/commit/c2efdc7011425fcd8b46dce54d811ce166b0c660))
+
 ## [0.2.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.0...rails_lens/v0.2.1) (2025-07-30)
 
 
