@@ -85,8 +85,33 @@ module RailsLens
             end
           end
         else
-          # Fall back to normal processing without connection management
-          results = pipeline.process(model_class)
+          # Fallback: Use the model's connection pool with proper management
+          # This path is used when annotating individual models
+          warn "Using fallback connection management for #{model_class.name}" if RailsLens.config.verbose
+
+          # Force connection management even in fallback mode
+          results = { schema: nil, sections: [], notes: [] }
+
+          model_class.connection_pool.with_connection do |connection|
+            pipeline.instance_variable_get(:@providers).each do |provider|
+              next unless provider.applicable?(model_class)
+
+              begin
+                result = provider.process(model_class, connection)
+
+                case provider.type
+                when :schema
+                  results[:schema] = result
+                when :section
+                  results[:sections] << result if result
+                when :notes
+                  results[:notes].concat(Array(result))
+                end
+              rescue StandardError => e
+                warn "Provider #{provider.class} error for #{model_class}: #{e.message}"
+              end
+            end
+          end
         end
 
         annotation = Annotation.new
@@ -117,7 +142,13 @@ module RailsLens
       end
 
       def self.annotate_all(options = {})
+        # Convert models option to include option for ModelDetector
+        if options[:models]
+          options[:include] = options[:models]
+        end
+
         models = ModelDetector.detect_models(options)
+        puts "Detected #{models.size} models for annotation" if options[:verbose]
 
         # Filter abstract classes based on options
         if options[:include_abstract]
@@ -133,13 +164,35 @@ module RailsLens
 
         # Group models by their connection pool to process each database separately
         models_by_connection_pool = models.group_by do |model|
-          model.connection_pool
-        rescue StandardError
-          nil # Models without connection pools will be processed separately
+          pool = model.connection_pool
+          pool
+        rescue StandardError => e
+          puts "Model #{model.name} -> NO POOL (#{e.message})" if options[:verbose]
+          nil # Models without connection pools will use primary pool
         end
+
+        # Force models without connection pools to use the primary connection pool
+        if models_by_connection_pool[nil]&.any?
+          begin
+            primary_pool = ApplicationRecord.connection_pool
+            models_by_connection_pool[primary_pool] ||= []
+            models_by_connection_pool[primary_pool].concat(models_by_connection_pool[nil])
+            models_by_connection_pool.delete(nil)
+          rescue StandardError => e
+            puts "Failed to assign to primary pool: #{e.message}" if options[:verbose]
+          end
+        end
+
+        # Get all connection pools first
+        all_pools = get_all_connection_pools(models_by_connection_pool)
+
+        # Log initial connection status (removed verbose output)
 
         models_by_connection_pool.each do |connection_pool, pool_models|
           if connection_pool
+            # Disconnect all OTHER connection pools before processing this one
+            disconnect_other_pools(connection_pool, all_pools, options)
+
             # Process all models for this database using a single connection
             connection_pool.with_connection do |connection|
               pool_models.each do |model|
@@ -147,9 +200,20 @@ module RailsLens
               end
             end
           else
-            # Process models without connection pools individually
-            pool_models.each do |model|
-              process_model_with_connection(model, nil, results, options)
+            # This should not happen anymore since we assign orphaned models to primary pool
+            # Use primary connection pool as fallback to avoid creating new connections
+            begin
+              primary_pool = ApplicationRecord.connection_pool
+              primary_pool.with_connection do |connection|
+                pool_models.each do |model|
+                  process_model_with_connection(model, connection, results, options)
+                end
+              end
+            rescue StandardError => e
+              # Last resort: process without connection management (will create multiple connections)
+              pool_models.each do |model|
+                process_model_with_connection(model, nil, results, options)
+              end
             end
           end
         end
@@ -167,7 +231,6 @@ module RailsLens
         # Skip models without tables or with missing tables (but not abstract classes)
         unless model.abstract_class? || model.table_exists?
           results[:skipped] << model.name
-          warn "Skipping #{model.name} - table does not exist" if options[:verbose]
           return
         end
 
@@ -191,10 +254,9 @@ module RailsLens
         else
           results[:skipped] << model.name
         end
-      rescue ActiveRecord::StatementInvalid => e
+      rescue ActiveRecord::StatementInvalid
         # Handle database-related errors (missing tables, schemas, etc.)
         results[:skipped] << model.name
-        warn "Skipping #{model.name} - database error: #{e.message}" if options[:verbose]
       rescue StandardError => e
         model_name = if model.is_a?(Class) && model.respond_to?(:name)
                        model.name
@@ -220,6 +282,45 @@ module RailsLens
         end
 
         results
+      end
+
+      def self.disconnect_other_pools(current_pool, all_pools, options = {})
+        all_pools.each do |pool|
+          next if pool == current_pool || pool.nil?
+
+          begin
+            if pool.connected?
+              pool.disconnect!
+            end
+          rescue StandardError => e
+            warn "Failed to disconnect pool: #{e.message}"
+          end
+        end
+      end
+
+      def self.get_all_connection_pools(models_by_pool)
+        models_by_pool.keys.compact
+      end
+
+      def self.log_connection_status(all_pools, options = {})
+        return unless options[:verbose]
+
+        puts "\n=== Connection Pool Status ==="
+        all_pools.each do |pool|
+          next unless pool
+
+          begin
+            name = pool.db_config&.name || 'unknown'
+            connected = pool.connected?
+            size = pool.size
+            checked_out = pool.stat[:busy]
+
+            puts "Pool #{name}: connected=#{connected}, size=#{size}, busy=#{checked_out}"
+          rescue StandardError => e
+            puts "Pool status error: #{e.message}"
+          end
+        end
+        puts "================================\n"
       end
 
       private

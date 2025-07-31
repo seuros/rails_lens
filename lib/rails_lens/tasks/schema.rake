@@ -9,7 +9,14 @@ namespace :rails_lens do
       options = {}
       options[:include_abstract] = true if ENV['INCLUDE_ABSTRACT'] == 'true'
 
-      puts 'Annotating models with schema information...'
+      # Support model filtering via environment variable
+      if ENV['MODELS']
+        model_list = ENV['MODELS'].split(',').map(&:strip)
+        options[:models] = model_list
+        puts "Filtering to specific models: #{model_list.join(', ')}"
+      end
+
+      options[:verbose] = true # Force verbose mode to see connection management
       results = RailsLens.annotate_models(options)
 
       if results[:annotated].any?
