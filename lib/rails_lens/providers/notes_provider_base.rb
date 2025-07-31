@@ -9,7 +9,8 @@ module RailsLens
       end
 
       def applicable?(model_class)
-        model_has_table?(model_class)
+        # Only applicable to tables, not views
+        model_has_table?(model_class) && !ModelDetector.view_exists?(model_class)
       end
 
       def analyzer_class

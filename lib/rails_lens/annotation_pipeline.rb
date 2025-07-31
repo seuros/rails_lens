@@ -65,6 +65,7 @@ module RailsLens
 
       # Section providers (additional structured content)
       register(Providers::ExtensionsProvider.new) if RailsLens.config.extensions[:enabled]
+      register(Providers::ViewProvider.new)
       register(Providers::InheritanceProvider.new)
       register(Providers::EnumsProvider.new)
       register(Providers::DelegatedTypesProvider.new)
@@ -75,6 +76,7 @@ module RailsLens
       # Notes providers (analysis and recommendations)
       return unless RailsLens.config.schema[:include_notes]
 
+      register(Providers::ViewNotesProvider.new)
       register(Providers::IndexNotesProvider.new)
       register(Providers::ForeignKeyNotesProvider.new)
       register(Providers::AssociationNotesProvider.new)

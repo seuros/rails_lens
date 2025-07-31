@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_05_24_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_31_083442) do
   create_schema "audit"
 
   # These are extensions that must be enabled in order to support this database
@@ -59,6 +59,11 @@ ActiveRecord::Schema[8.0].define(version: 2024_05_24_120000) do
     t.datetime "updated_at", null: false
     t.string "status", limit: 20
     t.string "specialization"
+  end
+
+  create_table "crew_mission_stats_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "diet_relationships", force: :cascade do |t|

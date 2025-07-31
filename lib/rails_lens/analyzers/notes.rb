@@ -29,12 +29,22 @@ module RailsLens
 
         notes = []
 
-        notes.concat(analyze_indexes)
-        notes.concat(analyze_foreign_keys)
-        notes.concat(analyze_associations)
-        notes.concat(analyze_columns)
-        notes.concat(analyze_performance)
-        notes.concat(analyze_best_practices)
+        # Check if this model is backed by a view
+        is_view = ModelDetector.view_exists?(model_class)
+
+        if is_view
+          # For views, add view-specific checks
+          notes.concat(analyze_view_readonly)
+          notes.concat(analyze_view_gotchas)
+        else
+          # For tables, run all standard checks
+          notes.concat(analyze_indexes)
+          notes.concat(analyze_foreign_keys)
+          notes.concat(analyze_associations)
+          notes.concat(analyze_columns)
+          notes.concat(analyze_performance)
+          notes.concat(analyze_best_practices)
+        end
 
         notes.compact.uniq
       rescue ActiveRecord::StatementInvalid => e
@@ -46,6 +56,54 @@ module RailsLens
       end
 
       private
+
+      def analyze_view_readonly
+        notes = []
+
+        # Check if this model is backed by a database view
+        if ModelDetector.view_exists?(model_class)
+          notes << '👁️ View-backed model: read-only'
+
+          # Check if model has readonly implementation
+          unless has_readonly_implementation?
+            notes << 'Add readonly? method'
+          end
+        end
+
+        notes
+      rescue StandardError => e
+        Rails.logger.debug { "Error checking view readonly status for #{model_class.name}: #{e.message}" }
+        []
+      end
+
+      def analyze_view_gotchas
+        notes = []
+        view_metadata = ViewMetadata.new(model_class)
+
+        # Check for materialized view specific issues
+        if view_metadata.materialized_view?
+          notes << '🔄 Materialized view: data may be stale until refreshed'
+          unless has_refresh_methods?
+            notes << 'Add refresh! method for manual updates'
+          end
+        end
+
+        # Check for nested views (view depending on other views)
+        dependencies = view_metadata.dependencies
+        if dependencies.any? { |dep| view_exists_by_name?(dep) }
+          notes << '⚠️ Nested views detected: may impact query performance'
+        end
+
+        # Check for readonly implementation
+        unless has_readonly_implementation?
+          notes << '🔒 Add readonly protection to prevent write operations'
+        end
+
+        notes
+      rescue StandardError => e
+        Rails.logger.debug { "Error analyzing view gotchas for #{model_class.name}: #{e.message}" }
+        []
+      end
 
       def analyze_indexes
         notes = []
@@ -319,6 +377,56 @@ module RailsLens
         columns.select do |column|
           column.type == :uuid || (column.type == :string && column.name.match?(/uuid|guid/))
         end
+      end
+
+      def has_readonly_implementation?
+        # Check if model has readonly? method defined (not just inherited from ActiveRecord)
+        model_class.method_defined?(:readonly?) &&
+          model_class.instance_method(:readonly?).owner != ActiveRecord::Base
+      rescue StandardError
+        false
+      end
+
+      def has_refresh_methods?
+        # Check if model has refresh! method for materialized views
+        model_class.respond_to?(:refresh!) || model_class.respond_to?(:refresh_concurrently!)
+      rescue StandardError
+        false
+      end
+
+      def view_exists_by_name?(view_name)
+        # Check if a view exists in the database by name
+        case @connection.adapter_name.downcase
+        when 'postgresql'
+          result = @connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View Existence')
+            SELECT 1 FROM information_schema.views#{' '}
+            WHERE table_name = '#{@connection.quote_string(view_name)}'
+            UNION ALL
+            SELECT 1 FROM pg_matviews#{' '}
+            WHERE matviewname = '#{@connection.quote_string(view_name)}'
+            LIMIT 1
+          SQL
+          result.rows.any?
+        when 'mysql', 'mysql2'
+          result = @connection.exec_query(<<~SQL.squish, 'Check MySQL View Existence')
+            SELECT 1 FROM information_schema.views#{' '}
+            WHERE table_name = '#{@connection.quote_string(view_name)}'
+            LIMIT 1
+          SQL
+          result.rows.any?
+        when 'sqlite', 'sqlite3'
+          result = @connection.exec_query(<<~SQL.squish, 'Check SQLite View Existence')
+            SELECT 1 FROM sqlite_master#{' '}
+            WHERE type = 'view' AND name = '#{@connection.quote_string(view_name)}'
+            LIMIT 1
+          SQL
+          result.rows.any?
+        else
+          false
+        end
+      rescue StandardError => e
+        Rails.logger.debug { "Error checking view existence for #{view_name}: #{e.message}" }
+        false
       end
     end
   end

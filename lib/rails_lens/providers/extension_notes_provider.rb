@@ -8,7 +8,8 @@ module RailsLens
       end
 
       def applicable?(model_class)
-        RailsLens.config.extensions[:enabled] && model_has_table?(model_class)
+        # Only applicable to tables, not views
+        RailsLens.config.extensions[:enabled] && model_has_table?(model_class) && !ModelDetector.view_exists?(model_class)
       end
 
       def process(model_class)

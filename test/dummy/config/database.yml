@@ -6,6 +6,7 @@ development:
     username: <%= ENV['POSTGRES_USER'] || 'rails_lens_user' %>
     password: <%= ENV['POSTGRES_PASSWORD'] || 'galactic_spaceships_2025' %>
     port: <%= ENV['POSTGRES_PORT'] || 15432 %>
+    migrations_paths: db/migrate
   
   vehicles:
     adapter: mysql2
@@ -17,10 +18,12 @@ development:
     encoding: utf8mb4
     collation: utf8mb4_unicode_ci
     sslmode: disabled
+    migrations_paths: db/vehicles_migrate
   
   prehistoric:
     adapter: sqlite3
     database: db/prehistoric_development.sqlite3
+    migrations_paths: db/prehistoric_migrate
 
 test:
   primary:
@@ -30,6 +33,7 @@ test:
     username: <%= ENV['POSTGRES_USER'] || 'rails_lens_user' %>
     password: <%= ENV['POSTGRES_PASSWORD'] || 'galactic_spaceships_2025' %>
     port: <%= ENV['POSTGRES_PORT'] || 5432 %>
+    migrations_paths: db/migrate
   
   vehicles:
     adapter: mysql2
@@ -41,7 +45,9 @@ test:
     encoding: utf8mb4
     collation: utf8mb4_unicode_ci
     sslmode: disabled
+    migrations_paths: db/vehicles_migrate
   
   prehistoric:
     adapter: sqlite3
     database: db/prehistoric_test.sqlite3
+    migrations_paths: db/prehistoric_migrate
