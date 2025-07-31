@@ -35,15 +35,18 @@ module RailsLens
           lines << "view = \"#{table_name}\""
           lines << "database_dialect = \"#{database_dialect}\""
 
-          # Add view-specific metadata
-          view_metadata = ViewMetadata.new(model_class)
-          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
-          lines << "updatable = #{view_metadata.updatable?}"
+          # Fetch all view metadata in a single query
+          view_info = fetch_view_metadata
+
+          if view_info
+            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
+            lines << "updatable = #{view_info[:updatable]}"
+          end
 
           lines << ''
 
           add_columns_toml(lines)
-          add_view_dependencies_toml(lines, view_metadata)
+          add_view_dependencies_toml(lines, view_info)
 
           lines.join("\n")
         end
@@ -117,8 +120,10 @@ module RailsLens
           end
         end
 
-        def add_view_dependencies_toml(lines, view_metadata)
-          dependencies = view_dependencies
+        def add_view_dependencies_toml(lines, view_info)
+          return unless view_info && view_info[:dependencies]
+
+          dependencies = view_info[:dependencies]
           return if dependencies.empty?
 
           lines << ''
@@ -128,45 +133,55 @@ module RailsLens
         # SQLite-specific view methods
         public
 
-        def view_type
-          result = connection.exec_query(<<~SQL.squish, 'Check SQLite View')
-            SELECT 1 FROM sqlite_master#{' '}
+        # Fetch all view metadata in a single consolidated query
+        def fetch_view_metadata
+          result = connection.exec_query(<<~SQL.squish, 'SQLite View Metadata')
+            SELECT sql FROM sqlite_master#{' '}
             WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
             LIMIT 1
           SQL
 
-          result.rows.any? ? 'regular' : nil
-        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
-          nil
-        end
+          return nil if result.rows.empty?
 
-        def view_updatable?
-          # SQLite views are generally read-only and have many restrictions for updates
-          # Most views in SQLite are not updatable, so return false by default
-          false
-        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
-          false
-        end
+          definition = result.rows.first&.first&.strip
+          return nil unless definition
 
-        def view_dependencies
-          # Parse the view definition to extract dependencies
-          definition = view_definition
-          return [] unless definition
-
-          # Simple regex to find table references in FROM and JOIN clauses
-          # This is a basic implementation - could be enhanced for more complex cases
+          # Parse dependencies from the SQL definition
           tables = []
           definition.scan(/(?:FROM|JOIN)\s+(\w+)/i) do |match|
-            table_name = match[0]
+            table_name_match = match[0]
             # Exclude the view itself and common SQL keywords
-            if !table_name.downcase.in?(%w[select where order group having limit offset]) && tables.exclude?(table_name)
-              tables << table_name
+            if !table_name_match.downcase.in?(%w[select where order group having limit offset]) &&
+               tables.exclude?(table_name_match) &&
+               table_name_match != table_name
+              tables << table_name_match
             end
           end
 
-          tables.sort
-        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
-          []
+          {
+            type: 'regular',  # SQLite only supports regular views
+            updatable: false, # SQLite views are generally read-only
+            dependencies: tables.sort
+          }
+        rescue ActiveRecord::StatementInvalid, SQLite3::Exception => e
+          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
+          nil
+        end
+
+        # Legacy methods - kept for backward compatibility but now use consolidated query
+        def view_type
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:type)
+        end
+
+        def view_updatable?
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:updatable) || false
+        end
+
+        def view_dependencies
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:dependencies) || []
         end
 
         def view_definition

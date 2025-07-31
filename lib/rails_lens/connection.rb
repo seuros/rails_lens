@@ -3,12 +3,12 @@
 module RailsLens
   class Connection
     class << self
-      def adapter_for(model_class)
-        connection = model_class.connection
-        adapter_name = detect_adapter_name(connection)
+      def adapter_for(model_class, connection = nil)
+        conn = connection || model_class.connection
+        adapter_name = detect_adapter_name(conn)
 
         adapter_class = resolve_adapter_class(adapter_name)
-        adapter_class.new(connection, model_class.table_name)
+        adapter_class.new(conn, model_class.table_name)
       end
 
       def resolve_adapter_class(adapter_name)

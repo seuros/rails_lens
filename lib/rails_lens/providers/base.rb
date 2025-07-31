@@ -21,7 +21,7 @@ module RailsLens
       # For :schema type - returns a string with the schema content
       # For :section type - returns a hash with { title: String, content: String } or nil
       # For :notes type - returns an array of note strings
-      def process(model_class)
+      def process(model_class, connection = nil)
         raise NotImplementedError, "#{self.class} must implement #process"
       end
 

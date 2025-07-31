@@ -12,7 +12,7 @@ module RailsLens
         RailsLens.config.extensions[:enabled] && model_has_table?(model_class) && !ModelDetector.view_exists?(model_class)
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         results = ExtensionLoader.apply_extensions(model_class)
         results[:notes]
       end

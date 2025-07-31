@@ -7,7 +7,7 @@ module RailsLens
         :section
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         analyzer = Analyzers::Inheritance.new(model_class)
         content = analyzer.analyze
 

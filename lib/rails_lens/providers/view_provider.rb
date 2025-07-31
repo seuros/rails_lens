@@ -8,7 +8,7 @@ module RailsLens
         ModelDetector.view_exists?(model_class)
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         view_metadata = ViewMetadata.new(model_class)
 
         return nil unless view_metadata.view_exists?
