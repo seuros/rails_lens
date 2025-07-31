@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'concurrent'
-
 module RailsLens
   class ModelDetector
     class << self
@@ -198,7 +196,10 @@ module RailsLens
 
         # Exclude abstract models and models without valid tables
         before_count = models.size
-        models = filter_models_concurrently(models, trace_filtering, options)
+
+        # Use connection management during model filtering to prevent connection exhaustion
+        models = filter_models_with_connection_management(models, trace_filtering, options)
+
         log_filter_step('Abstract/invalid table removal', before_count, models.size, trace_filtering)
 
         # Exclude tables from configuration
@@ -257,59 +258,178 @@ module RailsLens
       end
 
       def filter_models_concurrently(models, trace_filtering, options = {})
-        # Use concurrent futures to check table existence in parallel
-        futures = models.map do |model|
-          Concurrent::Future.execute do
-            should_exclude = false
-            reason = nil
+        puts "ModelDetector: Sequential filtering #{models.size} models..." if options[:verbose]
+        # Process models sequentially to prevent concurrent database connections
+        results = models.map do |model|
+          should_exclude = false
+          reason = nil
 
-            begin
-              # Skip abstract models unless explicitly included
-              if model.abstract_class? && !options[:include_abstract]
-                should_exclude = true
-                reason = 'abstract class'
-              # For abstract models that are included, skip table checks
-              elsif model.abstract_class? && options[:include_abstract]
-                reason = 'abstract class (included)'
-              # Skip models without configured tables
-              elsif !model.table_name
-                should_exclude = true
-                reason = 'no table name'
-              # Skip models whose tables don't exist
-              elsif !model.table_exists?
-                should_exclude = true
-                reason = "table '#{model.table_name}' does not exist"
-              # Additional check: Skip models that don't have any columns
-              elsif model.columns.empty?
-                should_exclude = true
-                reason = "table '#{model.table_name}' has no columns"
-              else
-                reason = "table '#{model.table_name}' exists with #{model.columns.size} columns"
-              end
-            rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotDefined => e
+          begin
+            # Skip abstract models unless explicitly included
+            if model.abstract_class? && !options[:include_abstract]
               should_exclude = true
-              reason = "database error checking model - #{e.message}"
-            rescue NameError, NoMethodError => e
+              reason = 'abstract class'
+            # For abstract models that are included, skip table checks
+            elsif model.abstract_class? && options[:include_abstract]
+              reason = 'abstract class (included)'
+            # Skip models without configured tables
+            elsif !model.table_name
               should_exclude = true
-              reason = "method error checking model - #{e.message}"
-            rescue StandardError => e
-              # Catch any other errors and exclude the model to prevent ERD corruption
+              reason = 'no table name'
+            # Skip models whose tables don't exist
+            elsif !model.table_exists?
               should_exclude = true
-              reason = "unexpected error checking model - #{e.message}"
+              reason = "table '#{model.table_name}' does not exist"
+            # Additional check: Skip models that don't have any columns
+            elsif model.columns.empty?
+              should_exclude = true
+              reason = "table '#{model.table_name}' has no columns"
+            else
+              reason = "table '#{model.table_name}' exists with #{model.columns.size} columns"
             end
+          rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotDefined => e
+            should_exclude = true
+            reason = "database error checking model - #{e.message}"
+          rescue NameError, NoMethodError => e
+            should_exclude = true
+            reason = "method error checking model - #{e.message}"
+          rescue StandardError => e
+            # Catch any other errors and exclude the model to prevent ERD corruption
+            should_exclude = true
+            reason = "unexpected error checking model - #{e.message}"
+          end
 
-            if trace_filtering
-              action = should_exclude ? 'Excluding' : 'Keeping'
-              Rails.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
-            end
+          if trace_filtering
+            action = should_exclude ? 'Excluding' : 'Keeping'
+            Rails.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
+          end
 
-            { model: model, exclude: should_exclude }
+          { model: model, exclude: should_exclude }
+        end
+
+        # Filter out excluded models
+        results.reject { |result| result[:exclude] }.pluck(:model)
+      end
+
+      def filter_models_with_connection_management(models, trace_filtering, options = {})
+        # Group models by connection pool first
+        models_by_pool = models.group_by do |model|
+          model.connection_pool
+        rescue StandardError
+          nil
+        end
+
+        # Assign orphaned models to primary pool
+        if models_by_pool[nil]&.any?
+          begin
+            primary_pool = ApplicationRecord.connection_pool
+            models_by_pool[primary_pool] ||= []
+            models_by_pool[primary_pool].concat(models_by_pool[nil])
+            models_by_pool.delete(nil)
+          rescue StandardError
+            # Keep orphaned models for individual processing
           end
         end
 
-        # Wait for all futures to complete and filter results
-        results = futures.map(&:value!)
-        results.reject { |result| result[:exclude] }.pluck(:model)
+        all_pools = models_by_pool.keys.compact
+        valid_models = []
+
+        models_by_pool.each do |pool, pool_models|
+          if pool
+            # Disconnect other pools before processing this one
+            all_pools.each do |p|
+              next if p == pool
+
+              begin
+                p.disconnect! if p.connected?
+              rescue StandardError
+                # Ignore disconnect errors
+              end
+            end
+
+            # Process models with managed connection
+            pool.with_connection do |connection|
+              pool_models.each do |model|
+                result = filter_single_model(model, connection, trace_filtering, options)
+                valid_models << model unless result[:exclude]
+              end
+            end
+          else
+            # Fallback for models without pools
+            pool_models.each do |model|
+              result = filter_single_model(model, nil, trace_filtering, options)
+              valid_models << model unless result[:exclude]
+            end
+          end
+        end
+
+        valid_models
+      end
+
+      def filter_single_model(model, connection, trace_filtering, options)
+        should_exclude = false
+        reason = nil
+
+        begin
+          # Skip abstract models unless explicitly included
+          if model.abstract_class? && !options[:include_abstract]
+            should_exclude = true
+            reason = 'abstract class'
+          # For abstract models that are included, skip table checks
+          elsif model.abstract_class? && options[:include_abstract]
+            reason = 'abstract class (included)'
+          # Skip models without configured tables
+          elsif !model.table_name
+            should_exclude = true
+            reason = 'no table name'
+          # Skip models whose tables don't exist (use connection if available)
+          elsif connection ? !table_exists_with_connection?(model, connection) : !model.table_exists?
+            should_exclude = true
+            reason = "table '#{model.table_name}' does not exist"
+          # Additional check: Skip models that don't have any columns
+          elsif connection ? columns_empty_with_connection?(model, connection) : model.columns.empty?
+            should_exclude = true
+            reason = "table '#{model.table_name}' has no columns"
+          else
+            column_count = connection ? get_column_count_with_connection(model, connection) : model.columns.size
+            reason = "table '#{model.table_name}' exists with #{column_count} columns"
+          end
+        rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotDefined => e
+          should_exclude = true
+          reason = "database error checking model - #{e.message}"
+        rescue NameError, NoMethodError => e
+          should_exclude = true
+          reason = "method error checking model - #{e.message}"
+        rescue StandardError => e
+          # Catch any other errors and exclude the model to prevent corruption
+          should_exclude = true
+          reason = "unexpected error checking model - #{e.message}"
+        end
+
+        if trace_filtering
+          action = should_exclude ? 'Excluding' : 'Keeping'
+          Rails.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
+        end
+
+        { model: model, exclude: should_exclude }
+      end
+
+      def table_exists_with_connection?(model, connection)
+        connection.table_exists?(model.table_name)
+      rescue StandardError
+        false
+      end
+
+      def columns_empty_with_connection?(model, connection)
+        connection.columns(model.table_name).empty?
+      rescue StandardError
+        true
+      end
+
+      def get_column_count_with_connection(model, connection)
+        connection.columns(model.table_name).size
+      rescue StandardError
+        0
       end
 
       def has_sti_column?(model)

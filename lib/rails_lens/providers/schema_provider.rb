@@ -12,8 +12,12 @@ module RailsLens
       end
 
       def process(model_class, connection = nil)
-        # Use passed connection or fall back to model's connection
-        conn = connection || model_class.connection
+        # Always require a connection to be passed to prevent connection pool exhaustion
+        if connection.nil?
+          raise ArgumentError, 'SchemaProvider requires a connection to be passed to prevent connection pool exhaustion'
+        end
+
+        conn = connection
 
         if model_class.abstract_class?
           # For abstract classes, show database connection information in TOML format
