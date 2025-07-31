@@ -112,8 +112,8 @@ module RailsLens
             next
           end
 
-          # Skip models without tables or with missing tables
-          unless model.table_exists?
+          # Skip models without tables or with missing tables (but not abstract classes)
+          unless model.abstract_class? || model.table_exists?
             results[:skipped] << model.name
             warn "Skipping #{model.name} - table does not exist" if options[:verbose]
             next

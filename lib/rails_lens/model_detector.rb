@@ -125,7 +125,7 @@ module RailsLens
 
         # Exclude abstract models and models without valid tables
         before_count = models.size
-        models = filter_models_concurrently(models, trace_filtering)
+        models = filter_models_concurrently(models, trace_filtering, options)
         log_filter_step('Abstract/invalid table removal', before_count, models.size, trace_filtering)
 
         # Exclude tables from configuration
@@ -183,7 +183,7 @@ module RailsLens
         end
       end
 
-      def filter_models_concurrently(models, trace_filtering)
+      def filter_models_concurrently(models, trace_filtering, options = {})
         # Use concurrent futures to check table existence in parallel
         futures = models.map do |model|
           Concurrent::Future.execute do
@@ -191,10 +191,13 @@ module RailsLens
             reason = nil
 
             begin
-              # Skip abstract models - this is the most important check
-              if model.abstract_class?
+              # Skip abstract models unless explicitly included
+              if model.abstract_class? && !options[:include_abstract]
                 should_exclude = true
                 reason = 'abstract class'
+              # For abstract models that are included, skip table checks
+              elsif model.abstract_class? && options[:include_abstract]
+                reason = 'abstract class (included)'
               # Skip models without configured tables
               elsif !model.table_name
                 should_exclude = true

@@ -18,18 +18,31 @@ module RailsLens
           adapter_name = connection.adapter_name
 
           lines = []
+
+          # Get connection name
+          begin
+            connection_name = connection.pool.db_config.name
+            lines << "connection = \"#{connection_name}\""
+          rescue StandardError
+            lines << 'connection = "unknown"'
+          end
+
           lines << "database_dialect = \"#{adapter_name}\""
 
-          # Add basic database information
+          # Add database version information
           begin
-            db_name = begin
-              connection.database_version
-            rescue StandardError
-              'unknown'
-            end
-            lines << "database_version = \"#{db_name}\""
+            db_version = connection.database_version
+            lines << "database_version = \"#{db_version}\""
           rescue StandardError
-            # Skip if can't get version
+            lines << 'database_version = "unknown"'
+          end
+
+          # Add database name if available
+          begin
+            db_name = connection.current_database
+            lines << "database_name = \"#{db_name}\"" if db_name
+          rescue StandardError
+            # Skip if can't get database name
           end
 
           lines << ''
