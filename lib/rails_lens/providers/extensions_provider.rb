@@ -7,7 +7,7 @@ module RailsLens
         :section
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         results = ExtensionLoader.apply_extensions(model_class)
 
         return nil if results[:annotations].empty?

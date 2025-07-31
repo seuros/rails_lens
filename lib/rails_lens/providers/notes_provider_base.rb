@@ -17,7 +17,7 @@ module RailsLens
         raise NotImplementedError, "#{self.class} must implement #analyzer_class"
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         analyzer = analyzer_class.new(model_class)
         analyzer.analyze
       end

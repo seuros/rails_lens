@@ -12,7 +12,7 @@ module RailsLens
         model_has_table?(model_class) && !ModelDetector.view_exists?(model_class)
       end
 
-      def process(model_class)
+      def process(model_class, connection = nil)
         analyzer = Analyzers::IndexAnalyzer.new(model_class)
         analyzer.analyze
       end

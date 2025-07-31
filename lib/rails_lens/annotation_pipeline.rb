@@ -27,30 +27,33 @@ module RailsLens
         notes: []
       }
 
-      @providers.each do |provider|
-        next unless provider.applicable?(model_class)
+      # Use the model's connection pool to manage a single connection for all providers
+      model_class.connection_pool.with_connection do |connection|
+        @providers.each do |provider|
+          next unless provider.applicable?(model_class)
 
-        begin
-          result = provider.process(model_class)
+          begin
+            result = provider.process(model_class, connection)
 
-          case provider.type
-          when :schema
-            results[:schema] = result
-          when :section
-            results[:sections] << result if result
-          when :notes
-            results[:notes].concat(Array(result))
+            case provider.type
+            when :schema
+              results[:schema] = result
+            when :section
+              results[:sections] << result if result
+            when :notes
+              results[:notes].concat(Array(result))
+            end
+          rescue ActiveRecord::StatementInvalid => e
+            warn "Provider #{provider.class} database error for #{model_class}: #{e.message}"
+          rescue ActiveRecord::ConnectionNotDefined => e
+            warn "Provider #{provider.class} connection error for #{model_class}: #{e.message}"
+          rescue NameError, NoMethodError => e
+            warn "Provider #{provider.class} method error for #{model_class}: #{e.message}"
+          rescue RailsLens::Error => e
+            warn "Provider #{provider.class} rails_lens error for #{model_class}: #{e.message}"
+          rescue StandardError => e
+            warn "Provider #{provider.class} unexpected error for #{model_class}: #{e.message}"
           end
-        rescue ActiveRecord::StatementInvalid => e
-          warn "Provider #{provider.class} database error for #{model_class}: #{e.message}"
-        rescue ActiveRecord::ConnectionNotDefined => e
-          warn "Provider #{provider.class} connection error for #{model_class}: #{e.message}"
-        rescue NameError, NoMethodError => e
-          warn "Provider #{provider.class} method error for #{model_class}: #{e.message}"
-        rescue RailsLens::Error => e
-          warn "Provider #{provider.class} rails_lens error for #{model_class}: #{e.message}"
-        rescue StandardError => e
-          warn "Provider #{provider.class} unexpected error for #{model_class}: #{e.message}"
         end
       end
 

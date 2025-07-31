@@ -42,20 +42,23 @@ module RailsLens
           # Add schema information for PostgreSQL
           lines << "schema = \"#{schema_name}\"" if schema_name && schema_name != 'public'
 
-          # Add view-specific metadata
-          view_metadata = ViewMetadata.new(model_class)
-          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
-          lines << "updatable = #{view_metadata.updatable?}"
+          # Fetch all view metadata in a single query
+          view_info = fetch_view_metadata
 
-          if view_metadata.materialized_view?
-            lines << 'materialized = true'
-            lines << "refresh_strategy = \"#{view_metadata.refresh_strategy}\"" if view_metadata.refresh_strategy
+          if view_info
+            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
+            lines << "updatable = #{view_info[:updatable]}"
+
+            if view_info[:type] == 'materialized'
+              lines << 'materialized = true'
+              lines << 'refresh_strategy = "manual"'
+            end
           end
 
           lines << ''
 
           add_columns_toml(lines)
-          add_view_dependencies_toml(lines, view_metadata)
+          add_view_dependencies_toml(lines, view_info)
 
           lines.join("\n")
         end
@@ -226,8 +229,10 @@ module RailsLens
           lines << "table_comment = \"#{comment.gsub('"', '\"')}\""
         end
 
-        def add_view_dependencies_toml(lines, view_metadata)
-          dependencies = view_dependencies
+        def add_view_dependencies_toml(lines, view_info)
+          return unless view_info && view_info[:dependencies]
+
+          dependencies = view_info[:dependencies]
           return if dependencies.empty?
 
           lines << ''
@@ -237,59 +242,76 @@ module RailsLens
         # PostgreSQL-specific view methods
         public
 
-        def view_type
-          # Check if it's a materialized view first
-          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL Materialized View')
-            SELECT 1 FROM pg_matviews
-            WHERE matviewname = '#{connection.quote_string(table_name)}'
+        # Fetch all view metadata in a single consolidated query
+        def fetch_view_metadata
+          result = connection.exec_query(<<~SQL.squish, 'PostgreSQL View Metadata')
+            WITH view_info AS (
+              -- Check for materialized view
+              SELECT#{' '}
+                'materialized' as view_type,
+                false as is_updatable,
+                mv.matviewname as view_name
+              FROM pg_matviews mv
+              WHERE mv.matviewname = '#{connection.quote_string(table_name)}'
+            #{'  '}
+              UNION ALL
+            #{'  '}
+              -- Check for regular view
+              SELECT#{' '}
+                'regular' as view_type,
+                CASE WHEN v.is_updatable = 'YES' THEN true ELSE false END as is_updatable,
+                v.table_name as view_name
+              FROM information_schema.views v
+              WHERE v.table_name = '#{connection.quote_string(table_name)}'
+            ),
+            dependencies AS (
+              SELECT DISTINCT c2.relname as dependency_name
+              FROM pg_class c1
+              JOIN pg_depend d ON c1.oid = d.objid
+              JOIN pg_class c2 ON d.refobjid = c2.oid
+              WHERE c1.relname = '#{connection.quote_string(table_name)}'
+              AND c1.relkind IN ('v', 'm')
+              AND c2.relkind IN ('r', 'v', 'm')
+              AND d.deptype = 'n'
+            )
+            SELECT#{' '}
+              vi.view_type,
+              vi.is_updatable,
+              COALESCE(
+                (SELECT array_agg(dependency_name ORDER BY dependency_name) FROM dependencies),
+                ARRAY[]::text[]
+              ) as dependencies
+            FROM view_info vi
             LIMIT 1
           SQL
 
-          return 'materialized' if result.rows.any?
+          return nil if result.rows.empty?
 
-          # Check if it's a regular view
-          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL Regular View')
-            SELECT 1 FROM information_schema.views
-            WHERE table_name = '#{connection.quote_string(table_name)}'
-            LIMIT 1
-          SQL
-
-          result.rows.any? ? 'regular' : nil
-        rescue ActiveRecord::StatementInvalid, PG::Error
+          row = result.rows.first
+          {
+            type: row[0],
+            updatable: ['t', true].include?(row[1]),
+            dependencies: row[2] || []
+          }
+        rescue ActiveRecord::StatementInvalid, PG::Error => e
+          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
           nil
         end
 
+        # Legacy methods - kept for backward compatibility but now use consolidated query
+        def view_type
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:type)
+        end
+
         def view_updatable?
-          return false if view_type == 'materialized'
-
-          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View Updatable')
-            SELECT is_updatable FROM information_schema.views
-            WHERE table_name = '#{connection.quote_string(table_name)}'
-            LIMIT 1
-          SQL
-
-          result.rows.first&.first == 'YES'
-        rescue ActiveRecord::StatementInvalid, PG::Error
-          false
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:updatable) || false
         end
 
         def view_dependencies
-          # Use pg_depend to find dependencies
-          result = connection.exec_query(<<~SQL, 'PostgreSQL View Dependencies')
-            SELECT DISTINCT c2.relname as dependency_name
-            FROM pg_class c1
-            JOIN pg_depend d ON c1.oid = d.objid
-            JOIN pg_class c2 ON d.refobjid = c2.oid
-            WHERE c1.relname = '#{connection.quote_string(table_name)}'
-            AND c1.relkind IN ('v', 'm')  -- views and materialized views
-            AND c2.relkind IN ('r', 'v', 'm')  -- tables, views, and materialized views
-            AND d.deptype = 'n'  -- normal dependency
-            ORDER BY c2.relname
-          SQL
-
-          result.rows.flatten
-        rescue ActiveRecord::StatementInvalid, PG::Error
-          []
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:dependencies) || []
         end
 
         def view_definition

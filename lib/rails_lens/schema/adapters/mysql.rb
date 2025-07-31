@@ -50,15 +50,18 @@ module RailsLens
           lines << "view = \"#{table_name}\""
           lines << "database_dialect = \"#{database_dialect}\""
 
-          # Add view-specific metadata
-          view_metadata = ViewMetadata.new(model_class)
-          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
-          lines << "updatable = #{view_metadata.updatable?}"
+          # Fetch all view metadata in a single query
+          view_info = fetch_view_metadata
+
+          if view_info
+            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
+            lines << "updatable = #{view_info[:updatable]}"
+          end
 
           lines << ''
 
           add_columns_toml(lines)
-          add_view_dependencies_toml(lines, view_metadata)
+          add_view_dependencies_toml(lines, view_info)
 
           lines.join("\n")
         end
@@ -300,8 +303,10 @@ module RailsLens
           Rails.logger.debug { "MySQL error fetching partitions: #{e.message}" }
         end
 
-        def add_view_dependencies_toml(lines, view_metadata)
-          dependencies = view_dependencies
+        def add_view_dependencies_toml(lines, view_info)
+          return unless view_info && view_info[:dependencies]
+
+          dependencies = view_info[:dependencies]
           return if dependencies.empty?
 
           lines << ''
@@ -311,45 +316,53 @@ module RailsLens
         # MySQL-specific view methods
         public
 
-        def view_type
-          result = connection.exec_query(<<~SQL.squish, 'Check MySQL View')
-            SELECT 1 FROM information_schema.views
-            WHERE table_schema = DATABASE()
-            AND table_name = '#{connection.quote_string(table_name)}'
+        # Fetch all view metadata in a single consolidated query
+        def fetch_view_metadata
+          result = connection.exec_query(<<~SQL.squish, 'MySQL View Metadata')
+            SELECT#{' '}
+              v.is_updatable,
+              COALESCE(
+                (
+                  SELECT GROUP_CONCAT(DISTINCT vtu.table_name ORDER BY vtu.table_name)
+                  FROM information_schema.view_table_usage vtu
+                  WHERE vtu.view_schema = DATABASE()
+                  AND vtu.view_name = '#{connection.quote_string(table_name)}'
+                ),
+                ''
+              ) as dependencies
+            FROM information_schema.views v
+            WHERE v.table_schema = DATABASE()
+            AND v.table_name = '#{connection.quote_string(table_name)}'
             LIMIT 1
           SQL
 
-          result.rows.any? ? 'regular' : nil
-        rescue ActiveRecord::StatementInvalid, Mysql2::Error
+          return nil if result.rows.empty?
+
+          row = result.rows.first
+          {
+            type: 'regular', # MySQL only supports regular views
+            updatable: row[0] == 'YES',
+            dependencies: row[1].to_s.split(',').reject(&:empty?)
+          }
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error => e
+          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
           nil
         end
 
-        def view_updatable?
-          result = connection.exec_query(<<~SQL.squish, 'Check MySQL View Updatable')
-            SELECT is_updatable FROM information_schema.views
-            WHERE table_schema = DATABASE()
-            AND table_name = '#{connection.quote_string(table_name)}'
-            LIMIT 1
-          SQL
+        # Legacy methods - kept for backward compatibility but now use consolidated query
+        def view_type
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:type)
+        end
 
-          result.rows.first&.first == 'YES'
-        rescue ActiveRecord::StatementInvalid, Mysql2::Error
-          false
+        def view_updatable?
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:updatable) || false
         end
 
         def view_dependencies
-          # Use information_schema.view_table_usage for MySQL
-          result = connection.exec_query(<<~SQL.squish, 'MySQL View Dependencies')
-            SELECT DISTINCT table_name as dependency_name
-            FROM information_schema.view_table_usage
-            WHERE view_schema = DATABASE()
-            AND view_name = '#{connection.quote_string(table_name)}'
-            ORDER BY table_name
-          SQL
-
-          result.rows.flatten
-        rescue ActiveRecord::StatementInvalid, Mysql2::Error
-          []
+          @view_metadata ||= fetch_view_metadata
+          @view_metadata&.dig(:dependencies) || []
         end
 
         def view_definition
