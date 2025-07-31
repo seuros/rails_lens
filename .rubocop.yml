@@ -97,4 +97,6 @@ Lint/MissingSuper:
 Style/IfUnlessModifier:
   Enabled: false
 
-
+# Allow rescuing StandardError explicitly
+Style/RescueStandardError:
+  Enabled: false

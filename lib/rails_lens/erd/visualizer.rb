@@ -65,16 +65,16 @@ module RailsLens
           group_models.each do |model|
             # Additional safety check: Skip abstract models that might have slipped through
             next if model.abstract_class?
-            
+
             # Skip models without valid tables or columns
             next unless model.table_exists? && model.columns.present?
-            
+
             model_display_name = format_model_name(model)
-            
+
             # Track opening brace position for error recovery
             brace_position = output.size
             output << "  #{model_display_name} {"
-            
+
             columns_added = false
             model.columns.each do |column|
               type_str = format_column_type(column)
@@ -96,7 +96,6 @@ module RailsLens
               output.slice!(brace_position..-1)
               Rails.logger.debug { "Skipped entity #{model_display_name}: no columns found" } if options[:verbose]
             end
-            
           rescue StandardError => e
             Rails.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
             # Remove any partial entity content added since the opening brace
@@ -112,7 +111,7 @@ module RailsLens
           # Skip abstract models in relationship generation too
           next if model.abstract_class?
           next unless model.table_exists? && model.columns.present?
-          
+
           add_model_relationships(output, model, models)
         end
 
@@ -174,7 +173,7 @@ module RailsLens
           end
 
           next unless target_model && models.include?(target_model)
-          
+
           # Skip relationships to abstract models
           next if target_model.abstract_class?
           next unless target_model.table_exists? && target_model.columns.present?
