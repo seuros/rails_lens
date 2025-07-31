@@ -71,9 +71,9 @@ module RailsLens
 
             model_display_name = format_model_name(model)
 
+            output << "  #{model_display_name} {"
             # Track opening brace position for error recovery
             brace_position = output.size
-            output << "  #{model_display_name} {"
 
             columns_added = false
             model.columns.each do |column|
@@ -99,7 +99,7 @@ module RailsLens
           rescue StandardError => e
             Rails.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
             # Remove any partial entity content added since the opening brace
-            if brace_position && output.size > brace_position
+            if output.size > brace_position
               output.slice!(brace_position..-1)
             end
           end
@@ -191,9 +191,11 @@ module RailsLens
         end
 
         # Check for closure_tree self-reference - but only if model is not abstract
-        return unless model.respond_to?(:_ct) && !model.abstract_class?
-
-        output << "  #{format_model_name(model)} }o--o{ #{format_model_name(model)} : \"closure_tree\""
+        # rubocop:disable Style/GuardClause
+        if model.respond_to?(:_ct) && !model.abstract_class?
+          output << "  #{format_model_name(model)} }o--o{ #{format_model_name(model)} : \"closure_tree\""
+        end
+        # rubocop:enable Style/GuardClause
       end
 
       def add_belongs_to_relationship(output, model, association, target_model)
