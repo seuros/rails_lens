@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.3...rails_lens/v0.2.4) (2025-07-31)
+
+
+### Bug Fixes
+
+* centralize connection management to prevent "too many clients" errors ([#10](https://github.com/seuros/rails_lens/issues/10)) ([1f9adf9](https://github.com/seuros/rails_lens/commit/1f9adf9b7dd0648add324492189c1322726da52f))
+
 ## [0.2.3](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.2...rails_lens/v0.2.3) (2025-07-31)
 
 
