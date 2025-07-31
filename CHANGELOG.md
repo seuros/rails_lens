@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.4...rails_lens/v0.2.5) (2025-07-31)
+
+
+### Bug Fixes
+
+* change strategy to cover database with hundrends of connections pool ([#12](https://github.com/seuros/rails_lens/issues/12)) ([7054d35](https://github.com/seuros/rails_lens/commit/7054d3582bfee41f0050725c2bd23e80c5898486))
+
 ## [0.2.4](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.3...rails_lens/v0.2.4) (2025-07-31)
 
 
