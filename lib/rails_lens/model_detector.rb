@@ -191,7 +191,7 @@ module RailsLens
             reason = nil
 
             begin
-              # Skip abstract models
+              # Skip abstract models - this is the most important check
               if model.abstract_class?
                 should_exclude = true
                 reason = 'abstract class'
@@ -203,8 +203,12 @@ module RailsLens
               elsif !model.table_exists?
                 should_exclude = true
                 reason = "table '#{model.table_name}' does not exist"
+              # Additional check: Skip models that don't have any columns
+              elsif model.columns.empty?
+                should_exclude = true
+                reason = "table '#{model.table_name}' has no columns"
               else
-                reason = "table '#{model.table_name}' exists"
+                reason = "table '#{model.table_name}' exists with #{model.columns.size} columns"
               end
             rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotDefined => e
               should_exclude = true
@@ -212,6 +216,10 @@ module RailsLens
             rescue NameError, NoMethodError => e
               should_exclude = true
               reason = "method error checking model - #{e.message}"
+            rescue StandardError => e
+              # Catch any other errors and exclude the model to prevent ERD corruption
+              should_exclude = true
+              reason = "unexpected error checking model - #{e.message}"
             end
 
             if trace_filtering

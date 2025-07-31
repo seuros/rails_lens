@@ -8,6 +8,11 @@ module RailsLens
   class CLI < Thor
     include CLIErrorHandler
 
+    # Thor configuration: exit with proper status codes on failure (modern behavior)
+    def self.exit_on_failure?
+      true
+    end
+
     class_option :config, type: :string, default: '.rails-lens.yml', desc: 'Configuration file path'
     class_option :dry_run, type: :boolean, desc: 'Show what would be done without making changes'
     class_option :verbose, type: :boolean, desc: 'Verbose output'
