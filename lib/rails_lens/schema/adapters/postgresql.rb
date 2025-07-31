@@ -247,17 +247,15 @@ module RailsLens
           result = connection.exec_query(<<~SQL.squish, 'PostgreSQL View Metadata')
             WITH view_info AS (
               -- Check for materialized view
-              SELECT#{' '}
+              SELECT
                 'materialized' as view_type,
                 false as is_updatable,
                 mv.matviewname as view_name
               FROM pg_matviews mv
               WHERE mv.matviewname = '#{connection.quote_string(table_name)}'
-            #{'  '}
               UNION ALL
-            #{'  '}
               -- Check for regular view
-              SELECT#{' '}
+              SELECT
                 'regular' as view_type,
                 CASE WHEN v.is_updatable = 'YES' THEN true ELSE false END as is_updatable,
                 v.table_name as view_name
@@ -274,7 +272,7 @@ module RailsLens
               AND c2.relkind IN ('r', 'v', 'm')
               AND d.deptype = 'n'
             )
-            SELECT#{' '}
+            SELECT
               vi.view_type,
               vi.is_updatable,
               COALESCE(

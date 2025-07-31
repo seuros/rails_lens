@@ -319,7 +319,7 @@ module RailsLens
         # Fetch all view metadata in a single consolidated query
         def fetch_view_metadata
           result = connection.exec_query(<<~SQL.squish, 'MySQL View Metadata')
-            SELECT#{' '}
+            SELECT
               v.is_updatable,
               COALESCE(
                 (

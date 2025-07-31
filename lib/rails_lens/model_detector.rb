@@ -82,10 +82,10 @@ module RailsLens
       def check_postgresql_view(connection, table_name)
         # Check both regular views and materialized views
         result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View')
-          SELECT 1 FROM information_schema.views#{' '}
+          SELECT 1 FROM information_schema.views
           WHERE table_name = '#{connection.quote_string(table_name)}'
           UNION ALL
-          SELECT 1 FROM pg_matviews#{' '}
+          SELECT 1 FROM pg_matviews
           WHERE matviewname = '#{connection.quote_string(table_name)}'
           LIMIT 1
         SQL
@@ -94,7 +94,7 @@ module RailsLens
 
       def check_mysql_view(connection, table_name)
         result = connection.exec_query(<<~SQL.squish, 'Check MySQL View')
-          SELECT 1 FROM information_schema.views#{' '}
+          SELECT 1 FROM information_schema.views
           WHERE table_name = '#{connection.quote_string(table_name)}'
           AND table_schema = DATABASE()
           LIMIT 1
@@ -104,7 +104,7 @@ module RailsLens
 
       def check_sqlite_view(connection, table_name)
         result = connection.exec_query(<<~SQL.squish, 'Check SQLite View')
-          SELECT 1 FROM sqlite_master#{' '}
+          SELECT 1 FROM sqlite_master
           WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
           LIMIT 1
         SQL

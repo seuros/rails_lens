@@ -399,24 +399,24 @@ module RailsLens
         case @connection.adapter_name.downcase
         when 'postgresql'
           result = @connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View Existence')
-            SELECT 1 FROM information_schema.views#{' '}
+            SELECT 1 FROM information_schema.views
             WHERE table_name = '#{@connection.quote_string(view_name)}'
             UNION ALL
-            SELECT 1 FROM pg_matviews#{' '}
+            SELECT 1 FROM pg_matviews
             WHERE matviewname = '#{@connection.quote_string(view_name)}'
             LIMIT 1
           SQL
           result.rows.any?
         when 'mysql', 'mysql2'
           result = @connection.exec_query(<<~SQL.squish, 'Check MySQL View Existence')
-            SELECT 1 FROM information_schema.views#{' '}
+            SELECT 1 FROM information_schema.views
             WHERE table_name = '#{@connection.quote_string(view_name)}'
             LIMIT 1
           SQL
           result.rows.any?
         when 'sqlite', 'sqlite3'
           result = @connection.exec_query(<<~SQL.squish, 'Check SQLite View Existence')
-            SELECT 1 FROM sqlite_master#{' '}
+            SELECT 1 FROM sqlite_master
             WHERE type = 'view' AND name = '#{@connection.quote_string(view_name)}'
             LIMIT 1
           SQL

@@ -61,7 +61,33 @@ module RailsLens
 
       def generate_annotation
         pipeline = AnnotationPipeline.new
-        results = pipeline.process(model_class)
+
+        # If we have a connection set by annotate_all, use it to process all providers
+        if @connection
+          results = { schema: nil, sections: [], notes: [] }
+
+          pipeline.instance_variable_get(:@providers).each do |provider|
+            next unless provider.applicable?(model_class)
+
+            begin
+              result = provider.process(model_class, @connection)
+
+              case provider.type
+              when :schema
+                results[:schema] = result
+              when :section
+                results[:sections] << result if result
+              when :notes
+                results[:notes].concat(Array(result))
+              end
+            rescue StandardError => e
+              warn "Provider #{provider.class} error for #{model_class}: #{e.message}"
+            end
+          end
+        else
+          # Fall back to normal processing without connection management
+          results = pipeline.process(model_class)
+        end
 
         annotation = Annotation.new
 
@@ -105,51 +131,77 @@ module RailsLens
 
         results = { annotated: [], skipped: [], failed: [] }
 
-        models.each do |model|
-          # Ensure model is actually a class, not a hash or other object
-          unless model.is_a?(Class)
-            results[:failed] << { model: model.inspect, error: "Expected Class, got #{model.class}" }
-            next
-          end
+        # Group models by their connection pool to process each database separately
+        models_by_connection_pool = models.group_by do |model|
+          model.connection_pool
+        rescue StandardError
+          nil # Models without connection pools will be processed separately
+        end
 
-          # Skip models without tables or with missing tables (but not abstract classes)
-          unless model.abstract_class? || model.table_exists?
-            results[:skipped] << model.name
-            warn "Skipping #{model.name} - table does not exist" if options[:verbose]
-            next
-          end
-
-          manager = new(model)
-
-          # Determine file path based on options
-          file_path = if options[:models_path]
-                        File.join(options[:models_path], "#{model.name.underscore}.rb")
-                      else
-                        nil # Use default model_file_path
-                      end
-
-          # Allow external files when models_path is provided (for testing)
-          allow_external = options[:models_path].present?
-
-          if manager.annotate_file(file_path, allow_external_files: allow_external)
-            results[:annotated] << model.name
+        models_by_connection_pool.each do |connection_pool, pool_models|
+          if connection_pool
+            # Process all models for this database using a single connection
+            connection_pool.with_connection do |connection|
+              pool_models.each do |model|
+                process_model_with_connection(model, connection, results, options)
+              end
+            end
           else
-            results[:skipped] << model.name
+            # Process models without connection pools individually
+            pool_models.each do |model|
+              process_model_with_connection(model, nil, results, options)
+            end
           end
-        rescue ActiveRecord::StatementInvalid => e
-          # Handle database-related errors (missing tables, schemas, etc.)
-          results[:skipped] << model.name
-          warn "Skipping #{model.name} - database error: #{e.message}" if options[:verbose]
-        rescue StandardError => e
-          model_name = if model.is_a?(Class) && model.respond_to?(:name)
-                         model.name
-                       else
-                         model.inspect
-                       end
-          results[:failed] << { model: model_name, error: e.message }
         end
 
         results
+      end
+
+      def self.process_model_with_connection(model, connection, results, options)
+        # Ensure model is actually a class, not a hash or other object
+        unless model.is_a?(Class)
+          results[:failed] << { model: model.inspect, error: "Expected Class, got #{model.class}" }
+          return
+        end
+
+        # Skip models without tables or with missing tables (but not abstract classes)
+        unless model.abstract_class? || model.table_exists?
+          results[:skipped] << model.name
+          warn "Skipping #{model.name} - table does not exist" if options[:verbose]
+          return
+        end
+
+        manager = new(model)
+
+        # Set the connection in the manager if provided
+        manager.instance_variable_set(:@connection, connection) if connection
+
+        # Determine file path based on options
+        file_path = if options[:models_path]
+                      File.join(options[:models_path], "#{model.name.underscore}.rb")
+                    else
+                      nil # Use default model_file_path
+                    end
+
+        # Allow external files when models_path is provided (for testing)
+        allow_external = options[:models_path].present?
+
+        if manager.annotate_file(file_path, allow_external_files: allow_external)
+          results[:annotated] << model.name
+        else
+          results[:skipped] << model.name
+        end
+      rescue ActiveRecord::StatementInvalid => e
+        # Handle database-related errors (missing tables, schemas, etc.)
+        results[:skipped] << model.name
+        warn "Skipping #{model.name} - database error: #{e.message}" if options[:verbose]
+      rescue StandardError => e
+        model_name = if model.is_a?(Class) && model.respond_to?(:name)
+                       model.name
+                     else
+                       model.inspect
+                     end
+        results[:failed] << { model: model_name, error: e.message }
       end
 
       def self.remove_all(options = {})
