@@ -8,7 +8,15 @@ module RailsLens
           'MySQL'
         end
 
-        def generate_annotation(_model_class)
+        def generate_annotation(model_class)
+          if model_class && ModelDetector.view_exists?(model_class)
+            generate_view_annotation(model_class)
+          else
+            generate_table_annotation(model_class)
+          end
+        end
+
+        def generate_table_annotation(_model_class)
           lines = []
           lines << "table = \"#{table_name}\""
           lines << "database_dialect = \"#{database_dialect}\""
@@ -33,6 +41,24 @@ module RailsLens
           add_indexes_toml(lines) if show_indexes?
           add_foreign_keys_toml(lines) if show_foreign_keys?
           add_partitions_toml(lines) if has_partitions?
+
+          lines.join("\n")
+        end
+
+        def generate_view_annotation(model_class)
+          lines = []
+          lines << "view = \"#{table_name}\""
+          lines << "database_dialect = \"#{database_dialect}\""
+
+          # Add view-specific metadata
+          view_metadata = ViewMetadata.new(model_class)
+          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
+          lines << "updatable = #{view_metadata.updatable?}"
+
+          lines << ''
+
+          add_columns_toml(lines)
+          add_view_dependencies_toml(lines, view_metadata)
 
           lines.join("\n")
         end
@@ -272,6 +298,79 @@ module RailsLens
         rescue => e
           # MySQL specific errors
           Rails.logger.debug { "MySQL error fetching partitions: #{e.message}" }
+        end
+
+        def add_view_dependencies_toml(lines, view_metadata)
+          dependencies = view_dependencies
+          return if dependencies.empty?
+
+          lines << ''
+          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
+        end
+
+        # MySQL-specific view methods
+        public
+
+        def view_type
+          result = connection.exec_query(<<~SQL.squish, 'Check MySQL View')
+            SELECT 1 FROM information_schema.views
+            WHERE table_schema = DATABASE()
+            AND table_name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.any? ? 'regular' : nil
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error
+          nil
+        end
+
+        def view_updatable?
+          result = connection.exec_query(<<~SQL.squish, 'Check MySQL View Updatable')
+            SELECT is_updatable FROM information_schema.views
+            WHERE table_schema = DATABASE()
+            AND table_name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.first&.first == 'YES'
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error
+          false
+        end
+
+        def view_dependencies
+          # Use information_schema.view_table_usage for MySQL
+          result = connection.exec_query(<<~SQL.squish, 'MySQL View Dependencies')
+            SELECT DISTINCT table_name as dependency_name
+            FROM information_schema.view_table_usage
+            WHERE view_schema = DATABASE()
+            AND view_name = '#{connection.quote_string(table_name)}'
+            ORDER BY table_name
+          SQL
+
+          result.rows.flatten
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error
+          []
+        end
+
+        def view_definition
+          result = connection.exec_query(<<~SQL.squish, 'MySQL View Definition')
+            SELECT view_definition FROM information_schema.views
+            WHERE table_schema = DATABASE()
+            AND table_name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.first&.first&.strip
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error
+          nil
+        end
+
+        def view_refresh_strategy
+          nil # MySQL doesn't have materialized views
+        end
+
+        def view_last_refreshed
+          nil # MySQL doesn't have materialized views
         end
       end
     end

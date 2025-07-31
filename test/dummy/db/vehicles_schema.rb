@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_07_24_120000) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_31_120002) do
   create_table "alerts", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "severity"
     t.string "alert_type"

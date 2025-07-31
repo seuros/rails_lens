@@ -66,8 +66,11 @@ module RailsLens
             # Additional safety check: Skip abstract models that might have slipped through
             next if model.abstract_class?
 
-            # Skip models without valid tables or columns
-            next unless model.table_exists? && model.columns.present?
+            # Skip models without valid tables/views or columns
+            # Include both table-backed and view-backed models
+            is_view = ModelDetector.view_exists?(model)
+            has_data_source = is_view || (model.table_exists? && model.columns.present?)
+            next unless has_data_source
 
             model_display_name = format_model_name(model)
 
@@ -105,12 +108,19 @@ module RailsLens
           end
         end
 
+        # Add visual styling for views vs tables
+        add_visual_styling(output, models)
+
         # Add relationships
         output << '  %% Relationships'
         models.each do |model|
           # Skip abstract models in relationship generation too
           next if model.abstract_class?
-          next unless model.table_exists? && model.columns.present?
+
+          # Include both table-backed and view-backed models
+          is_view = ModelDetector.view_exists?(model)
+          has_data_source = is_view || (model.table_exists? && model.columns.present?)
+          next unless has_data_source
 
           add_model_relationships(output, model, models)
         end
@@ -251,6 +261,43 @@ module RailsLens
         output << "      \"tertiaryColor\": \"#{tertiary_color}\""
         output << '    }'
         output << '  }}%%'
+      end
+
+      def add_visual_styling(output, models)
+        # Add class definitions for visual distinction between tables and views
+        output << ''
+        output << '  %% Entity Styling'
+
+        # Define styling classes
+        output << '  classDef tableEntity fill:#f9f9f9,stroke:#333,stroke-width:2px'
+        output << '  classDef viewEntity fill:#e6f3ff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5'
+        output << '  classDef materializedViewEntity fill:#ffe6e6,stroke:#333,stroke-width:3px,stroke-dasharray: 5 5'
+
+        # Apply styling to each model
+        models.each do |model|
+          next if model.abstract_class?
+
+          is_view = ModelDetector.view_exists?(model)
+          has_data_source = is_view || (model.table_exists? && model.columns.present?)
+          next unless has_data_source
+
+          model_display_name = format_model_name(model)
+
+          if is_view
+            view_metadata = ViewMetadata.new(model)
+            output << if view_metadata.materialized_view?
+                        "  class #{model_display_name} materializedViewEntity"
+                      else
+                        "  class #{model_display_name} viewEntity"
+                      end
+          else
+            output << "  class #{model_display_name} tableEntity"
+          end
+        rescue StandardError => e
+          Rails.logger.debug { "Warning: Could not apply styling to #{model.name}: #{e.message}" }
+        end
+
+        output << ''
       end
 
       def group_models_by_database(models)

@@ -37,7 +37,80 @@ module RailsLens
         concrete_models.select { |model| model.superclass != ActiveRecord::Base && concrete_models.include?(model.superclass) }
       end
 
+      def view_backed_models
+        detect_models.select { |model| view_exists?(model) }
+      end
+
+      def table_backed_models
+        detect_models.reject { |model| view_exists?(model) }
+      end
+
+      def view_exists?(model_class)
+        return false if model_class.abstract_class?
+        return false unless model_class.table_name
+
+        # Cache view existence checks for performance
+        @view_cache ||= {}
+        cache_key = "#{model_class.connection.object_id}_#{model_class.table_name}"
+
+        return @view_cache[cache_key] if @view_cache.key?(cache_key)
+
+        @view_cache[cache_key] = check_view_existence(model_class)
+      end
+
       private
+
+      def check_view_existence(model_class)
+        connection = model_class.connection
+        table_name = model_class.table_name
+
+        case connection.adapter_name.downcase
+        when 'postgresql'
+          check_postgresql_view(connection, table_name)
+        when 'mysql', 'mysql2'
+          check_mysql_view(connection, table_name)
+        when 'sqlite', 'sqlite3'
+          check_sqlite_view(connection, table_name)
+        else
+          false # Unsupported adapter
+        end
+      rescue ActiveRecord::StatementInvalid, ActiveRecord::ConnectionNotDefined
+        false # If we can't check, assume it's not a view
+      end
+
+      # rubocop:disable Naming/PredicateMethod
+      def check_postgresql_view(connection, table_name)
+        # Check both regular views and materialized views
+        result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View')
+          SELECT 1 FROM information_schema.views#{' '}
+          WHERE table_name = '#{connection.quote_string(table_name)}'
+          UNION ALL
+          SELECT 1 FROM pg_matviews#{' '}
+          WHERE matviewname = '#{connection.quote_string(table_name)}'
+          LIMIT 1
+        SQL
+        result.rows.any?
+      end
+
+      def check_mysql_view(connection, table_name)
+        result = connection.exec_query(<<~SQL.squish, 'Check MySQL View')
+          SELECT 1 FROM information_schema.views#{' '}
+          WHERE table_name = '#{connection.quote_string(table_name)}'
+          AND table_schema = DATABASE()
+          LIMIT 1
+        SQL
+        result.rows.any?
+      end
+
+      def check_sqlite_view(connection, table_name)
+        result = connection.exec_query(<<~SQL.squish, 'Check SQLite View')
+          SELECT 1 FROM sqlite_master#{' '}
+          WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
+          LIMIT 1
+        SQL
+        result.rows.any?
+      end
+      # rubocop:enable Naming/PredicateMethod
 
       def eager_load_models
         # Zeitwerk is always available in Rails 7+

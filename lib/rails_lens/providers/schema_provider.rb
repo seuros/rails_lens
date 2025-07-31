@@ -51,7 +51,7 @@ module RailsLens
 
           lines.join("\n")
         else
-          # Add schema information for regular models
+          # Add schema information for regular models (tables or views)
           adapter = Connection.adapter_for(model_class)
           adapter.generate_annotation(model_class)
         end

@@ -8,7 +8,15 @@ module RailsLens
           'PostgreSQL'
         end
 
-        def generate_annotation(_model_class)
+        def generate_annotation(model_class)
+          if model_class && ModelDetector.view_exists?(model_class)
+            generate_view_annotation(model_class)
+          else
+            generate_table_annotation(model_class)
+          end
+        end
+
+        def generate_table_annotation(_model_class)
           lines = []
           lines << "table = \"#{table_name}\""
           lines << "database_dialect = \"#{database_dialect}\""
@@ -22,6 +30,32 @@ module RailsLens
           add_foreign_keys_toml(lines) if show_foreign_keys?
           add_check_constraints_toml(lines) if show_check_constraints?
           add_table_comment_toml(lines) if show_comments?
+
+          lines.join("\n")
+        end
+
+        def generate_view_annotation(model_class)
+          lines = []
+          lines << "view = \"#{table_name}\""
+          lines << "database_dialect = \"#{database_dialect}\""
+
+          # Add schema information for PostgreSQL
+          lines << "schema = \"#{schema_name}\"" if schema_name && schema_name != 'public'
+
+          # Add view-specific metadata
+          view_metadata = ViewMetadata.new(model_class)
+          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
+          lines << "updatable = #{view_metadata.updatable?}"
+
+          if view_metadata.materialized_view?
+            lines << 'materialized = true'
+            lines << "refresh_strategy = \"#{view_metadata.refresh_strategy}\"" if view_metadata.refresh_strategy
+          end
+
+          lines << ''
+
+          add_columns_toml(lines)
+          add_view_dependencies_toml(lines, view_metadata)
 
           lines.join("\n")
         end
@@ -190,6 +224,112 @@ module RailsLens
 
           lines << ''
           lines << "table_comment = \"#{comment.gsub('"', '\"')}\""
+        end
+
+        def add_view_dependencies_toml(lines, view_metadata)
+          dependencies = view_dependencies
+          return if dependencies.empty?
+
+          lines << ''
+          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
+        end
+
+        # PostgreSQL-specific view methods
+        public
+
+        def view_type
+          # Check if it's a materialized view first
+          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL Materialized View')
+            SELECT 1 FROM pg_matviews
+            WHERE matviewname = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          return 'materialized' if result.rows.any?
+
+          # Check if it's a regular view
+          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL Regular View')
+            SELECT 1 FROM information_schema.views
+            WHERE table_name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.any? ? 'regular' : nil
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          nil
+        end
+
+        def view_updatable?
+          return false if view_type == 'materialized'
+
+          result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View Updatable')
+            SELECT is_updatable FROM information_schema.views
+            WHERE table_name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.first&.first == 'YES'
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          false
+        end
+
+        def view_dependencies
+          # Use pg_depend to find dependencies
+          result = connection.exec_query(<<~SQL, 'PostgreSQL View Dependencies')
+            SELECT DISTINCT c2.relname as dependency_name
+            FROM pg_class c1
+            JOIN pg_depend d ON c1.oid = d.objid
+            JOIN pg_class c2 ON d.refobjid = c2.oid
+            WHERE c1.relname = '#{connection.quote_string(table_name)}'
+            AND c1.relkind IN ('v', 'm')  -- views and materialized views
+            AND c2.relkind IN ('r', 'v', 'm')  -- tables, views, and materialized views
+            AND d.deptype = 'n'  -- normal dependency
+            ORDER BY c2.relname
+          SQL
+
+          result.rows.flatten
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          []
+        end
+
+        def view_definition
+          result = if view_type == 'materialized'
+                     connection.exec_query(<<~SQL.squish, 'PostgreSQL Materialized View Definition')
+                       SELECT definition FROM pg_matviews
+                       WHERE matviewname = '#{connection.quote_string(table_name)}'
+                       LIMIT 1
+                     SQL
+                   else
+                     connection.exec_query(<<~SQL.squish, 'PostgreSQL View Definition')
+                       SELECT view_definition FROM information_schema.views
+                       WHERE table_name = '#{connection.quote_string(table_name)}'
+                       LIMIT 1
+                     SQL
+                   end
+
+          result.rows.first&.first&.strip
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          nil
+        end
+
+        def view_refresh_strategy
+          view_type == 'materialized' ? 'manual' : nil
+        end
+
+        def view_last_refreshed
+          return nil unless view_type == 'materialized'
+
+          # Get the last refresh time from pg_stat_user_tables
+          result = connection.exec_query(<<~SQL.squish, 'PostgreSQL Materialized View Last Refresh')
+            SELECT COALESCE(last_vacuum, last_autovacuum) as last_refreshed
+            FROM pg_stat_user_tables
+            WHERE relname = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.first&.first
+        rescue ActiveRecord::StatementInvalid, PG::Error
+          nil
         end
       end
     end

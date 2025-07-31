@@ -8,7 +8,15 @@ module RailsLens
           'SQLite'
         end
 
-        def generate_annotation(_model_class)
+        def generate_annotation(model_class)
+          if model_class && ModelDetector.view_exists?(model_class)
+            generate_view_annotation(model_class)
+          else
+            generate_table_annotation(model_class)
+          end
+        end
+
+        def generate_table_annotation(_model_class)
           lines = []
           lines << "table = \"#{table_name}\""
           lines << "database_dialect = \"#{database_dialect}\""
@@ -18,6 +26,24 @@ module RailsLens
           add_indexes_toml(lines) if show_indexes?
           add_foreign_keys_toml(lines) if show_foreign_keys?
           add_sqlite_pragmas_toml(lines)
+
+          lines.join("\n")
+        end
+
+        def generate_view_annotation(model_class)
+          lines = []
+          lines << "view = \"#{table_name}\""
+          lines << "database_dialect = \"#{database_dialect}\""
+
+          # Add view-specific metadata
+          view_metadata = ViewMetadata.new(model_class)
+          lines << "view_type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
+          lines << "updatable = #{view_metadata.updatable?}"
+
+          lines << ''
+
+          add_columns_toml(lines)
+          add_view_dependencies_toml(lines, view_metadata)
 
           lines.join("\n")
         end
@@ -89,6 +115,78 @@ module RailsLens
             # SQLite specific errors (database locked, etc)
             Rails.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
           end
+        end
+
+        def add_view_dependencies_toml(lines, view_metadata)
+          dependencies = view_dependencies
+          return if dependencies.empty?
+
+          lines << ''
+          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
+        end
+
+        # SQLite-specific view methods
+        public
+
+        def view_type
+          result = connection.exec_query(<<~SQL.squish, 'Check SQLite View')
+            SELECT 1 FROM sqlite_master#{' '}
+            WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.any? ? 'regular' : nil
+        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
+          nil
+        end
+
+        def view_updatable?
+          # SQLite views are generally read-only and have many restrictions for updates
+          # Most views in SQLite are not updatable, so return false by default
+          false
+        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
+          false
+        end
+
+        def view_dependencies
+          # Parse the view definition to extract dependencies
+          definition = view_definition
+          return [] unless definition
+
+          # Simple regex to find table references in FROM and JOIN clauses
+          # This is a basic implementation - could be enhanced for more complex cases
+          tables = []
+          definition.scan(/(?:FROM|JOIN)\s+(\w+)/i) do |match|
+            table_name = match[0]
+            # Exclude the view itself and common SQL keywords
+            if !table_name.downcase.in?(%w[select where order group having limit offset]) && tables.exclude?(table_name)
+              tables << table_name
+            end
+          end
+
+          tables.sort
+        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
+          []
+        end
+
+        def view_definition
+          result = connection.exec_query(<<~SQL.squish, 'SQLite View Definition')
+            SELECT sql FROM sqlite_master#{' '}
+            WHERE type = 'view' AND name = '#{connection.quote_string(table_name)}'
+            LIMIT 1
+          SQL
+
+          result.rows.first&.first&.strip
+        rescue ActiveRecord::StatementInvalid, SQLite3::Exception
+          nil
+        end
+
+        def view_refresh_strategy
+          nil # SQLite doesn't have materialized views
+        end
+
+        def view_last_refreshed
+          nil # SQLite doesn't have materialized views
         end
       end
     end
