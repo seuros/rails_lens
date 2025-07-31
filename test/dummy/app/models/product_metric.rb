@@ -21,10 +21,6 @@
 #   { name = "index_product_metrics_on_product_id", columns = ["product_id"] }
 # ]
 #
-# foreign_keys = [
-#   { column = "product_id", references_table = "products", references_column = "id", name = "fk_rails_51259df091" }
-# ]
-#
 # check_constraints = [
 #   { name = "check_positive_purchases", expression = "purchases >= 0" },
 #   { name = "check_positive_revenue", expression = "revenue >= 0::numeric" },
@@ -49,6 +45,7 @@
 # END)
 #
 # == Notes
+# - Missing foreign key constraint on 'product_id' referencing 'products'
 # - Association 'product' should specify inverse_of
 # - Column 'revenue' should probably have NOT NULL constraint
 # - Column 'conversion_rate' should probably have NOT NULL constraint

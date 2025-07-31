@@ -63,9 +63,19 @@ module RailsLens
           end
 
           group_models.each do |model|
-            model_display_name = format_model_name(model)
-            output << "  #{model_display_name} {"
+            # Additional safety check: Skip abstract models that might have slipped through
+            next if model.abstract_class?
 
+            # Skip models without valid tables or columns
+            next unless model.table_exists? && model.columns.present?
+
+            model_display_name = format_model_name(model)
+
+            output << "  #{model_display_name} {"
+            # Track opening brace position for error recovery
+            brace_position = output.size
+
+            columns_added = false
             model.columns.each do |column|
               type_str = format_column_type(column)
               name_str = column.name
@@ -73,23 +83,35 @@ module RailsLens
               key_str = keys.map(&:to_s).join(' ')
 
               output << "    #{type_str} #{name_str}#{" #{key_str}" unless key_str.empty?}"
+              columns_added = true
             end
 
-            output << '  }'
-            output << ''
-
-            Rails.logger.debug { "Added entity: #{model_display_name}" } if options[:verbose]
+            # Only close the entity if we successfully added columns
+            if columns_added
+              output << '  }'
+              output << ''
+              Rails.logger.debug { "Added entity: #{model_display_name}" } if options[:verbose]
+            else
+              # Remove the opening brace if no columns were added
+              output.slice!(brace_position..-1)
+              Rails.logger.debug { "Skipped entity #{model_display_name}: no columns found" } if options[:verbose]
+            end
           rescue StandardError => e
             Rails.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
-            # Don't add partial entity if there's an error
-            # Remove the opening brace line if it was added
-            output.pop if output.last&.end_with?(' {')
+            # Remove any partial entity content added since the opening brace
+            if output.size > brace_position
+              output.slice!(brace_position..-1)
+            end
           end
         end
 
         # Add relationships
         output << '  %% Relationships'
         models.each do |model|
+          # Skip abstract models in relationship generation too
+          next if model.abstract_class?
+          next unless model.table_exists? && model.columns.present?
+
           add_model_relationships(output, model, models)
         end
 
@@ -152,6 +174,10 @@ module RailsLens
 
           next unless target_model && models.include?(target_model)
 
+          # Skip relationships to abstract models
+          next if target_model.abstract_class?
+          next unless target_model.table_exists? && target_model.columns.present?
+
           case association.macro
           when :belongs_to
             add_belongs_to_relationship(output, model, association, target_model)
@@ -164,10 +190,12 @@ module RailsLens
           end
         end
 
-        # Check for closure_tree self-reference
-        return unless model.respond_to?(:_ct)
-
-        output << "  #{format_model_name(model)} }o--o{ #{format_model_name(model)} : \"closure_tree\""
+        # Check for closure_tree self-reference - but only if model is not abstract
+        # rubocop:disable Style/GuardClause
+        if model.respond_to?(:_ct) && !model.abstract_class?
+          output << "  #{format_model_name(model)} }o--o{ #{format_model_name(model)} : \"closure_tree\""
+        end
+        # rubocop:enable Style/GuardClause
       end
 
       def add_belongs_to_relationship(output, model, association, target_model)
