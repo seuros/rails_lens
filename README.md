@@ -154,13 +154,12 @@ bundle exec rails_lens erd --verbose
 
 ```yaml
 # .rails-lens.yml (optional)
-adapter: auto  # auto-detects PostgreSQL/MySQL/SQLite3
-marker_format: rails-lens:schema  # LLM-friendly markers
-include_notes: true  # Performance recommendations
+schema:
+  include_notes: true  # Performance recommendations
 extensions:
   enabled: true  # ClosureTree, PostGIS, etc.
 erd:
-  output: doc/diagrams  # For those Midjourney visuals!
+  output_dir: doc/diagrams  # You need to add mermaid gem to your Gemfile
 ```
 
 **Database Support**:

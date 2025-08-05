@@ -100,3 +100,6 @@ Style/IfUnlessModifier:
 # Allow rescuing StandardError explicitly
 Style/RescueStandardError:
   Enabled: false
+
+Rails/Output:
+  Enabled: false
