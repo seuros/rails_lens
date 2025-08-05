@@ -229,17 +229,9 @@ module RailsLens
         when :silent
           # Do nothing
         when :warn
-          if RailsLens.logger
-            RailsLens.logger.warn "[RailsLens Extensions] #{message}#{" (#{context})" if context}"
-          else
-            RailsLens.logger.debug { "Warning: [RailsLens Extensions] #{message}#{" (#{context})" if context}" }
-          end
+          RailsLens.logger.warn "[RailsLens Extensions] #{message}#{" (#{context})" if context}"
         when :verbose
-          if RailsLens.logger
-            RailsLens.logger.error "[RailsLens Extensions] #{message}#{" (#{context})" if context}"
-          else
-            RailsLens.logger.debug { "Error: [RailsLens Extensions] #{message}#{" (#{context})" if context}" }
-          end
+          RailsLens.logger.error "[RailsLens Extensions] #{message}#{" (#{context})" if context}"
         end
       end
 

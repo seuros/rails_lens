@@ -176,17 +176,9 @@ module RailsLens
         when :silent
           # Do nothing
         when :warn
-          if RailsLens.logger
-            RailsLens.logger.warn "[RailsLens Extensions] Method failed: #{message} (#{context})"
-          else
-            RailsLens.logger.debug { "Warning: [RailsLens Extensions] Method failed: #{message} (#{context})" }
-          end
+          RailsLens.logger.warn "[RailsLens Extensions] Method failed: #{message} (#{context})"
         when :verbose
-          if RailsLens.logger
-            RailsLens.logger.error "[RailsLens Extensions] Method failed: #{message} (#{context})"
-          else
-            RailsLens.logger.debug { "Error: [RailsLens Extensions] Method failed: #{message} (#{context})" }
-          end
+          RailsLens.logger.error "[RailsLens Extensions] Method failed: #{message} (#{context})"
         end
       end
     end
