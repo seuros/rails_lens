@@ -21,10 +21,10 @@ module RailsLens
 
         nil
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to analyze composite keys for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to analyze composite keys for #{model_class.name}: #{e.message}" }
         nil
       rescue ActiveRecord::ConnectionNotEstablished => e
-        Rails.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
         nil
       end
 
@@ -51,10 +51,10 @@ module RailsLens
         keys = result.pluck('attname')
         keys.empty? ? nil : keys
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Failed to detect composite keys from database for #{table_name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to detect composite keys from database for #{table_name}: #{e.message}" }
         nil
       rescue PG::Error => e
-        Rails.logger.debug { "PostgreSQL error detecting composite keys: #{e.message}" }
+        RailsLens.logger.debug { "PostgreSQL error detecting composite keys: #{e.message}" }
         nil
       end
     end

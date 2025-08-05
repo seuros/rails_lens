@@ -33,10 +33,10 @@ module RailsLens
         model_class.respond_to?(:delegated_type_reflection) &&
           model_class.delegated_type_reflection.present?
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to check delegated type for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to check delegated type for #{model_class.name}: #{e.message}" }
         false
       rescue NameError => e
-        Rails.logger.debug { "Name error checking delegated type: #{e.message}" }
+        RailsLens.logger.debug { "Name error checking delegated type: #{e.message}" }
         false
       end
 
@@ -91,10 +91,10 @@ module RailsLens
 
         subclasses.sort
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to find STI subclasses for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to find STI subclasses for #{model_class.name}: #{e.message}" }
         []
       rescue NameError => e
-        Rails.logger.debug { "Name error finding STI subclasses: #{e.message}" }
+        RailsLens.logger.debug { "Name error finding STI subclasses: #{e.message}" }
         []
       end
 
@@ -110,10 +110,10 @@ module RailsLens
 
         siblings.sort
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to find STI siblings for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to find STI siblings for #{model_class.name}: #{e.message}" }
         []
       rescue NameError => e
-        Rails.logger.debug { "Name error finding STI siblings: #{e.message}" }
+        RailsLens.logger.debug { "Name error finding STI siblings: #{e.message}" }
         []
       end
 
@@ -136,10 +136,10 @@ module RailsLens
 
         types.uniq.sort
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Database error finding delegated types for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Database error finding delegated types for #{model_class.name}: #{e.message}" }
         []
       rescue ActiveRecord::ConnectionNotEstablished => e
-        Rails.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
         []
       end
 
@@ -201,10 +201,10 @@ module RailsLens
           .compact
           .sort
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Database error finding polymorphic types for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Database error finding polymorphic types for #{model_class.name}: #{e.message}" }
         []
       rescue ActiveRecord::ConnectionNotEstablished => e
-        Rails.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
         []
       end
     end

@@ -35,6 +35,9 @@ module RailsLens
   config_accessor :debug, default: false
   config_accessor :raise_on_error, default: false
 
+  # Logger configuration
+  config_accessor :logger
+
   # Configuration using ActiveSupport::Configurable
   config_accessor :annotations do
     {
@@ -64,7 +67,7 @@ module RailsLens
     {
       adapter: :auto,
       include_notes: true,
-      exclude_tables: %w[schema_migrations ar_internal_metadata],
+      exclude_tables: nil, # Will use ActiveRecord::SchemaDumper.ignore_tables if nil
       format_options: {
         show_defaults: true,
         show_comments: true,
@@ -112,6 +115,24 @@ module RailsLens
   end
 
   class << self
+    def logger
+      @logger ||= config.logger || default_logger
+    end
+
+    def logger=(new_logger)
+      @logger = new_logger
+      config.logger = new_logger
+    end
+
+    def default_logger
+      if defined?(Rails.logger) && Rails.logger
+        Rails.logger
+      else
+        require 'logger'
+        Logger.new($stdout)
+      end
+    end
+
     def load_config_file(path = '.rails-lens.yml')
       return unless File.exist?(path)
 
@@ -127,6 +148,17 @@ module RailsLens
         else
           config.send("#{section}=", settings.symbolize_keys)
         end
+      end
+    end
+
+    # Get tables to exclude
+    def excluded_tables
+      custom_excludes = config.schema[:exclude_tables]
+      if custom_excludes.nil?
+        # Use ActiveRecord's default ignore tables
+        ActiveRecord::SchemaDumper.ignore_tables.to_a
+      else
+        Array(custom_excludes)
       end
     end
 

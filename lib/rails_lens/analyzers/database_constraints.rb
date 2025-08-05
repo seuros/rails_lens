@@ -24,10 +24,10 @@ module RailsLens
 
         constraints.empty? ? nil : constraints.join("\n")
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Failed to fetch check constraints for #{table_name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to fetch check constraints for #{table_name}: #{e.message}" }
         nil
       rescue NoMethodError => e
-        Rails.logger.debug { "Check constraints not supported by adapter: #{e.message}" }
+        RailsLens.logger.debug { "Check constraints not supported by adapter: #{e.message}" }
         nil
       end
     end

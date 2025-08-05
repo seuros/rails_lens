@@ -45,10 +45,10 @@ module RailsLens
           }
         end
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Failed to detect generated columns for #{table_name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to detect generated columns for #{table_name}: #{e.message}" }
         []
       rescue PG::Error => e
-        Rails.logger.debug { "PostgreSQL error detecting generated columns: #{e.message}" }
+        RailsLens.logger.debug { "PostgreSQL error detecting generated columns: #{e.message}" }
         []
       end
     end

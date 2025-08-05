@@ -79,7 +79,7 @@ module RailsLens
 
         # Transform CLI options to visualizer options
         visualizer_options = options.dup
-        visualizer_options[:output_dir] = options[:output] || 'output'
+        visualizer_options[:output_dir] = options[:output] if options[:output]
 
         commands = Commands.new(self)
         commands.generate_erd(visualizer_options)

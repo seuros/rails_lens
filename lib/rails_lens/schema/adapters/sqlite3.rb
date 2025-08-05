@@ -93,10 +93,10 @@ module RailsLens
             lines << 'FOREIGN_KEYS_ENABLED: false' if fk_status && fk_status['foreign_keys'].zero?
           rescue ActiveRecord::StatementInvalid => e
             # SQLite doesn't recognize the pragma or access denied
-            Rails.logger.debug { "Failed to fetch SQLite foreign_keys pragma: #{e.message}" }
+            RailsLens.logger.debug { "Failed to fetch SQLite foreign_keys pragma: #{e.message}" }
           rescue SQLite3::Exception => e
             # SQLite specific errors (database locked, etc)
-            Rails.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
+            RailsLens.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
           end
         end
 
@@ -113,10 +113,10 @@ module RailsLens
             end
           rescue ActiveRecord::StatementInvalid => e
             # SQLite doesn't recognize the pragma or access denied
-            Rails.logger.debug { "Failed to fetch SQLite foreign_keys pragma: #{e.message}" }
+            RailsLens.logger.debug { "Failed to fetch SQLite foreign_keys pragma: #{e.message}" }
           rescue SQLite3::Exception => e
             # SQLite specific errors (database locked, etc)
-            Rails.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
+            RailsLens.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
           end
         end
 
@@ -164,7 +164,7 @@ module RailsLens
             dependencies: tables.sort
           }
         rescue ActiveRecord::StatementInvalid, SQLite3::Exception => e
-          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
           nil
         end
 

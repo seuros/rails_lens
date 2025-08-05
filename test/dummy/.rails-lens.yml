@@ -1,3 +1,12 @@
-format_options:
-  show_indexes: false
-  show_foreign_keys: false
+# Rails Lens configuration for dummy app
+schema:
+  include_notes: true
+  format_options:
+    show_indexes: false
+    show_foreign_keys: false
+
+extensions:
+  enabled: true
+
+erd:
+  output_dir: doc/diagrams

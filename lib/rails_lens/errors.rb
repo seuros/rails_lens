@@ -47,12 +47,12 @@ module RailsLens
         message = build_error_message(error, context)
 
         # Use Rails logger for verbose mode
-        Rails.logger&.error message
+        RailsLens.logger&.error message
 
         # Use kernel output for debug mode to ensure visibility
         return unless RailsLens.debug
 
-        Rails.logger.debug message
+        RailsLens.logger.debug message
       end
 
       def handle(context = {})

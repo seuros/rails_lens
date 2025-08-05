@@ -93,14 +93,14 @@ module RailsLens
             if columns_added
               output << '  }'
               output << ''
-              Rails.logger.debug { "Added entity: #{model_display_name}" } if options[:verbose]
+              RailsLens.logger.debug { "Added entity: #{model_display_name}" } if options[:verbose]
             else
               # Remove the opening brace if no columns were added
               output.slice!(brace_position..-1)
-              Rails.logger.debug { "Skipped entity #{model_display_name}: no columns found" } if options[:verbose]
+              RailsLens.logger.debug { "Skipped entity #{model_display_name}: no columns found" } if options[:verbose]
             end
           rescue StandardError => e
-            Rails.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
+            RailsLens.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
             # Remove any partial entity content added since the opening brace
             if output.size > brace_position
               output.slice!(brace_position..-1)
@@ -131,7 +131,7 @@ module RailsLens
         # Save output
         filename = save_output(mermaid_output, 'mmd')
 
-        Rails.logger.debug 'ERD generated successfully!'
+        RailsLens.logger.debug 'ERD generated successfully!'
         filename # Return the filename instead of content
       end
 
@@ -211,7 +211,7 @@ module RailsLens
       def add_belongs_to_relationship(output, model, association, target_model)
         output << "  #{format_model_name(model)} }o--|| #{format_model_name(target_model)} : \"#{association.name}\""
       rescue StandardError => e
-        Rails.logger.debug do
+        RailsLens.logger.debug do
           "Warning: Could not add belongs_to relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
@@ -219,7 +219,7 @@ module RailsLens
       def add_has_one_relationship(output, model, association, target_model)
         output << "  #{format_model_name(model)} ||--o| #{format_model_name(target_model)} : \"#{association.name}\""
       rescue StandardError => e
-        Rails.logger.debug do
+        RailsLens.logger.debug do
           "Warning: Could not add has_one relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
@@ -227,7 +227,7 @@ module RailsLens
       def add_has_many_relationship(output, model, association, target_model)
         output << "  #{format_model_name(model)} ||--o{ #{format_model_name(target_model)} : \"#{association.name}\""
       rescue StandardError => e
-        Rails.logger.debug do
+        RailsLens.logger.debug do
           "Warning: Could not add has_many relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
@@ -235,7 +235,7 @@ module RailsLens
       def add_habtm_relationship(output, model, association, target_model)
         output << "  #{format_model_name(model)} }o--o{ #{format_model_name(target_model)} : \"#{association.name}\""
       rescue StandardError => e
-        Rails.logger.debug do
+        RailsLens.logger.debug do
           "Warning: Could not add habtm relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
@@ -294,7 +294,7 @@ module RailsLens
             output << "  class #{model_display_name} tableEntity"
           end
         rescue StandardError => e
-          Rails.logger.debug { "Warning: Could not apply styling to #{model.name}: #{e.message}" }
+          RailsLens.logger.debug { "Warning: Could not apply styling to #{model.name}: #{e.message}" }
         end
 
         output << ''
@@ -308,7 +308,7 @@ module RailsLens
           db_name = model.connection.pool.db_config.name
           grouped[db_name] << model
         rescue StandardError => e
-          Rails.logger.debug { "Warning: Could not determine database for #{model.name}: #{e.message}" }
+          RailsLens.logger.debug { "Warning: Could not determine database for #{model.name}: #{e.message}" }
           grouped['unknown'] << model
         end
 
@@ -368,7 +368,7 @@ module RailsLens
         filename = File.join(output_dir, "erd.#{extension}")
         File.write(filename, content)
 
-        Rails.logger.debug { "ERD saved to: #{filename}" }
+        RailsLens.logger.debug { "ERD saved to: #{filename}" }
         filename # Return the filename
       end
     end
