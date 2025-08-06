@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.5...rails_lens/v0.2.6) (2025-08-06)
+
+
+### Bug Fixes
+
+* improve logger configuration and use ActiveRecord ignore_tables ([#16](https://github.com/seuros/rails_lens/issues/16)) ([cf914b9](https://github.com/seuros/rails_lens/commit/cf914b9a421f2f69328e80733229408c9f362963))
+
 ## [0.2.5](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.4...rails_lens/v0.2.5) (2025-07-31)
 
 
