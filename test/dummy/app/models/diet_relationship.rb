@@ -15,16 +15,6 @@
 #   { name = "evidence_type", type = "string", nullable = true }
 # ]
 #
-# indexes = [
-#   { name = "index_diet_relationships_on_prey_id", columns = ["prey_id"] },
-#   { name = "index_diet_relationships_on_predator_id", columns = ["predator_id"] }
-# ]
-#
-# foreign_keys = [
-#   { column = "prey_id", references_table = "species", references_column = "id" },
-#   { column = "predator_id", references_table = "species", references_column = "id" }
-# ]
-#
 # == Enums
 # - evidence_type: { stomach_contents: "stomach_contents", coprolite: "coprolite", bite_marks: "bite_marks", tooth_marks: "tooth_marks", behavioral: "behavioral", anatomical: "anatomical" } (string)
 #

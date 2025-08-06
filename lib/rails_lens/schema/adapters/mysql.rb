@@ -144,10 +144,10 @@ module RailsLens
             result[1] # Engine is typically the second column
           end
         rescue ActiveRecord::StatementInvalid => e
-          Rails.logger.debug { "Failed to fetch storage engine for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch storage engine for #{table_name}: #{e.message}" }
           nil
         rescue => e
-          Rails.logger.debug { "MySQL error fetching storage engine: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching storage engine: #{e.message}" }
           nil
         end
 
@@ -164,10 +164,10 @@ module RailsLens
 
           collation&.split('_')&.first
         rescue ActiveRecord::StatementInvalid => e
-          Rails.logger.debug { "Failed to fetch charset for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch charset for #{table_name}: #{e.message}" }
           nil
         rescue => e
-          Rails.logger.debug { "MySQL error fetching charset: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching charset: #{e.message}" }
           nil
         end
 
@@ -182,10 +182,10 @@ module RailsLens
             result[14] # Collation is typically the 15th column
           end
         rescue ActiveRecord::StatementInvalid => e
-          Rails.logger.debug { "Failed to fetch collation for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch collation for #{table_name}: #{e.message}" }
           nil
         rescue => e
-          Rails.logger.debug { "MySQL error fetching collation: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching collation: #{e.message}" }
           nil
         end
 
@@ -229,11 +229,11 @@ module RailsLens
           count.to_i.positive?
         rescue ActiveRecord::StatementInvalid => e
           # Table doesn't exist or no permission to query information_schema
-          Rails.logger.debug { "Failed to check partitions for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to check partitions for #{table_name}: #{e.message}" }
           false
         rescue => e
           # MySQL specific errors (connection issues, etc)
-          Rails.logger.debug { "MySQL error checking partitions: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error checking partitions: #{e.message}" }
           false
         end
 
@@ -259,10 +259,10 @@ module RailsLens
           end
         rescue ActiveRecord::StatementInvalid => e
           # Permission denied or table doesn't exist
-          Rails.logger.debug { "Failed to fetch partitions for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch partitions for #{table_name}: #{e.message}" }
         rescue => e
           # MySQL specific errors
-          Rails.logger.debug { "MySQL error fetching partitions: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching partitions: #{e.message}" }
         end
 
         def add_partitions_toml(lines)
@@ -297,10 +297,10 @@ module RailsLens
           lines << ']'
         rescue ActiveRecord::StatementInvalid => e
           # Permission denied or table doesn't exist
-          Rails.logger.debug { "Failed to fetch partitions for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch partitions for #{table_name}: #{e.message}" }
         rescue => e
           # MySQL specific errors
-          Rails.logger.debug { "MySQL error fetching partitions: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching partitions: #{e.message}" }
         end
 
         def add_view_dependencies_toml(lines, view_info)
@@ -345,7 +345,7 @@ module RailsLens
             dependencies: row[1].to_s.split(',').reject(&:empty?)
           }
         rescue ActiveRecord::StatementInvalid, Mysql2::Error => e
-          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
           nil
         end
 

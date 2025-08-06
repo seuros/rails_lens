@@ -11,15 +11,15 @@ module RailsLens
         @connection = model_class.connection
         @table_name = model_class.table_name
       rescue ActiveRecord::ConnectionNotEstablished => e
-        Rails.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "No database connection for #{model_class.name}: #{e.message}" }
         @connection = nil
         @table_name = nil
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to initialize Notes analyzer for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to initialize Notes analyzer for #{model_class.name}: #{e.message}" }
         @connection = nil
         @table_name = nil
       rescue RuntimeError => e
-        Rails.logger.debug { "Runtime error initializing Notes analyzer for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Runtime error initializing Notes analyzer for #{model_class.name}: #{e.message}" }
         @connection = nil
         @table_name = nil
       end
@@ -48,10 +48,10 @@ module RailsLens
 
         notes.compact.uniq
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Database error analyzing notes for #{@table_name}: #{e.message}" }
+        RailsLens.logger.debug { "Database error analyzing notes for #{@table_name}: #{e.message}" }
         nil
       rescue NoMethodError => e
-        Rails.logger.debug { "Method error analyzing notes for #{@table_name}: #{e.message}" }
+        RailsLens.logger.debug { "Method error analyzing notes for #{@table_name}: #{e.message}" }
         nil
       end
 
@@ -72,7 +72,7 @@ module RailsLens
 
         notes
       rescue StandardError => e
-        Rails.logger.debug { "Error checking view readonly status for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Error checking view readonly status for #{model_class.name}: #{e.message}" }
         []
       end
 
@@ -101,7 +101,7 @@ module RailsLens
 
         notes
       rescue StandardError => e
-        Rails.logger.debug { "Error analyzing view gotchas for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Error analyzing view gotchas for #{model_class.name}: #{e.message}" }
         []
       end
 
@@ -341,10 +341,10 @@ module RailsLens
           inverse = association.klass.reflect_on_association(association.inverse_of&.name || model_class.name.underscore.pluralize)
           inverse && inverse.macro == :has_many && !association.options[:counter_cache]
         rescue NameError => e
-          Rails.logger.debug { "Failed to check counter cache for association: #{e.message}" }
+          RailsLens.logger.debug { "Failed to check counter cache for association: #{e.message}" }
           false
         rescue NoMethodError => e
-          Rails.logger.debug { "Method error checking counter cache: #{e.message}" }
+          RailsLens.logger.debug { "Method error checking counter cache: #{e.message}" }
           false
         end
       end
@@ -425,7 +425,7 @@ module RailsLens
           false
         end
       rescue StandardError => e
-        Rails.logger.debug { "Error checking view existence for #{view_name}: #{e.message}" }
+        RailsLens.logger.debug { "Error checking view existence for #{view_name}: #{e.message}" }
         false
       end
     end

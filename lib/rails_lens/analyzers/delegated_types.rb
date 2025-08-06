@@ -81,10 +81,10 @@ module RailsLens
 
         delegated_info
       rescue NoMethodError => e
-        Rails.logger.debug { "Failed to find delegated type info for #{model_class.name}: #{e.message}" }
+        RailsLens.logger.debug { "Failed to find delegated type info for #{model_class.name}: #{e.message}" }
         nil
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Database error finding delegated type info: #{e.message}" }
+        RailsLens.logger.debug { "Database error finding delegated type info: #{e.message}" }
         nil
       end
 
@@ -118,10 +118,10 @@ module RailsLens
           []
         end
       rescue ActiveRecord::StatementInvalid => e
-        Rails.logger.debug { "Database error inferring delegated types: #{e.message}" }
+        RailsLens.logger.debug { "Database error inferring delegated types: #{e.message}" }
         []
       rescue Errno::ENOENT => e
-        Rails.logger.debug { "File not found when inferring delegated types: #{e.message}" }
+        RailsLens.logger.debug { "File not found when inferring delegated types: #{e.message}" }
         []
       end
     end

@@ -79,7 +79,7 @@ module RailsLens
         say error.backtrace.first(10).join("\n"), :yellow
       end
 
-      say "\nPlease report this issue at: https://github.com/your-org/rails_lens/issues", :cyan
+      say "\nPlease report this issue at: https://github.com/seuros/rails_lens/issues", :cyan
       exit 1
     end
   end

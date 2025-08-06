@@ -150,11 +150,11 @@ module RailsLens
           end
         rescue ActiveRecord::StatementInvalid => e
           # Table doesn't exist or other database error
-          Rails.logger.debug { "Failed to fetch check constraints for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch check constraints for #{table_name}: #{e.message}" }
           []
         rescue PG::Error => e
           # PostgreSQL specific errors
-          Rails.logger.debug { "PostgreSQL error fetching check constraints: #{e.message}" }
+          RailsLens.logger.debug { "PostgreSQL error fetching check constraints: #{e.message}" }
           []
         end
 
@@ -164,11 +164,11 @@ module RailsLens
           connection.column_comment(table_name, column_name)
         rescue ActiveRecord::StatementInvalid => e
           # Table or column doesn't exist
-          Rails.logger.debug { "Failed to fetch column comment for #{table_name}.#{column_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch column comment for #{table_name}.#{column_name}: #{e.message}" }
           nil
         rescue PG::Error => e
           # PostgreSQL specific errors
-          Rails.logger.debug { "PostgreSQL error fetching column comment: #{e.message}" }
+          RailsLens.logger.debug { "PostgreSQL error fetching column comment: #{e.message}" }
           nil
         end
 
@@ -178,11 +178,11 @@ module RailsLens
           connection.table_comment(table_name)
         rescue ActiveRecord::StatementInvalid => e
           # Table doesn't exist
-          Rails.logger.debug { "Failed to fetch table comment for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch table comment for #{table_name}: #{e.message}" }
           nil
         rescue PG::Error => e
           # PostgreSQL specific errors
-          Rails.logger.debug { "PostgreSQL error fetching table comment: #{e.message}" }
+          RailsLens.logger.debug { "PostgreSQL error fetching table comment: #{e.message}" }
           nil
         end
 
@@ -292,7 +292,7 @@ module RailsLens
             dependencies: row[2] || []
           }
         rescue ActiveRecord::StatementInvalid, PG::Error => e
-          Rails.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
           nil
         end
 

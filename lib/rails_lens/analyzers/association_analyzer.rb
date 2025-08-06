@@ -69,10 +69,10 @@ module RailsLens
           end
         end
       rescue NameError => e
-        Rails.logger.debug { "Failed to check bidirectional association: #{e.message}" }
+        RailsLens.logger.debug { "Failed to check bidirectional association: #{e.message}" }
         false
       rescue NoMethodError => e
-        Rails.logger.debug { "Method error checking bidirectional association: #{e.message}" }
+        RailsLens.logger.debug { "Method error checking bidirectional association: #{e.message}" }
         false
       end
 

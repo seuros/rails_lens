@@ -126,7 +126,7 @@ module RailsLens
         trace_filtering = options[:trace_filtering] || ENV.fetch('RAILS_LENS_TRACE_FILTERING', nil)
 
         original_count = models.size
-        Rails.logger.debug { "[ModelDetector] Starting with #{original_count} models" } if trace_filtering
+        RailsLens.logger.debug { "[ModelDetector] Starting with #{original_count} models" } if trace_filtering
 
         # Remove anonymous classes and non-class objects
         before_count = models.size
@@ -157,7 +157,7 @@ module RailsLens
               end
             end
             if excluded && trace_filtering
-              Rails.logger.debug do
+              RailsLens.logger.debug do
                 "[ModelDetector] Excluding #{model.name}: matched exclude pattern"
               end
             end
@@ -182,12 +182,12 @@ module RailsLens
               end
             end
             if included && trace_filtering
-              Rails.logger.debug do
+              RailsLens.logger.debug do
                 "[ModelDetector] Including #{model.name}: matched include pattern"
               end
             end
             if !included && trace_filtering
-              Rails.logger.debug { "[ModelDetector] Excluding #{model.name}: did not match include patterns" }
+              RailsLens.logger.debug { "[ModelDetector] Excluding #{model.name}: did not match include patterns" }
             end
             included
           end
@@ -203,13 +203,13 @@ module RailsLens
         log_filter_step('Abstract/invalid table removal', before_count, models.size, trace_filtering)
 
         # Exclude tables from configuration
-        excluded_tables = RailsLens.config.schema[:exclude_tables]
+        excluded_tables = RailsLens.excluded_tables
         before_count = models.size
         models = models.reject do |model|
           begin
             excluded = excluded_tables.include?(model.table_name)
             if excluded && trace_filtering
-              Rails.logger.debug do
+              RailsLens.logger.debug do
                 "[ModelDetector] Excluding #{model.name}: table '#{model.table_name}' in exclude_tables config"
               end
             end
@@ -218,7 +218,7 @@ module RailsLens
             # This can happen in multi-db setups if the connection is not yet established
             # We will assume the model should be kept in this case
             if trace_filtering
-              Rails.logger.debug do
+              RailsLens.logger.debug do
                 "[ModelDetector] Keeping #{model.name}: connection not defined, assuming keep"
               end
             end
@@ -226,7 +226,7 @@ module RailsLens
           end
         rescue ActiveRecord::StatementInvalid => e
           if trace_filtering
-            Rails.logger.debug do
+            RailsLens.logger.debug do
               "[ModelDetector] Keeping #{model.name}: database error checking exclude_tables - #{e.message}"
             end
           end
@@ -235,11 +235,11 @@ module RailsLens
         log_filter_step('Configuration exclude_tables', before_count, models.size, trace_filtering)
 
         if trace_filtering
-          Rails.logger.debug do
+          RailsLens.logger.debug do
             "[ModelDetector] Final result: #{models.size} models after all filtering"
           end
         end
-        Rails.logger.debug { "[ModelDetector] Final models: #{models.map(&:name).join(', ')}" } if trace_filtering
+        RailsLens.logger.debug { "[ModelDetector] Final models: #{models.map(&:name).join(', ')}" } if trace_filtering
 
         models
       end
@@ -249,11 +249,11 @@ module RailsLens
 
         filtered_count = before_count - after_count
         if filtered_count.positive?
-          Rails.logger.debug do
+          RailsLens.logger.debug do
             "[ModelDetector] #{step_name}: filtered out #{filtered_count} models (#{before_count} -> #{after_count})"
           end
         else
-          Rails.logger.debug { "[ModelDetector] #{step_name}: no models filtered (#{after_count} remain)" }
+          RailsLens.logger.debug { "[ModelDetector] #{step_name}: no models filtered (#{after_count} remain)" }
         end
       end
 
@@ -301,7 +301,7 @@ module RailsLens
 
           if trace_filtering
             action = should_exclude ? 'Excluding' : 'Keeping'
-            Rails.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
+            RailsLens.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
           end
 
           { model: model, exclude: should_exclude }
@@ -408,7 +408,7 @@ module RailsLens
 
         if trace_filtering
           action = should_exclude ? 'Excluding' : 'Keeping'
-          Rails.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
+          RailsLens.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
         end
 
         { model: model, exclude: should_exclude }
