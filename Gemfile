@@ -22,4 +22,4 @@ gem 'rubocop-rake', '~> 0.6'
 gem 'simplecov', require: false
 gem 'with_advisory_lock'
 
-gem 'mermaid', '>= 0.0.5'
+gem 'mermaid', '>= 0.0.6'

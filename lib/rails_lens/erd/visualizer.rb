@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'mermaid'
+
 module RailsLens
   module ERD
     class Visualizer
@@ -29,104 +31,56 @@ module RailsLens
           return save_output(mermaid_output, 'mmd')
         end
 
-        output = ['erDiagram']
+        # Create new ERDiagram using mermaid-ruby gem
+        diagram = Diagrams::ERDiagram.new
 
-        # Add theme configuration
-        if config[:theme] || config[:colors]
-          output << ''
-          output << '  %% Theme Configuration'
-          add_theme_configuration(output)
-          output << ''
-        end
-
-        # Choose grouping strategy based on configuration
-        grouped_models = if config[:group_by_database]
-                           # Group models by database connection
-                           group_models_by_database(models)
-                         else
-                           # Group models by domain (existing behavior)
-                           group_models_by_domain(models)
-                         end
-
-        # Create color mapper for domains (for future extensibility)
-        unless config[:group_by_database]
-          domain_list = grouped_models.keys.sort
-          @color_mapper = create_domain_color_mapper(domain_list)
-        end
-
-        # Add entities
-        grouped_models.each do |group_key, group_models|
-          if config[:group_by_database]
-            output << "  %% Database: #{group_key}"
-          elsif group_key != :general
-            output << "  %% #{group_key.to_s.humanize} Domain"
-          end
-
-          group_models.each do |model|
-            # Additional safety check: Skip abstract models that might have slipped through
-            next if model.abstract_class?
-
-            # Skip models without valid tables/views or columns
-            # Include both table-backed and view-backed models
-            is_view = ModelDetector.view_exists?(model)
-            has_data_source = is_view || (model.table_exists? && model.columns.present?)
-            next unless has_data_source
-
-            model_display_name = format_model_name(model)
-
-            output << "  #{model_display_name} {"
-            # Track opening brace position for error recovery
-            brace_position = output.size
-
-            columns_added = false
-            model.columns.each do |column|
-              type_str = format_column_type(column)
-              name_str = column.name
-              keys = determine_keys(model, column)
-              key_str = keys.map(&:to_s).join(' ')
-
-              output << "    #{type_str} #{name_str}#{" #{key_str}" unless key_str.empty?}"
-              columns_added = true
-            end
-
-            # Only close the entity if we successfully added columns
-            if columns_added
-              output << '  }'
-              output << ''
-              RailsLens.logger.debug { "Added entity: #{model_display_name}" } if options[:verbose]
-            else
-              # Remove the opening brace if no columns were added
-              output.slice!(brace_position..-1)
-              RailsLens.logger.debug { "Skipped entity #{model_display_name}: no columns found" } if options[:verbose]
-            end
-          rescue StandardError => e
-            RailsLens.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
-            # Remove any partial entity content added since the opening brace
-            if output.size > brace_position
-              output.slice!(brace_position..-1)
-            end
-          end
-        end
-
-        # Add visual styling for views vs tables
-        add_visual_styling(output, models)
-
-        # Add relationships
-        output << '  %% Relationships'
+        # Process models and add them to the diagram
         models.each do |model|
-          # Skip abstract models in relationship generation too
+          # Skip abstract models
           next if model.abstract_class?
 
-          # Include both table-backed and view-backed models
+          # Skip models without valid tables/views or columns
           is_view = ModelDetector.view_exists?(model)
           has_data_source = is_view || (model.table_exists? && model.columns.present?)
           next unless has_data_source
 
-          add_model_relationships(output, model, models)
+          begin
+            # Create attributes for the entity
+            attributes = []
+            model.columns.each do |column|
+              type_str = format_column_type(column)
+              keys = determine_keys(model, column)
+
+              attributes << {
+                type: type_str,
+                name: column.name,
+                keys: keys
+              }
+            end
+
+            # Add entity to diagram (model name will be automatically quoted if needed)
+            diagram.add_entity(
+              name: model.name,
+              attributes: attributes
+            )
+
+            RailsLens.logger.debug { "Added entity: #{model.name}" } if options[:verbose]
+          rescue StandardError => e
+            RailsLens.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
+          end
+
+          # Add relationships
+          next if model.abstract_class?
+
+          is_view = ModelDetector.view_exists?(model)
+          has_data_source = is_view || (model.table_exists? && model.columns.present?)
+          next unless has_data_source
+
+          add_model_relationships(diagram, model, models)
         end
 
-        # Generate mermaid syntax
-        mermaid_output = output.join("\n")
+        # Generate mermaid syntax using the gem
+        mermaid_output = diagram.to_mermaid
 
         # Save output
         filename = save_output(mermaid_output, 'mmd')
@@ -159,7 +113,7 @@ module RailsLens
           end
         end
 
-        # Check unique indexes
+        # Check unique indexes - use UK which will be automatically quoted as comment
         if model.connection.indexes(model.table_name).any? do |idx|
           idx.unique && idx.columns.include?(column.name)
         end && keys.exclude?(:PK)
@@ -169,7 +123,7 @@ module RailsLens
         keys
       end
 
-      def add_model_relationships(output, model, models)
+      def add_model_relationships(diagram, model, models)
         model.reflect_on_all_associations.each do |association|
           next if association.options[:through] # Skip through associations for now
           next if association.polymorphic? # Skip polymorphic associations
@@ -190,174 +144,86 @@ module RailsLens
 
           case association.macro
           when :belongs_to
-            add_belongs_to_relationship(output, model, association, target_model)
+            add_belongs_to_relationship(diagram, model, association, target_model)
           when :has_one
-            add_has_one_relationship(output, model, association, target_model)
+            add_has_one_relationship(diagram, model, association, target_model)
           when :has_many
-            add_has_many_relationship(output, model, association, target_model)
+            add_has_many_relationship(diagram, model, association, target_model)
           when :has_and_belongs_to_many
-            add_habtm_relationship(output, model, association, target_model)
+            add_habtm_relationship(diagram, model, association, target_model)
           end
         end
 
         # Check for closure_tree self-reference - but only if model is not abstract
-        # rubocop:disable Style/GuardClause
-        if model.respond_to?(:_ct) && !model.abstract_class?
-          output << "  #{format_model_name(model)} }o--o{ #{format_model_name(model)} : \"closure_tree\""
-        end
-        # rubocop:enable Style/GuardClause
+        return unless model.respond_to?(:_ct) && !model.abstract_class?
+
+        diagram.add_relationship(
+          entity1: model.name,
+          entity2: model.name,
+          cardinality1: :ZERO_OR_MORE,
+          cardinality2: :ZERO_OR_MORE,
+          identifying: false,
+          label: 'closure_tree'
+        )
       end
 
-      def add_belongs_to_relationship(output, model, association, target_model)
-        output << "  #{format_model_name(model)} }o--|| #{format_model_name(target_model)} : \"#{association.name}\""
+      def add_belongs_to_relationship(diagram, model, association, target_model)
+        diagram.add_relationship(
+          entity1: model.name,
+          entity2: target_model.name,
+          cardinality1: :ZERO_OR_MORE,
+          cardinality2: :ONE_ONLY,
+          identifying: false,
+          label: association.name.to_s
+        )
       rescue StandardError => e
         RailsLens.logger.debug do
           "Warning: Could not add belongs_to relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
 
-      def add_has_one_relationship(output, model, association, target_model)
-        output << "  #{format_model_name(model)} ||--o| #{format_model_name(target_model)} : \"#{association.name}\""
+      def add_has_one_relationship(diagram, model, association, target_model)
+        diagram.add_relationship(
+          entity1: model.name,
+          entity2: target_model.name,
+          cardinality1: :ONE_ONLY,
+          cardinality2: :ZERO_OR_ONE,
+          identifying: false,
+          label: association.name.to_s
+        )
       rescue StandardError => e
         RailsLens.logger.debug do
           "Warning: Could not add has_one relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
 
-      def add_has_many_relationship(output, model, association, target_model)
-        output << "  #{format_model_name(model)} ||--o{ #{format_model_name(target_model)} : \"#{association.name}\""
+      def add_has_many_relationship(diagram, model, association, target_model)
+        diagram.add_relationship(
+          entity1: model.name,
+          entity2: target_model.name,
+          cardinality1: :ONE_ONLY,
+          cardinality2: :ZERO_OR_MORE,
+          identifying: false,
+          label: association.name.to_s
+        )
       rescue StandardError => e
         RailsLens.logger.debug do
           "Warning: Could not add has_many relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
 
-      def add_habtm_relationship(output, model, association, target_model)
-        output << "  #{format_model_name(model)} }o--o{ #{format_model_name(target_model)} : \"#{association.name}\""
+      def add_habtm_relationship(diagram, model, association, target_model)
+        diagram.add_relationship(
+          entity1: model.name,
+          entity2: target_model.name,
+          cardinality1: :ZERO_OR_MORE,
+          cardinality2: :ZERO_OR_MORE,
+          identifying: false,
+          label: association.name.to_s
+        )
       rescue StandardError => e
         RailsLens.logger.debug do
           "Warning: Could not add habtm relationship #{model.name} -> #{association.name}: #{e.message}"
-        end
-      end
-
-      def add_theme_configuration(output)
-        # Get default color palette
-        default_colors = config[:default_colors] || DomainColorMapper::DEFAULT_COLORS
-
-        # Use first few colors for Mermaid theme
-        primary_color = default_colors[0] || 'lightgray'
-        secondary_color = default_colors[1] || 'lightblue'
-        tertiary_color = default_colors[2] || 'lightcoral'
-
-        # Mermaid theme directives
-        output << '  %%{init: {'
-        output << '    "theme": "default",'
-        output << '    "themeVariables": {'
-        output << "      \"primaryColor\": \"#{primary_color}\","
-        output << '      "primaryTextColor": "#333",'
-        output << '      "primaryBorderColor": "#666",'
-        output << '      "lineColor": "#666",'
-        output << "      \"secondaryColor\": \"#{secondary_color}\","
-        output << "      \"tertiaryColor\": \"#{tertiary_color}\""
-        output << '    }'
-        output << '  }}%%'
-      end
-
-      def add_visual_styling(output, models)
-        # Add class definitions for visual distinction between tables and views
-        output << ''
-        output << '  %% Entity Styling'
-
-        # Define styling classes
-        output << '  classDef tableEntity fill:#f9f9f9,stroke:#333,stroke-width:2px'
-        output << '  classDef viewEntity fill:#e6f3ff,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5'
-        output << '  classDef materializedViewEntity fill:#ffe6e6,stroke:#333,stroke-width:3px,stroke-dasharray: 5 5'
-
-        # Apply styling to each model
-        models.each do |model|
-          next if model.abstract_class?
-
-          is_view = ModelDetector.view_exists?(model)
-          has_data_source = is_view || (model.table_exists? && model.columns.present?)
-          next unless has_data_source
-
-          model_display_name = format_model_name(model)
-
-          if is_view
-            view_metadata = ViewMetadata.new(model)
-            output << if view_metadata.materialized_view?
-                        "  class #{model_display_name} materializedViewEntity"
-                      else
-                        "  class #{model_display_name} viewEntity"
-                      end
-          else
-            output << "  class #{model_display_name} tableEntity"
-          end
-        rescue StandardError => e
-          RailsLens.logger.debug { "Warning: Could not apply styling to #{model.name}: #{e.message}" }
-        end
-
-        output << ''
-      end
-
-      def group_models_by_database(models)
-        grouped = Hash.new { |h, k| h[k] = [] }
-
-        models.each do |model|
-          # Get the database name from the model's connection
-          db_name = model.connection.pool.db_config.name
-          grouped[db_name] << model
-        rescue StandardError => e
-          RailsLens.logger.debug { "Warning: Could not determine database for #{model.name}: #{e.message}" }
-          grouped['unknown'] << model
-        end
-
-        # Sort databases for consistent output
-        grouped.sort_by { |db_name, _| db_name.to_s }.to_h
-      end
-
-      def group_models_by_domain(models)
-        grouped = Hash.new { |h, k| h[k] = [] }
-
-        models.each do |model|
-          domain = determine_model_domain(model)
-          grouped[domain] << model
-        end
-
-        # Sort domains for consistent output
-        grouped.sort_by { |domain, _| domain.to_s }.to_h
-      end
-
-      def determine_model_domain(model)
-        model_name = model.name.downcase
-
-        # Basic domain detection based on common patterns
-        return :auth if model_name.match?(/user|account|session|authentication|authorization/)
-        return :content if model_name.match?(/post|article|comment|blog|page|content/)
-        return :commerce if model_name.match?(/product|order|payment|cart|invoice|transaction/)
-        return :core if model_name.match?(/category|tag|setting|configuration|notification/)
-
-        # Default domain
-        :general
-      end
-
-      def create_domain_color_mapper(domains)
-        # Get colors from config or use defaults
-        colors = config[:default_colors] || DomainColorMapper::DEFAULT_COLORS
-        DomainColorMapper.new(domains, colors: colors)
-      end
-
-      def format_model_name(model)
-        return model.name unless config[:include_all_databases] || config[:show_database_labels]
-
-        # Get database name from the model's connection
-        begin
-          db_name = model.connection.pool.db_config.name
-          return model.name if db_name == 'primary' # Don't prefix primary database models
-
-          "#{model.name}[#{db_name}]"
-        rescue StandardError
-          model.name
         end
       end
 
