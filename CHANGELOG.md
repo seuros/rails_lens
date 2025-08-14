@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.7...rails_lens/v0.2.8) (2025-08-14)
+
+
+### Bug Fixes
+
+* remove hard dependency of mermaid ([b82ea17](https://github.com/seuros/rails_lens/commit/b82ea17ccb0920321b5ab219bc63b3043d182ad3))
+
 ## [0.2.7](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.6...rails_lens/v0.2.7) (2025-08-14)
 
 
