@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.6...rails_lens/v0.2.7) (2025-08-14)
+
+
+### Bug Fixes
+
+* use mermaid gem as backend ([#19](https://github.com/seuros/rails_lens/issues/19)) ([2297ecb](https://github.com/seuros/rails_lens/commit/2297ecb1a61ae1c3bb3ea4b1f602f9bea91a5aa8)), closes [#18](https://github.com/seuros/rails_lens/issues/18)
+
 ## [0.2.6](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.5...rails_lens/v0.2.6) (2025-08-06)
 
 
