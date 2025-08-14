@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'mermaid'
-
 module RailsLens
   module ERD
     class Visualizer
