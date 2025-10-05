@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.8...rails_lens/v0.2.9) (2025-10-05)
+
+
+### Features
+
+* support PostgreSQL schema-qualified table names ([#22](https://github.com/seuros/rails_lens/issues/22)) ([478c6cc](https://github.com/seuros/rails_lens/commit/478c6ccb3f0271dd5bbe182e30057528a1639f4f))
+
 ## [0.2.8](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.7...rails_lens/v0.2.8) (2025-08-14)
 
 
