@@ -73,6 +73,50 @@ module RailsLens
                            end
         end
 
+        # Execute block with schema in search_path for ActiveRecord methods
+        def with_schema_in_search_path
+          if schema_name && schema_name != 'public'
+            original_search_path = connection.schema_search_path
+            begin
+              connection.schema_search_path = "#{schema_name}, #{original_search_path}"
+              yield
+            ensure
+              connection.schema_search_path = original_search_path
+            end
+          else
+            yield
+          end
+        end
+
+        # Override to handle schema-qualified table names
+        def columns
+          @columns ||= with_schema_in_search_path do
+            connection.columns(unqualified_table_name)
+          end
+        end
+
+        def fetch_indexes
+          with_schema_in_search_path do
+            connection.indexes(unqualified_table_name)
+          end
+        end
+
+        def fetch_foreign_keys
+          with_schema_in_search_path do
+            if connection.supports_foreign_keys?
+              connection.foreign_keys(unqualified_table_name)
+            else
+              []
+            end
+          end
+        end
+
+        def primary_key_name
+          @primary_key_name ||= with_schema_in_search_path do
+            connection.primary_key(unqualified_table_name)
+          end
+        end
+
         def format_column(column)
           parts = []
           parts << column.name.ljust(column_name_width)
@@ -142,11 +186,13 @@ module RailsLens
         def fetch_check_constraints
           return [] unless connection.supports_check_constraints?
 
-          connection.check_constraints(table_name).map do |constraint|
-            {
-              name: constraint.name,
-              expression: constraint.expression
-            }
+          with_schema_in_search_path do
+            connection.check_constraints(unqualified_table_name).map do |constraint|
+              {
+                name: constraint.name,
+                expression: constraint.expression
+              }
+            end
           end
         rescue ActiveRecord::StatementInvalid => e
           # Table doesn't exist or other database error
@@ -161,7 +207,9 @@ module RailsLens
         def column_comment(column_name)
           return nil unless connection.respond_to?(:column_comment)
 
-          connection.column_comment(table_name, column_name)
+          with_schema_in_search_path do
+            connection.column_comment(unqualified_table_name, column_name)
+          end
         rescue ActiveRecord::StatementInvalid => e
           # Table or column doesn't exist
           RailsLens.logger.debug { "Failed to fetch column comment for #{table_name}.#{column_name}: #{e.message}" }
@@ -175,7 +223,9 @@ module RailsLens
         def table_comment
           return nil unless connection.respond_to?(:table_comment)
 
-          connection.table_comment(table_name)
+          with_schema_in_search_path do
+            connection.table_comment(unqualified_table_name)
+          end
         rescue ActiveRecord::StatementInvalid => e
           # Table doesn't exist
           RailsLens.logger.debug { "Failed to fetch table comment for #{table_name}: #{e.message}" }
@@ -252,7 +302,7 @@ module RailsLens
                 false as is_updatable,
                 mv.matviewname as view_name
               FROM pg_matviews mv
-              WHERE mv.matviewname = '#{connection.quote_string(table_name)}'
+              WHERE mv.matviewname = '#{connection.quote_string(unqualified_table_name)}'
               UNION ALL
               -- Check for regular view
               SELECT
@@ -260,14 +310,14 @@ module RailsLens
                 CASE WHEN v.is_updatable = 'YES' THEN true ELSE false END as is_updatable,
                 v.table_name as view_name
               FROM information_schema.views v
-              WHERE v.table_name = '#{connection.quote_string(table_name)}'
+              WHERE v.table_name = '#{connection.quote_string(unqualified_table_name)}'
             ),
             dependencies AS (
               SELECT DISTINCT c2.relname as dependency_name
               FROM pg_class c1
               JOIN pg_depend d ON c1.oid = d.objid
               JOIN pg_class c2 ON d.refobjid = c2.oid
-              WHERE c1.relname = '#{connection.quote_string(table_name)}'
+              WHERE c1.relname = '#{connection.quote_string(unqualified_table_name)}'
               AND c1.relkind IN ('v', 'm')
               AND c2.relkind IN ('r', 'v', 'm')
               AND d.deptype = 'n'
@@ -316,13 +366,13 @@ module RailsLens
           result = if view_type == 'materialized'
                      connection.exec_query(<<~SQL.squish, 'PostgreSQL Materialized View Definition')
                        SELECT definition FROM pg_matviews
-                       WHERE matviewname = '#{connection.quote_string(table_name)}'
+                       WHERE matviewname = '#{connection.quote_string(unqualified_table_name)}'
                        LIMIT 1
                      SQL
                    else
                      connection.exec_query(<<~SQL.squish, 'PostgreSQL View Definition')
                        SELECT view_definition FROM information_schema.views
-                       WHERE table_name = '#{connection.quote_string(table_name)}'
+                       WHERE table_name = '#{connection.quote_string(unqualified_table_name)}'
                        LIMIT 1
                      SQL
                    end
@@ -343,7 +393,7 @@ module RailsLens
           result = connection.exec_query(<<~SQL.squish, 'PostgreSQL Materialized View Last Refresh')
             SELECT COALESCE(last_vacuum, last_autovacuum) as last_refreshed
             FROM pg_stat_user_tables
-            WHERE relname = '#{connection.quote_string(table_name)}'
+            WHERE relname = '#{connection.quote_string(unqualified_table_name)}'
             LIMIT 1
           SQL
 
