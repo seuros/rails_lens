@@ -11,6 +11,12 @@ module RailsLens
           @table_name = table_name
         end
 
+        # Extract table name without schema prefix for ActiveRecord connection methods
+        # PostgreSQL tables can be schema-qualified (e.g., "cms.posts")
+        def unqualified_table_name
+          @unqualified_table_name ||= table_name.to_s.split('.').last
+        end
+
         def generate_annotation(_model_class)
           lines = []
           lines << "table = \"#{table_name}\""
@@ -74,16 +80,16 @@ module RailsLens
         end
 
         def columns
-          @columns ||= connection.columns(table_name)
+          @columns ||= connection.columns(unqualified_table_name)
         end
 
         def fetch_indexes
-          connection.indexes(table_name)
+          connection.indexes(unqualified_table_name)
         end
 
         def fetch_foreign_keys
           if connection.supports_foreign_keys?
-            connection.foreign_keys(table_name)
+            connection.foreign_keys(unqualified_table_name)
           else
             []
           end
@@ -139,7 +145,7 @@ module RailsLens
         end
 
         def primary_key_name
-          @primary_key_name ||= connection.primary_key(table_name)
+          @primary_key_name ||= connection.primary_key(unqualified_table_name)
         end
 
         def column_name_width
@@ -267,7 +273,7 @@ module RailsLens
             line = '  { '
             attrs = []
             attrs << "name = \"#{index.name}\""
-            attrs << "columns = [#{index.columns.map { |c| "\"#{c}\"" }.join(', ')}]"
+            attrs << "columns = [#{Array(index.columns).map { |c| "\"#{c}\"" }.join(', ')}]"
             attrs << 'unique = true' if index.unique
             attrs << "type = \"#{index.type}\"" if index.respond_to?(:type) && index.type
             line += attrs.join(', ')

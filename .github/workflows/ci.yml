@@ -12,24 +12,24 @@ jobs:
     name: Lint
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      
+
       - name: Run RuboCop
         run: bundle exec rubocop --parallel
 
   test:
     runs-on: ubuntu-latest
     name: Test (Rails ${{ matrix.rails }})
-    
+
     strategy:
       fail-fast: false
       matrix:
-        rails: ['7.2', '8.0']
-    
+        rails: ['7.2', '8.0', '8.1.beta1']
+
     services:
       postgres:
         image: ghcr.io/seuros/postgis-with-extensions:17-4
@@ -44,7 +44,7 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-      
+
       mysql:
         image: mysql:8
         env:
@@ -60,6 +60,7 @@ jobs:
 
     env:
       RAILS_ENV: test
+      RAILS_VERSION: ${{ matrix.rails }}
       POSTGRES_HOST: localhost
       POSTGRES_USER: rails_lens_user
       POSTGRES_PASSWORD: galactic_spaceships_2025
@@ -71,12 +72,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
-      
+          bundler-cache: false
+
+      - name: Install dependencies with Rails ${{ matrix.rails }}
+        run: |
+          gem install bundler
+          bundle config set --local path 'vendor/bundle'
+          bundle install --jobs 4 --retry 3
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -86,7 +93,7 @@ jobs:
             libsqlite3-dev \
             postgresql-client \
             mysql-client
-      
+
       - name: Set up test databases
         run: |
           cd test/dummy
@@ -98,21 +105,21 @@ jobs:
           # Create and migrate all databases in multi-database setup
           bundle exec rails db:create:all RAILS_ENV=test
           bundle exec rails db:migrate RAILS_ENV=test
-      
+
       - name: Run tests
         run: bundle exec rake test
-      
+
       - name: Test CLI commands
         run: |
           cd test/dummy
-          
+
           # Test annotation commands
           bundle exec rails_lens annotate --all
           bundle exec rails_lens remove --all
-          
+
           # Test ERD generation
           bundle exec rails_lens erd --output tmp/test_erd
-          
+
           # Test version command
           bundle exec rails_lens version
 

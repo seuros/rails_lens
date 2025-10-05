@@ -299,4 +299,44 @@ class DatabaseSpecificFeaturesTest < ActiveSupport::TestCase
       end
     end
   end
+
+  def test_postgresql_schema_qualified_table_names
+    skip 'PostgreSQL only test' unless User.connection.adapter_name == 'PostgreSQL'
+
+    # Use existing AuditLog model with schema-qualified table name (audit.audit_logs)
+    adapter = RailsLens::Schema::Adapters::Postgresql.new(
+      ActiveRecord::Base.connection,
+      'audit.audit_logs'
+    )
+
+    annotation = adapter.generate_annotation(AuditLog)
+
+    # Verify the annotation includes the schema
+    assert_includes annotation, 'table = "audit.audit_logs"',
+                    'Annotation should include schema-qualified table name'
+    assert_includes annotation, 'schema = "audit"',
+                    'Annotation should include schema name'
+    assert_includes annotation, 'database_dialect = "PostgreSQL"',
+                    'Annotation should include database dialect'
+
+    # Verify columns are properly extracted
+    assert_includes annotation, 'columns = [',
+                    'Annotation should include columns array'
+    assert_includes annotation, 'name = "id"',
+                    'Annotation should include id column'
+    assert_includes annotation, 'name = "table_name"',
+                    'Annotation should include table_name column'
+    assert_includes annotation, 'name = "record_id"',
+                    'Annotation should include record_id column'
+    assert_includes annotation, 'name = "action"',
+                    'Annotation should include action column'
+
+    # Verify no errors for schema-qualified table operations
+    assert_nothing_raised do
+      adapter.send(:columns)
+      adapter.send(:fetch_indexes)
+      adapter.send(:fetch_foreign_keys)
+      adapter.send(:primary_key_name)
+    end
+  end
 end
