@@ -65,7 +65,11 @@ module RailsLens
         end
 
         # Check table naming
-        if !table_name.match?(/^[a-z_]+$/) || table_name != table_name.pluralize
+        # Extract the actual table name without schema prefix for PostgreSQL
+        # PostgreSQL uses schema.table format (e.g., "ai.skills" -> "skills")
+        unqualified_table = table_name.to_s.split('.').last
+
+        if !unqualified_table.match?(/^[a-z_]+$/) || unqualified_table != unqualified_table.pluralize
           notes << "Table name '#{table_name}' doesn't follow Rails conventions (should be plural, snake_case)"
         end
 
