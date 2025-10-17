@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.9...rails_lens/v0.2.10) (2025-10-17)
+
+
+### Bug Fixes
+
+* handle PostgreSQL schema-qualified table names in BestPracticesAnalyzer ([#24](https://github.com/seuros/rails_lens/issues/24)) ([607536f](https://github.com/seuros/rails_lens/commit/607536f58d8840a9123bc50eec7878b979cd1891))
+
 ## [0.2.9](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.8...rails_lens/v0.2.9) (2025-10-05)
 
 
