@@ -117,6 +117,20 @@ bundle install
 
 ## Usage
 
+### Quick Setup (Recommended)
+
+Install automatic annotation after migrations:
+
+```bash
+bundle exec rails_lens install
+```
+
+This creates `lib/tasks/rails_lens.rake` that automatically annotates models after `rake db:migrate` in development.
+
+**Configuration:**
+- `AUTO_ANNOTATE=false` - Disable auto-annotation
+- `RAILS_LENS_ENV=test,development` - Environments where it runs (default: development only)
+
 ### Annotate Models
 
 ```bash
