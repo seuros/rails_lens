@@ -124,6 +124,15 @@ module RailsLens
       end
     end
 
+    desc 'install', 'Install Rails Lens rake tasks for automatic annotation'
+    option :force, type: :boolean, desc: 'Overwrite existing rake task file'
+    def install
+      with_error_handling do
+        commands = Commands.new(self)
+        commands.install(options)
+      end
+    end
+
     private
 
     def setup_environment
