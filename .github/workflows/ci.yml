@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rails: ['7.2', '8.0', '8.1.beta1']
+        rails: ['7.2', '8.0', '8.1']
 
     services:
       postgres:

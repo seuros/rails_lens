@@ -4,7 +4,6 @@ require 'zeitwerk'
 require 'rails'
 require 'active_record'
 require 'active_support'
-require 'active_support/configurable'
 require 'thor'
 require 'ostruct'
 
@@ -29,8 +28,7 @@ require_relative 'rails_lens/cli'
 require_relative 'rails_lens/configuration'
 
 module RailsLens
-  include ActiveSupport::Configurable
-  include Configuration
+  extend Configuration
 
   class << self
     def logger
