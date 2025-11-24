@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.11](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.10...rails_lens/v0.2.11) (2025-11-24)
+
+
+### Features
+
+* add install command for automatic post-migration annotation ([#28](https://github.com/seuros/rails_lens/issues/28)) ([873fcdc](https://github.com/seuros/rails_lens/commit/873fcdcb4ca481273f71068824d066557f3cc38b))
+
+
+### Bug Fixes
+
+* replace deprecated ActiveSupport::Configurable and update CI to Rails 8.1 ([#26](https://github.com/seuros/rails_lens/issues/26)) ([b540214](https://github.com/seuros/rails_lens/commit/b540214afd25e0313ee2772e6c65d81bae68cb64))
+
 ## [0.2.10](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.9...rails_lens/v0.2.10) (2025-10-17)
 
 
