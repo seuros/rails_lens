@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.11...rails_lens/v0.2.12) (2025-11-26)
+
+
+### Bug Fixes
+
+* handle engine/gem dummy app file paths in annotation ([7a3dab8](https://github.com/seuros/rails_lens/commit/7a3dab83570e43cb243b7bac41afc184a27bed2c))
+
 ## [0.2.11](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.10...rails_lens/v0.2.11) (2025-11-24)
 
 
