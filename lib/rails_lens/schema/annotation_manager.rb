@@ -16,8 +16,19 @@ module RailsLens
         return unless file_path && File.exist?(file_path)
 
         # Only annotate files within the Rails application (unless explicitly allowed)
-        if !allow_external_files && defined?(Rails.root) && !file_path.start_with?(Rails.root.to_s)
-          return
+        # For engines/gems with dummy apps, check if the file is within the parent directory
+        if !allow_external_files && defined?(Rails.root)
+          rails_root = Rails.root.to_s
+          # Check if this is a dummy app inside a gem/engine
+          parent_root = if rails_root.include?('/test/dummy')
+                          File.expand_path('../..', rails_root)
+                        else
+                          rails_root
+                        end
+
+          unless file_path.start_with?(rails_root) || file_path.start_with?(parent_root)
+            return
+          end
         end
 
         annotation_text = generate_annotation
