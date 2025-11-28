@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.13](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.12...rails_lens/v0.2.13) (2025-11-28)
+
+
+### Features
+
+* add PostgreSQL trigger and function annotations with extension filtering ([#30](https://github.com/seuros/rails_lens/issues/30)) ([a6d6e27](https://github.com/seuros/rails_lens/commit/a6d6e2715f61842ef3c2c585251ac3bf09ec740a))
+
 ## [0.2.12](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.11...rails_lens/v0.2.12) (2025-11-26)
 
 
