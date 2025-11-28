@@ -26,6 +26,12 @@
 #   { column = "post_id", references_table = "posts", references_column = "id", name = "fk_rails_2fd19c0db7" }
 # ]
 #
+# triggers = [
+#   { name = "increment_posts_comments_count", event = "INSERT", timing = "AFTER", function = "update_posts_comments_count", for_each = "ROW", condition = "(new.post_id IS NOT NULL)" },
+#   { name = "decrement_posts_comments_count", event = "DELETE", timing = "AFTER", function = "update_posts_comments_count", for_each = "ROW", condition = "(old.post_id IS NOT NULL)" },
+#   { name = "update_posts_comments_count_on_reassign", event = "UPDATE", timing = "AFTER", function = "update_posts_comments_count", for_each = "ROW", condition = "(old.post_id IS DISTINCT FROM new.post_id)" }
+# ]
+#
 # == Polymorphic Associations
 # Polymorphic References:
 # - commentable (commentable_type/commentable_id)

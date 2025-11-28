@@ -3,7 +3,6 @@
 module RailsLens
   module ERD
     class Visualizer
-      require_relative 'domain_color_mapper'
       attr_reader :options, :config
 
       def initialize(options: {})

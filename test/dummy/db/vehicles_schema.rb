@@ -430,6 +430,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_31_120002) do
     t.datetime "updated_at", null: false
     t.string "vehicle_type", limit: 20
     t.string "status", limit: 20
+    t.integer "maintenance_count", default: 0, null: false
   end
 
   add_foreign_key "comments", "posts"
@@ -449,4 +450,88 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_31_120002) do
   add_foreign_key "trips", "vehicles"
   add_foreign_key "vehicle_owners", "owners"
   add_foreign_key "vehicle_owners", "vehicles"
+
+  # MySQL triggers for maintenance_count (manually maintained)
+  execute <<-SQL
+    CREATE TRIGGER increment_vehicle_maintenance_count
+      AFTER INSERT ON maintenance_records FOR EACH ROW
+      UPDATE vehicles SET maintenance_count = maintenance_count + 1 WHERE id = NEW.vehicle_id
+  SQL
+
+  execute <<-SQL
+    CREATE TRIGGER decrement_vehicle_maintenance_count
+      AFTER DELETE ON maintenance_records FOR EACH ROW
+      UPDATE vehicles SET maintenance_count = GREATEST(maintenance_count - 1, 0) WHERE id = OLD.vehicle_id
+  SQL
+
+  # MySQL views (manually maintained)
+  execute <<-SQL
+    CREATE VIEW vehicle_performance_metrics AS
+    SELECT
+      v.id,
+      v.name,
+      v.model,
+      v.year,
+      v.vehicle_type,
+      v.fuel_type,
+      v.price,
+      v.mileage,
+      COUNT(DISTINCT mr.id) as maintenance_events,
+      COALESCE(SUM(mr.cost), 0) as total_maintenance_cost,
+      COUNT(DISTINCT t.id) as trip_count,
+      COALESCE(SUM(t.distance), 0) as total_distance,
+      CASE
+        WHEN COALESCE(SUM(t.distance), 0) > 0 THEN
+          ROUND(COALESCE(SUM(mr.cost), 0) / SUM(t.distance), 4)
+        ELSE NULL
+      END as cost_per_mile,
+      DATEDIFF(CURDATE(), v.created_at) as days_owned,
+      CASE
+        WHEN COUNT(mr.id) = 0 THEN 'No Maintenance'
+        WHEN COUNT(mr.id) <= 2 THEN 'Low Maintenance'
+        WHEN COUNT(mr.id) <= 5 THEN 'Regular Maintenance'
+        ELSE 'High Maintenance'
+      END as maintenance_category,
+      CASE
+        WHEN v.available = 1 AND v.condition = 'excellent' THEN 'Premium'
+        WHEN v.available = 1 AND v.condition = 'good' THEN 'Standard'
+        WHEN v.available = 1 THEN 'Basic'
+        ELSE 'Unavailable'
+      END as availability_tier
+    FROM vehicles v
+    LEFT JOIN maintenance_records mr ON v.id = mr.vehicle_id
+    LEFT JOIN trips t ON v.id = t.vehicle_id
+    GROUP BY v.id, v.name, v.model, v.year, v.vehicle_type, v.fuel_type, v.price, v.mileage, v.available, v.condition, v.created_at
+    ORDER BY cost_per_mile ASC, total_distance DESC
+  SQL
+
+  execute <<-SQL
+    CREATE VIEW maintenance_stats AS
+    SELECT
+      mr.vehicle_id,
+      v.name as vehicle_name,
+      v.model,
+      v.year,
+      COUNT(mr.id) as maintenance_count,
+      SUM(mr.cost) as total_cost,
+      AVG(mr.cost) as average_cost,
+      MIN(mr.service_date) as first_service_date,
+      MAX(mr.service_date) as last_service_date,
+      GROUP_CONCAT(DISTINCT mr.service_type ORDER BY mr.service_date SEPARATOR ', ') as service_types,
+      CASE
+        WHEN COUNT(mr.id) = 0 THEN 'No Maintenance'
+        WHEN COUNT(mr.id) <= 2 THEN 'Low Maintenance'
+        WHEN COUNT(mr.id) <= 5 THEN 'Regular Maintenance'
+        ELSE 'High Maintenance'
+      END as maintenance_level,
+      CASE
+        WHEN MAX(mr.service_date) < DATE_SUB(CURDATE(), INTERVAL 6 MONTH) THEN 'Service Due'
+        WHEN MAX(mr.service_date) < DATE_SUB(CURDATE(), INTERVAL 3 MONTH) THEN 'Service Soon'
+        ELSE 'Recently Serviced'
+      END as service_status
+    FROM vehicles v
+    LEFT JOIN maintenance_records mr ON v.id = mr.vehicle_id
+    GROUP BY mr.vehicle_id, v.name, v.model, v.year
+    ORDER BY total_cost DESC, maintenance_count DESC
+  SQL
 end

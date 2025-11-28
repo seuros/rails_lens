@@ -430,4 +430,80 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_31_120002) do
   add_foreign_key "trips", "vehicles"
   add_foreign_key "vehicle_owners", "owners"
   add_foreign_key "vehicle_owners", "vehicles"
+
+  # SQLite views (manually maintained)
+  execute <<-SQL
+    CREATE VIEW fossil_discovery_timeline AS
+    SELECT
+      fd.id,
+      fd.discovered_at,
+      fd.completeness,
+      fd.condition,
+      d.name as dinosaur_name,
+      d.species,
+      d.period,
+      d.diet,
+      es.name as excavation_site,
+      es.location as site_location,
+      es.depth as excavation_depth,
+      es.soil_type,
+      es.rock_formation,
+      es.climate_ancient,
+      CASE
+        WHEN fd.completeness >= 90 THEN 'Nearly Complete'
+        WHEN fd.completeness >= 70 THEN 'Well Preserved'
+        WHEN fd.completeness >= 50 THEN 'Moderately Complete'
+        WHEN fd.completeness >= 25 THEN 'Fragmentary'
+        ELSE 'Trace Evidence'
+      END as completeness_category,
+      strftime('%Y', fd.discovered_at) as discovery_year,
+      strftime('%m', fd.discovered_at) as discovery_month,
+      CASE
+        WHEN d.period = 'Triassic' THEN 1
+        WHEN d.period = 'Jurassic' THEN 2
+        WHEN d.period = 'Cretaceous' THEN 3
+        ELSE 4
+      END as period_order
+    FROM fossil_discoveries fd
+    INNER JOIN dinosaurs d ON fd.dinosaur_id = d.id
+    INNER JOIN excavation_sites es ON fd.excavation_site_id = es.id
+    ORDER BY fd.discovered_at DESC, fd.completeness DESC
+  SQL
+
+  execute <<-SQL
+    CREATE VIEW fossil_stats AS
+    SELECT
+      es.id as excavation_site_id,
+      es.name as site_name,
+      es.location,
+      es.coordinates,
+      es.depth,
+      es.soil_type,
+      es.rock_formation,
+      es.climate_ancient,
+      es.active,
+      COUNT(DISTINCT fd.id) as fossil_count,
+      COUNT(DISTINCT fd.dinosaur_id) as unique_dinosaur_count,
+      AVG(fd.completeness) as average_completeness,
+      MAX(fd.completeness) as best_completeness,
+      MIN(fd.completeness) as worst_completeness,
+      GROUP_CONCAT(DISTINCT d.species) as species_found,
+      GROUP_CONCAT(DISTINCT d.period) as periods_represented,
+      CASE
+        WHEN COUNT(fd.id) = 0 THEN 'No Fossils'
+        WHEN COUNT(fd.id) <= 5 THEN 'Few Fossils'
+        WHEN COUNT(fd.id) <= 20 THEN 'Moderate Fossils'
+        ELSE 'Rich Fossil Site'
+      END as richness_level,
+      CASE
+        WHEN es.active = 1 THEN 'Active Excavation'
+        ELSE 'Inactive Site'
+      END as excavation_status
+    FROM excavation_sites es
+    LEFT JOIN fossil_discoveries fd ON es.id = fd.excavation_site_id
+    LEFT JOIN dinosaurs d ON fd.dinosaur_id = d.id
+    GROUP BY es.id, es.name, es.location, es.coordinates, es.depth, es.soil_type,
+             es.rock_formation, es.climate_ancient, es.active
+    ORDER BY COUNT(fd.id) DESC, es.name
+  SQL
 end

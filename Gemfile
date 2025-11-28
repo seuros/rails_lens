@@ -21,7 +21,8 @@ else
   gem 'actionmailer', '>= 7.2.0'
 end
 
-gem 'activerecord-postgis'
+# PostGIS adapter only supports Rails 8+
+gem 'activerecord-postgis' if !ENV['RAILS_VERSION'] || ENV['RAILS_VERSION'].to_i >= 8
 gem 'closure_tree'
 gem 'dotenv', '~> 3.0'
 gem 'rubocop', '~> 1.66'

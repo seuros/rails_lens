@@ -27,7 +27,8 @@
 #   { name = "created_at", type = "datetime", nullable = false },
 #   { name = "updated_at", type = "datetime", nullable = false },
 #   { name = "vehicle_type", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true }
+#   { name = "status", type = "string", nullable = true },
+#   { name = "maintenance_count", type = "integer", nullable = false, default = "0" }
 # ]
 #
 # == Enums

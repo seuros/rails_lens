@@ -24,11 +24,12 @@ module RailsLens
 
       def test_uses_single_connection_for_models_in_same_database
         connection_ids = []
+        test_models = @model_classes
 
         # Monkey patch ModelDetector to return our test models
         original_detect = ModelDetector.method(:detect_models)
         ModelDetector.define_singleton_method(:detect_models) do |_options|
-          @model_classes
+          test_models
         end
 
         # Monkey patch the annotation manager to capture connections
@@ -52,26 +53,21 @@ module RailsLens
 
       def test_connection_released_after_annotation
         # Test that connections are properly released back to the pool
-        initial_connections = ApplicationRecord.connection_pool.connections.size
+        pool = ApplicationRecord.connection_pool
 
         # Run annotation multiple times
         3.times do
           AnnotationManager.annotate_all
         end
 
-        # Force a garbage collection to ensure any leaked connections would be visible
-        GC.start
+        # All connections should be idle after annotation completes
+        # (the test thread may hold 1 connection, but no extras should be busy)
+        busy_after = pool.stat[:busy]
 
-        # Connection pool size should not have grown
-        final_connections = ApplicationRecord.connection_pool.connections.size
-
-        assert_equal initial_connections, final_connections,
-                     'Connection pool should not grow after annotation'
+        assert_operator busy_after, :<=, 1, "Expected at most 1 busy connection (test thread), got #{busy_after}"
       end
 
       def test_multi_database_uses_separate_connections
-        skip 'Multi-database test requires Rails 6+' unless ActiveRecord::Base.respond_to?(:connected_to)
-
         # This test would verify that models from different databases
         # use different connections but share connections within each database
       end

@@ -40,6 +40,7 @@ module RailsLens
           add_columns_toml(lines)
           add_indexes_toml(lines) if show_indexes?
           add_foreign_keys_toml(lines) if show_foreign_keys?
+          add_triggers_toml(lines) if show_triggers?
           add_partitions_toml(lines) if has_partitions?
 
           lines.join("\n")
@@ -384,6 +385,80 @@ module RailsLens
 
         def view_last_refreshed
           nil # MySQL doesn't have materialized views
+        end
+
+        # Fetch triggers for the table
+        def fetch_triggers
+          quoted_table = connection.quote(unqualified_table_name)
+          result = connection.exec_query(<<~SQL.squish, 'MySQL Table Triggers')
+            SELECT
+              TRIGGER_NAME AS name,
+              ACTION_TIMING AS timing,
+              EVENT_MANIPULATION AS event,
+              'ROW' AS for_each,
+              ACTION_STATEMENT AS action_statement
+            FROM information_schema.TRIGGERS
+            WHERE TRIGGER_SCHEMA = DATABASE()
+              AND EVENT_OBJECT_TABLE = #{quoted_table}
+            ORDER BY TRIGGER_NAME
+          SQL
+
+          result.rows.map do |row|
+            {
+              name: row[0],
+              timing: row[1],
+              event: row[2],
+              for_each: row[3],
+              function: extract_function_call(row[4]),
+              definition: row[4]
+            }
+          end
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error => e
+          RailsLens.logger.debug { "Failed to fetch triggers for #{table_name}: #{e.message}" }
+          []
+        end
+
+        # Extract function/procedure call from trigger action statement
+        def extract_function_call(action_statement)
+          return nil unless action_statement
+
+          # Match CALL with optional schema prefix and backticks: CALL `schema`.`proc` or CALL schema.proc or CALL proc
+          match = action_statement.match(/CALL\s+(?:`?(\w+)`?\.)?`?(\w+)`?/i)
+          if match
+            schema_part = match[1]
+            proc_name = match[2]
+            schema_part ? "#{schema_part}.#{proc_name}" : proc_name
+          else
+            'inline'
+          end
+        end
+
+        # Fetch all user-defined functions
+        def self.fetch_functions(connection)
+          result = connection.exec_query(<<~SQL.squish, 'MySQL Functions')
+            SELECT
+              ROUTINE_NAME AS name,
+              ROUTINE_SCHEMA AS `schema`,
+              DATA_TYPE AS return_type,
+              ROUTINE_COMMENT AS description
+            FROM information_schema.ROUTINES
+            WHERE ROUTINE_SCHEMA = DATABASE()
+              AND ROUTINE_TYPE = 'FUNCTION'
+            ORDER BY ROUTINE_NAME
+          SQL
+
+          result.rows.map do |row|
+            {
+              name: row[0],
+              schema: row[1],
+              language: 'SQL',
+              return_type: row[2],
+              description: row[3]
+            }
+          end
+        rescue ActiveRecord::StatementInvalid, Mysql2::Error => e
+          RailsLens.logger.debug { "Failed to fetch functions: #{e.message}" }
+          []
         end
       end
     end

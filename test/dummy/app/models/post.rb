@@ -11,7 +11,8 @@
 #   { name = "user_id", type = "integer", nullable = false },
 #   { name = "published", type = "boolean", nullable = true, default = "false" },
 #   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "updated_at", type = "datetime", nullable = false },
+#   { name = "comments_count", type = "integer", nullable = false, default = "0" }
 # ]
 #
 # indexes = [

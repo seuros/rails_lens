@@ -3,8 +3,8 @@
 # <rails-lens:schema:begin>
 # connection = "vehicles"
 # database_dialect = "Mysql2"
-# database_version = "8.4.5"
-# database_name = "rails_lens_vehicles_development"
+# database_version = "8.4.7"
+# database_name = "rails_lens_vehicles_test"
 #
 # # This is an abstract class that establishes a database connection
 # # but does not have an associated table.

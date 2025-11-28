@@ -24,6 +24,28 @@ module RailsLens
         end
       end
 
+      # Also annotate database-level objects (functions, etc.)
+      if options[:include_database_objects]
+        db_results = annotate_database_objects(options)
+        results.merge!(database_objects: db_results)
+      end
+
+      results
+    end
+
+    def annotate_database_objects(options = {})
+      results = Schema::DatabaseAnnotator.annotate_all(options)
+
+      output.say "Annotated #{results[:annotated].length} abstract base classes with database objects", :green
+      output.say "Skipped #{results[:skipped].length} abstract classes", :yellow if results[:skipped].any?
+
+      if results[:failed].any?
+        output.say "Failed to annotate #{results[:failed].length} abstract classes:", :red
+        results[:failed].each do |failure|
+          output.say "  - #{failure[:model]}: #{failure[:error]}", :red
+        end
+      end
+
       results
     end
 
@@ -183,7 +205,7 @@ module RailsLens
       end
 
       # Create lib/tasks directory if it doesn't exist
-      FileUtils.mkdir_p(tasks_dir) unless Dir.exist?(tasks_dir)
+      FileUtils.mkdir_p(tasks_dir)
 
       # Write the rake task
       File.write(rake_file, rake_task_template)

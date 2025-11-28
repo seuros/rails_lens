@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../file_insertion_helper'
-
 module RailsLens
   module Schema
     class AnnotationManager
@@ -194,16 +192,8 @@ module RailsLens
           end
         end
 
-        # Get all connection pools first
-        all_pools = get_all_connection_pools(models_by_connection_pool)
-
-        # Log initial connection status (removed verbose output)
-
         models_by_connection_pool.each do |connection_pool, pool_models|
           if connection_pool
-            # Disconnect all OTHER connection pools before processing this one
-            disconnect_other_pools(connection_pool, all_pools, options)
-
             # Process all models for this database using a single connection
             connection_pool.with_connection do |connection|
               pool_models.each do |model|
@@ -278,60 +268,39 @@ module RailsLens
       end
 
       def self.remove_all(options = {})
-        models = ModelDetector.detect_models(options)
-        results = { removed: [], skipped: [], failed: [] }
+        # Use filesystem-based removal (doesn't require database)
+        remove_all_by_filesystem(options)
+      end
 
-        models.each do |model|
-          manager = new(model)
-          if manager.remove_annotations
-            results[:removed] << model.name
+      def self.remove_all_by_filesystem(options = {})
+        base_path = options[:models_path] || default_models_path
+        results = { removed: [], skipped: [], failed: [] }
+        pattern = File.join(base_path, '**', '*.rb')
+        files = Dir.glob(pattern)
+
+        files.each do |file_path|
+          content = File.read(file_path)
+          next unless Annotation.extract(content)
+
+          cleaned = Annotation.remove(content)
+          if cleaned == content
+            results[:skipped] << File.basename(file_path, '.rb').camelize
           else
-            results[:skipped] << model.name
+            File.write(file_path, cleaned)
+            model_name = File.basename(file_path, '.rb').camelize
+            results[:removed] << model_name
           end
         rescue StandardError => e
-          results[:failed] << { model: model.name, error: e.message }
+          results[:failed] << { model: File.basename(file_path, '.rb').camelize, error: e.message }
         end
 
         results
       end
 
-      def self.disconnect_other_pools(current_pool, all_pools, options = {})
-        all_pools.each do |pool|
-          next if pool == current_pool || pool.nil?
+      def self.default_models_path
+        return Rails.root.join('app/models') if defined?(Rails.root)
 
-          begin
-            if pool.connected?
-              pool.disconnect!
-            end
-          rescue StandardError => e
-            warn "Failed to disconnect pool: #{e.message}"
-          end
-        end
-      end
-
-      def self.get_all_connection_pools(models_by_pool)
-        models_by_pool.keys.compact
-      end
-
-      def self.log_connection_status(all_pools, options = {})
-        return unless options[:verbose]
-
-        puts "\n=== Connection Pool Status ==="
-        all_pools.each do |pool|
-          next unless pool
-
-          begin
-            name = pool.db_config&.name || 'unknown'
-            connected = pool.connected?
-            size = pool.size
-            checked_out = pool.stat[:busy]
-
-            puts "Pool #{name}: connected=#{connected}, size=#{size}, busy=#{checked_out}"
-          rescue StandardError => e
-            puts "Pool status error: #{e.message}"
-          end
-        end
-        puts "================================\n"
+        File.join(Dir.pwd, 'app', 'models')
       end
 
       private

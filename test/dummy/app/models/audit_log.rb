@@ -1,4 +1,26 @@
 # frozen_string_literal: true
+
+# <rails-lens:schema:begin>
+# table = "audit.audit_logs"
+# database_dialect = "PostgreSQL"
+# schema = "audit"
+#
+# columns = [
+#   { name = "id", type = "integer", primary_key = true, nullable = false },
+#   { name = "table_name", type = "string", nullable = false },
+#   { name = "record_id", type = "integer", nullable = false },
+#   { name = "action", type = "string", nullable = false },
+#   { name = "user_id", type = "integer", nullable = false },
+#   { name = "changes", type = "jsonb", nullable = true },
+#   { name = "created_at", type = "datetime", nullable = false },
+#   { name = "updated_at", type = "datetime", nullable = false }
+# ]
+#
+# == Notes
+# - Column 'changes' should probably have NOT NULL constraint
+# - String column 'table_name' has no length limit - consider adding one
+# - String column 'action' has no length limit - consider adding one
+# <rails-lens:schema:end>
 class AuditLog < ApplicationRecord
   self.table_name = 'audit.audit_logs'
 

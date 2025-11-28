@@ -66,16 +66,8 @@ module RailsLens
         end
 
         def test_schema_search_path_handling
-          # Create test table in custom schema
-          @connection.execute('CREATE SCHEMA IF NOT EXISTS custom_schema')
-          @connection.execute(<<~SQL.squish)
-            CREATE TABLE IF NOT EXISTS custom_schema.widgets (
-              id serial PRIMARY KEY,
-              name varchar(100) NOT NULL
-            )
-          SQL
-
-          adapter = Postgresql.new(@connection, 'custom_schema.widgets')
+          # Use existing audit schema table
+          adapter = Postgresql.new(@connection, 'audit.audit_logs')
 
           # These operations should work without errors
           assert_nothing_raised do
@@ -83,7 +75,8 @@ module RailsLens
 
             assert_predicate columns, :any?
             assert(columns.any? { |c| c.name == 'id' })
-            assert(columns.any? { |c| c.name == 'name' })
+            assert(columns.any? { |c| c.name == 'table_name' })
+            assert(columns.any? { |c| c.name == 'record_id' })
           end
 
           # Verify primary_key extraction works
@@ -92,17 +85,53 @@ module RailsLens
 
             assert_equal 'id', pk
           end
-        ensure
-          begin
-            @connection.execute('DROP TABLE IF EXISTS custom_schema.widgets')
-          rescue
-            nil
-          end
-          begin
-            @connection.execute('DROP SCHEMA IF EXISTS custom_schema CASCADE')
-          rescue
-            nil
-          end
+        end
+
+        def test_fetch_triggers_returns_user_defined_triggers
+          # Use existing comments table which has triggers defined in schema.rb
+          adapter = Postgresql.new(@connection, 'comments')
+          triggers = adapter.fetch_triggers
+
+          assert_predicate triggers, :any?, 'Expected at least one trigger'
+
+          trigger = triggers.find { |t| t[:name] == 'increment_posts_comments_count' }
+
+          assert trigger, 'Expected to find increment_posts_comments_count'
+          assert_equal 'AFTER', trigger[:timing]
+          assert_equal 'INSERT', trigger[:event]
+          assert_equal 'ROW', trigger[:for_each]
+          assert_equal 'update_posts_comments_count', trigger[:function]
+        end
+
+        def test_fetch_triggers_excludes_extension_triggers
+          adapter = Postgresql.new(@connection, 'users')
+          triggers = adapter.fetch_triggers
+
+          # Extension triggers (if any) should be excluded
+          # This mainly tests the query doesn't error
+          assert_instance_of Array, triggers
+        end
+
+        def test_fetch_triggers_with_when_condition
+          # Use existing comments table - triggers have WHEN conditions
+          adapter = Postgresql.new(@connection, 'comments')
+          triggers = adapter.fetch_triggers
+
+          trigger = triggers.find { |t| t[:name] == 'increment_posts_comments_count' }
+
+          assert trigger, 'Expected to find increment_posts_comments_count'
+          assert_match(/post_id/, trigger[:condition].to_s)
+        end
+
+        def test_triggers_included_in_annotation
+          # Use existing comments table with triggers
+          adapter = Postgresql.new(@connection, 'comments')
+          annotation = adapter.generate_annotation(nil)
+
+          assert_match(/triggers = \[/, annotation)
+          assert_match(/increment_posts_comments_count/, annotation)
+          assert_match(/timing = "AFTER"/, annotation)
+          assert_match(/event = "INSERT"/, annotation)
         end
       end
     end

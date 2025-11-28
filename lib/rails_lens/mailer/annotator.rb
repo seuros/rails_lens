@@ -7,14 +7,14 @@ module RailsLens
       def initialize(dry_run: false)
         @dry_run = dry_run
         @mailers = RailsLens::Mailer::Extractor.call
-        @changed_files = []
+        @changed_files = Set.new
       end
 
       # Annotate all mailer files with mailer information
       #
       # @param pattern [String] Glob pattern for mailer files
       # @param exclusion [String] Glob pattern for files to exclude
-      # @return [Array<String>] List of changed files
+      # @return [Set<String>] Set of changed files
       def annotate_all(pattern: '**/*_mailer.rb', exclusion: 'vendor/**/*_mailer.rb')
         # Simply annotate all mailer files we found via their source locations
         source_paths_map.each do |source_path, methods|
@@ -31,7 +31,7 @@ module RailsLens
       #
       # @param pattern [String] Glob pattern for mailer files
       # @param exclusion [String] Glob pattern for files to exclude
-      # @return [Array<String>] List of changed files
+      # @return [Set<String>] Set of changed files
       def remove_all(pattern: '**/*_mailer.rb', exclusion: 'vendor/**/*_mailer.rb')
         # Remove annotations from all mailer files we found via their source locations
         source_paths_map.each_key do |source_path|
