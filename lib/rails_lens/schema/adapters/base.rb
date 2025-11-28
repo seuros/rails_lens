@@ -175,6 +175,42 @@ module RailsLens
             connection.supports_comments?
         end
 
+        def show_triggers?
+          RailsLens.config.schema[:format_options][:show_triggers]
+        end
+
+        def fetch_triggers
+          # Override in database-specific adapters
+          []
+        end
+
+        def add_triggers_toml(lines)
+          triggers = fetch_triggers
+          return if triggers.empty?
+
+          lines << ''
+          lines << 'triggers = ['
+          triggers.each_with_index do |trigger, i|
+            line = '  { '
+            attrs = []
+            attrs << "name = \"#{trigger[:name]}\""
+            attrs << "event = \"#{trigger[:event]}\""
+            attrs << "timing = \"#{trigger[:timing]}\""
+            attrs << "function = \"#{trigger[:function]}\""
+            attrs << "for_each = \"#{trigger[:for_each]}\"" if trigger[:for_each]
+            attrs << "condition = \"#{escape_toml_string(trigger[:condition])}\"" if trigger[:condition]
+            line += attrs.join(', ')
+            line += ' }'
+            line += ',' if i < triggers.length - 1
+            lines << line
+          end
+          lines << ']'
+        end
+
+        def escape_toml_string(str)
+          str.to_s.gsub('\\', '\\\\').gsub('"', '\\"')
+        end
+
         # Structured formatting methods
         def add_columns_structured(lines)
           lines << 'COLUMNS:'

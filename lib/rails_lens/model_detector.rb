@@ -415,21 +415,67 @@ module RailsLens
       end
 
       def table_exists_with_connection?(model, connection)
-        connection.table_exists?(model.table_name)
+        table_name = model.table_name
+
+        # Handle schema-qualified table names for PostgreSQL (e.g., 'audit.audit_logs')
+        if connection.adapter_name == 'PostgreSQL' && table_name.include?('.')
+          with_schema_in_search_path(connection, table_name) do |unqualified_name|
+            connection.table_exists?(unqualified_name) || connection.views.include?(unqualified_name)
+          end
+        else
+          # Check both tables and views
+          return true if connection.table_exists?(table_name)
+          return true if connection.views.include?(table_name)
+
+          # Fallback for SQLite: direct sqlite_master query for views
+          if connection.adapter_name.downcase.include?('sqlite')
+            check_sqlite_view(connection, table_name)
+          else
+            false
+          end
+        end
       rescue StandardError
         false
       end
 
       def columns_empty_with_connection?(model, connection)
-        connection.columns(model.table_name).empty?
+        table_name = model.table_name
+
+        if connection.adapter_name == 'PostgreSQL' && table_name.include?('.')
+          with_schema_in_search_path(connection, table_name) do |unqualified_name|
+            connection.columns(unqualified_name).empty?
+          end
+        else
+          connection.columns(table_name).empty?
+        end
       rescue StandardError
         true
       end
 
       def get_column_count_with_connection(model, connection)
-        connection.columns(model.table_name).size
+        table_name = model.table_name
+
+        if connection.adapter_name == 'PostgreSQL' && table_name.include?('.')
+          with_schema_in_search_path(connection, table_name) do |unqualified_name|
+            connection.columns(unqualified_name).size
+          end
+        else
+          connection.columns(table_name).size
+        end
       rescue StandardError
         0
+      end
+
+      # Helper to execute block with schema in PostgreSQL search_path
+      def with_schema_in_search_path(connection, qualified_table_name)
+        schema_name, unqualified_name = qualified_table_name.split('.', 2)
+        original_search_path = connection.schema_search_path
+        begin
+          connection.schema_search_path = "#{schema_name}, #{original_search_path}"
+          yield unqualified_name
+        ensure
+          connection.schema_search_path = original_search_path
+        end
       end
 
       def has_sti_column?(model)

@@ -16,6 +16,14 @@
 #   { name = "locomotion", type = "string", nullable = true }
 # ]
 #
+# indexes = [
+#   { name = "index_species_on_family_id", columns = ["family_id"] }
+# ]
+#
+# foreign_keys = [
+#   { column = "family_id", references_table = "families", references_column = "id" }
+# ]
+#
 # == Notes
 # - Association 'family' should specify inverse_of
 # - Association 'dinosaurs' has N+1 query risk. Consider using includes/preload

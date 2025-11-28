@@ -13,6 +13,20 @@
 ActiveRecord::Schema[8.0].define(version: 2025_07_31_083442) do
   create_schema "audit"
 
+  # Audit logs table in audit schema (manually maintained - not auto-dumped by Rails)
+  execute <<-SQL
+    CREATE TABLE IF NOT EXISTS audit.audit_logs (
+      id BIGSERIAL PRIMARY KEY,
+      table_name VARCHAR NOT NULL,
+      record_id BIGINT NOT NULL,
+      action VARCHAR NOT NULL,
+      user_id BIGINT NOT NULL,
+      changes JSONB,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  SQL
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -286,6 +300,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_083442) do
     t.boolean "published", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "comments_count", default: 0, null: false
     t.index ["published"], name: "index_posts_on_published"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
@@ -479,4 +494,127 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_083442) do
   add_foreign_key "trips", "vehicles"
   add_foreign_key "vehicle_owners", "owners"
   add_foreign_key "vehicle_owners", "vehicles"
+
+  # PostgreSQL triggers and functions for comments_count (manually maintained)
+  execute <<-SQL
+    CREATE FUNCTION update_posts_comments_count()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF (TG_OP = 'INSERT') THEN
+        UPDATE posts SET comments_count = comments_count + 1 WHERE id = NEW.post_id;
+        RETURN NEW;
+      ELSIF (TG_OP = 'DELETE') THEN
+        UPDATE posts SET comments_count = GREATEST(comments_count - 1, 0) WHERE id = OLD.post_id;
+        RETURN OLD;
+      ELSIF (TG_OP = 'UPDATE' AND OLD.post_id IS DISTINCT FROM NEW.post_id) THEN
+        UPDATE posts SET comments_count = GREATEST(comments_count - 1, 0) WHERE id = OLD.post_id;
+        UPDATE posts SET comments_count = comments_count + 1 WHERE id = NEW.post_id;
+        RETURN NEW;
+      END IF;
+      RETURN NEW;
+    END;
+    $$;
+
+    COMMENT ON FUNCTION update_posts_comments_count() IS 'Maintains the comments_count cache counter on the posts table';
+
+    CREATE TRIGGER increment_posts_comments_count
+      AFTER INSERT ON comments FOR EACH ROW
+      WHEN (NEW.post_id IS NOT NULL)
+      EXECUTE FUNCTION update_posts_comments_count();
+
+    CREATE TRIGGER decrement_posts_comments_count
+      AFTER DELETE ON comments FOR EACH ROW
+      WHEN (OLD.post_id IS NOT NULL)
+      EXECUTE FUNCTION update_posts_comments_count();
+
+    CREATE TRIGGER update_posts_comments_count_on_reassign
+      AFTER UPDATE ON comments FOR EACH ROW
+      WHEN (OLD.post_id IS DISTINCT FROM NEW.post_id)
+      EXECUTE FUNCTION update_posts_comments_count();
+  SQL
+
+  # PostgreSQL views (manually maintained)
+  execute <<-SQL
+    CREATE VIEW crew_mission_stats AS
+    SELECT
+      cm.id,
+      cm.name,
+      cm.rank,
+      cm.specialization,
+      COUNT(DISTINCT scm.spaceship_id) AS ships_served,
+      COUNT(DISTINCT m.id) AS missions_participated,
+      MAX(scm.assigned_at) AS last_assignment,
+      CASE
+        WHEN cm.rank IN ('Admiral', 'Captain', 'Commander') THEN 'Officer'
+        WHEN cm.rank IN ('Lieutenant Commander', 'Lieutenant', 'Lieutenant JG') THEN 'Junior Officer'
+        ELSE 'Crew'
+      END AS rank_category
+    FROM crew_members cm
+    LEFT JOIN spaceship_crew_members scm ON cm.id = scm.crew_member_id
+    LEFT JOIN missions m ON scm.spaceship_id = (SELECT id FROM spaceships WHERE name = m.name)
+    GROUP BY cm.id, cm.name, cm.rank, cm.specialization
+    ORDER BY COUNT(DISTINCT m.id) DESC, cm.rank, cm.name;
+
+    CREATE VIEW spaceship_stats AS
+    SELECT
+      s.id,
+      s.name,
+      s.class_type,
+      s.status,
+      s.warp_capability,
+      COUNT(DISTINCT scm.crew_member_id) FILTER (WHERE scm.active = true) as active_crew_count,
+      COUNT(DISTINCT m.id) as mission_count,
+      COUNT(DISTINCT sc.id) as coordinate_records,
+      CASE
+        WHEN s.type = 'CargoVessel' THEN s.cargo_capacity::text || ' (' || COALESCE(s.cargo_type, 'Unknown') || ')'
+        WHEN s.type = 'StarfleetBattleCruiser' THEN 'Battle Ready: ' || COALESCE(s.battle_status, 'Unknown')
+        ELSE 'Standard Configuration'
+      END as special_configuration
+    FROM spaceships s
+    LEFT JOIN spaceship_crew_members scm ON s.id = scm.spaceship_id
+    LEFT JOIN missions m ON s.name = m.name
+    LEFT JOIN spatial_coordinates sc ON s.id = sc.spaceship_id
+    GROUP BY s.id, s.name, s.class_type, s.status, s.warp_capability, s.type, s.cargo_capacity, s.cargo_type, s.battle_status
+    ORDER BY s.name;
+
+    CREATE MATERIALIZED VIEW spatial_analysis AS
+    SELECT
+      s.id AS spaceship_id,
+      s.name AS spaceship_name,
+      s.class_type,
+      COUNT(sc.id) AS coordinate_records,
+      ST_EXTENT(sc.location) AS coverage_area,
+      AVG(sc.altitude) AS avg_altitude,
+      MIN(sc.recorded_at) AS first_recorded,
+      MAX(sc.recorded_at) AS last_recorded,
+      EXTRACT(EPOCH FROM (MAX(sc.recorded_at) - MIN(sc.recorded_at))) / 3600 AS mission_duration_hours,
+      COUNT(DISTINCT DATE(sc.recorded_at)) AS active_days
+    FROM spaceships s
+    LEFT JOIN spatial_coordinates sc ON s.id = sc.spaceship_id
+    WHERE sc.id IS NOT NULL
+    GROUP BY s.id, s.name, s.class_type
+    ORDER BY COUNT(sc.id) DESC, s.name;
+
+    CREATE INDEX index_spatial_analysis_on_spaceship_id ON spatial_analysis (spaceship_id);
+    CREATE INDEX index_spatial_analysis_on_coordinate_records ON spatial_analysis (coordinate_records);
+    CREATE INDEX index_spatial_analysis_on_mission_duration_hours ON spatial_analysis (mission_duration_hours);
+
+    CREATE VIEW active_crew_members AS
+    SELECT
+      cm.id,
+      cm.name,
+      cm.rank,
+      cm.species,
+      cm.specialization,
+      cm.status,
+      scm.spaceship_id,
+      s.name AS spaceship_name,
+      scm.position,
+      scm.assigned_at
+    FROM crew_members cm
+    INNER JOIN spaceship_crew_members scm ON cm.id = scm.crew_member_id AND scm.active = true
+    INNER JOIN spaceships s ON scm.spaceship_id = s.id
+    WHERE cm.active = true
+    ORDER BY cm.rank, cm.name;
+  SQL
 end

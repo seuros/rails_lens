@@ -26,6 +26,11 @@
 #   { column = "vehicle_id", references_table = "vehicles", references_column = "id", name = "fk_rails_6e208080fe" }
 # ]
 #
+# triggers = [
+#   { name = "decrement_vehicle_maintenance_count", event = "DELETE", timing = "AFTER", function = "inline", for_each = "ROW" },
+#   { name = "increment_vehicle_maintenance_count", event = "INSERT", timing = "AFTER", function = "inline", for_each = "ROW" }
+# ]
+#
 # == Enums
 # - service_type: { oil_change: "oil_change", tire_rotation: "tire_rotation", brake_service: "brake_service", transmission: "transmission", engine_repair: "engine_repair", inspection: "inspection", warranty: "warranty", recall: "recall" } (string)
 #

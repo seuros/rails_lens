@@ -29,6 +29,7 @@ module RailsLens
           add_indexes_toml(lines) if show_indexes?
           add_foreign_keys_toml(lines) if show_foreign_keys?
           add_check_constraints_toml(lines) if show_check_constraints?
+          add_triggers_toml(lines) if show_triggers?
           add_table_comment_toml(lines) if show_comments?
 
           lines.join("\n")
@@ -294,23 +295,24 @@ module RailsLens
 
         # Fetch all view metadata in a single consolidated query
         def fetch_view_metadata
+          target_schema = schema_name || 'public'
           result = connection.exec_query(<<~SQL.squish, 'PostgreSQL View Metadata')
             WITH view_info AS (
-              -- Check for materialized view
               SELECT
                 'materialized' as view_type,
                 false as is_updatable,
                 mv.matviewname as view_name
               FROM pg_matviews mv
               WHERE mv.matviewname = '#{connection.quote_string(unqualified_table_name)}'
+                AND mv.schemaname = '#{connection.quote_string(target_schema)}'
               UNION ALL
-              -- Check for regular view
               SELECT
                 'regular' as view_type,
                 CASE WHEN v.is_updatable = 'YES' THEN true ELSE false END as is_updatable,
                 v.table_name as view_name
               FROM information_schema.views v
               WHERE v.table_name = '#{connection.quote_string(unqualified_table_name)}'
+                AND v.table_schema = '#{connection.quote_string(target_schema)}'
             ),
             dependencies AS (
               SELECT DISTINCT c2.relname as dependency_name
@@ -336,10 +338,19 @@ module RailsLens
           return nil if result.rows.empty?
 
           row = result.rows.first
+          # Parse PostgreSQL array string (e.g., "{table1,table2}" or "{}")
+          deps_raw = row[2]
+          deps = if deps_raw.is_a?(Array)
+                   deps_raw
+                 elsif deps_raw.is_a?(String) && deps_raw.start_with?('{')
+                   deps_raw.gsub(/[{}]/, '').split(',').map(&:strip).reject(&:empty?)
+                 else
+                   []
+                 end
           {
             type: row[0],
             updatable: ['t', true].include?(row[1]),
-            dependencies: row[2] || []
+            dependencies: deps
           }
         rescue ActiveRecord::StatementInvalid, PG::Error => e
           RailsLens.logger.debug { "Failed to fetch view metadata for #{table_name}: #{e.message}" }
@@ -400,6 +411,115 @@ module RailsLens
           result.rows.first&.first
         rescue ActiveRecord::StatementInvalid, PG::Error
           nil
+        end
+
+        # Fetch triggers for the table, excluding extension-owned triggers
+        def fetch_triggers
+          result = connection.exec_query(<<~SQL.squish, 'PostgreSQL Table Triggers')
+            SELECT
+              t.tgname AS name,
+              CASE t.tgtype::integer & 66
+                WHEN 2 THEN 'BEFORE'
+                WHEN 64 THEN 'INSTEAD OF'
+                ELSE 'AFTER'
+              END AS timing,
+              CASE t.tgtype::integer & 60
+                WHEN 4 THEN 'INSERT'
+                WHEN 8 THEN 'DELETE'
+                WHEN 16 THEN 'UPDATE'
+                WHEN 20 THEN 'INSERT OR UPDATE'
+                WHEN 24 THEN 'UPDATE OR DELETE'
+                WHEN 12 THEN 'INSERT OR DELETE'
+                WHEN 28 THEN 'INSERT OR UPDATE OR DELETE'
+                WHEN 32 THEN 'TRUNCATE'
+                ELSE 'UNKNOWN'
+              END AS event,
+              CASE WHEN t.tgtype::integer & 1 = 1 THEN 'ROW' ELSE 'STATEMENT' END AS for_each,
+              p.proname AS function_name,
+              n.nspname AS function_schema,
+              pg_get_triggerdef(t.oid) AS definition
+            FROM pg_trigger t
+            JOIN pg_class c ON t.tgrelid = c.oid
+            JOIN pg_namespace cn ON c.relnamespace = cn.oid
+            JOIN pg_proc p ON t.tgfoid = p.oid
+            JOIN pg_namespace n ON p.pronamespace = n.oid
+            WHERE c.relname = '#{connection.quote_string(unqualified_table_name)}'
+              AND cn.nspname = '#{connection.quote_string(schema_name || 'public')}'
+              AND NOT t.tgisinternal
+              -- Exclude triggers owned by extensions
+              AND NOT EXISTS (
+                SELECT 1 FROM pg_depend d
+                JOIN pg_extension e ON d.refobjid = e.oid
+                WHERE d.objid = t.oid
+                  AND d.deptype = 'e'
+              )
+            ORDER BY t.tgname
+          SQL
+
+          result.rows.map do |row|
+            {
+              name: row[0],
+              timing: row[1],
+              event: row[2],
+              for_each: row[3],
+              function: row[5] == 'public' ? row[4] : "#{row[5]}.#{row[4]}",
+              definition: row[6],
+              condition: extract_trigger_condition(row[6])
+            }
+          end
+        rescue ActiveRecord::StatementInvalid, PG::Error => e
+          RailsLens.logger.debug { "Failed to fetch triggers for #{table_name}: #{e.message}" }
+          []
+        end
+
+        # Extract WHEN condition from trigger definition if present
+        def extract_trigger_condition(definition)
+          return nil unless definition
+
+          match = definition.match(/WHEN\s*\((.+?)\)\s*EXECUTE/i)
+          match ? match[1] : nil
+        end
+
+        # Fetch all user-defined functions, excluding extension-owned functions
+        # This is a database-level operation, returns all functions in user schemas
+        def self.fetch_functions(connection)
+          result = connection.exec_query(<<~SQL.squish, 'PostgreSQL Functions')
+            SELECT
+              p.proname AS name,
+              n.nspname AS schema,
+              l.lanname AS language,
+              CASE
+                WHEN p.prorettype = 'trigger'::regtype THEN 'trigger'
+                ELSE pg_catalog.format_type(p.prorettype, NULL)
+              END AS return_type,
+              pg_get_functiondef(p.oid) AS definition,
+              obj_description(p.oid, 'pg_proc') AS description
+            FROM pg_proc p
+            JOIN pg_namespace n ON p.pronamespace = n.oid
+            JOIN pg_language l ON p.prolang = l.oid
+            WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND NOT EXISTS (
+                SELECT 1 FROM pg_depend d
+                JOIN pg_extension e ON d.refobjid = e.oid
+                WHERE d.objid = p.oid
+                  AND d.deptype = 'e'
+              )
+            ORDER BY n.nspname, p.proname
+          SQL
+
+          result.rows.map do |row|
+            {
+              name: row[0],
+              schema: row[1],
+              language: row[2],
+              return_type: row[3],
+              definition: row[4],
+              description: row[5]
+            }
+          end
+        rescue ActiveRecord::StatementInvalid, PG::Error => e
+          RailsLens.logger.debug { "Failed to fetch functions: #{e.message}" }
+          []
         end
       end
     end

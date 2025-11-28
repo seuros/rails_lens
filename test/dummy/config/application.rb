@@ -40,5 +40,9 @@ module Dummy
     config.active_record.database_selector = { delay: 2 }
     config.active_record.database_resolver = ActiveRecord::Middleware::DatabaseSelector::Resolver
     config.active_record.database_resolver_context = ActiveRecord::Middleware::DatabaseSelector::Resolver::Session
+
+    # Disable schema dump to preserve manually maintained schema.rb
+    # (includes audit.audit_logs table and other non-standard structures)
+    config.active_record.dump_schema_after_migration = false
   end
 end

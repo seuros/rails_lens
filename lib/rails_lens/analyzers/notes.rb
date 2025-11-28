@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require_relative '../errors'
-require_relative 'error_handling'
-
 module RailsLens
   module Analyzers
     class Notes < Base

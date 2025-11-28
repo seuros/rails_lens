@@ -11,17 +11,18 @@
 #   { name = "name", type = "string", nullable = true },
 #   { name = "rank", type = "string", nullable = true },
 #   { name = "species", type = "string", nullable = true },
-#   { name = "birth_planet", type = "string", nullable = true },
 #   { name = "specialization", type = "string", nullable = true },
-#   { name = "joined_starfleet_at", type = "datetime", nullable = true },
-#   { name = "active_assignments", type = "integer", nullable = true },
-#   { name = "assigned_spaceships", type = "string", nullable = true }
+#   { name = "status", type = "string", nullable = true },
+#   { name = "spaceship_id", type = "integer", nullable = true },
+#   { name = "spaceship_name", type = "string", nullable = true },
+#   { name = "position", type = "string", nullable = true },
+#   { name = "assigned_at", type = "datetime", nullable = true }
 # ]
 #
 # == View Information
 # View Type: regular
 # Updatable: No
-# Definition: SELECT cm.id, cm.name, cm.rank, cm.species, cm.birth_planet, cm.specialization, cm.joined_starfleet_at, count(scm.id) AS active_assignments, array_agg(DISTINCT s.name) F...
+# Definition: SELECT cm.id, cm.name, cm.rank, cm.species, cm.specialization, cm.status, scm.spaceship_id, s.name AS spaceship_name, scm."position", scm.assigned_at FROM ((crew_...
 #
 # == Notes
 # - 👁️ View-backed model: read-only

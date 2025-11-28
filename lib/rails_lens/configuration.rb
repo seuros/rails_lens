@@ -40,7 +40,9 @@ module RailsLens
           show_comments: true,
           show_foreign_keys: true,
           show_indexes: true,
-          show_check_constraints: true
+          show_check_constraints: true,
+          show_triggers: true,
+          show_functions: true
         }
       }
 

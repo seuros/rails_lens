@@ -18,6 +18,16 @@
 #   { name = "fossil_type", type = "string", nullable = true }
 # ]
 #
+# indexes = [
+#   { name = "index_fossil_discoveries_on_excavation_site_id", columns = ["excavation_site_id"] },
+#   { name = "index_fossil_discoveries_on_dinosaur_id", columns = ["dinosaur_id"] }
+# ]
+#
+# foreign_keys = [
+#   { column = "excavation_site_id", references_table = "excavation_sites", references_column = "id" },
+#   { column = "dinosaur_id", references_table = "dinosaurs", references_column = "id" }
+# ]
+#
 # == Enums
 # - preservation_quality: { excellent: "excellent", good: "good", fair: "fair", poor: "poor", fragmentary: "fragmentary" } (string)
 # - fossil_type: { skeleton: "skeleton", skull: "skull", teeth: "teeth", tracks: "tracks", eggs: "eggs", coprolite: "coprolite", skin_impression: "skin_impression" } (string)

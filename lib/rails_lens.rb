@@ -60,7 +60,7 @@ module RailsLens
 
         current_value = config.send(section)
         if current_value.is_a?(Hash)
-          config.send("#{section}=", current_value.merge(settings.symbolize_keys))
+          config.send("#{section}=", current_value.deep_merge(settings.symbolize_keys))
         else
           config.send("#{section}=", settings.symbolize_keys)
         end
