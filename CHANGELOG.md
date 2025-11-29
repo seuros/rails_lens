@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.13...rails_lens/v0.3.0) (2025-11-29)
+
+
+### Features
+
+* add callback annotations with Rails 8 unified callback chain API ([bcc43f7](https://github.com/seuros/rails_lens/commit/bcc43f783ed207cc57acf7f2d8cf7691c2481484))
+* compact TOML annotation format with NoteCodes ([5de557e](https://github.com/seuros/rails_lens/commit/5de557ea209ad7554527e87715d1966a1ea27db2))
+
+
+### Bug Fixes
+
+* address codex review feedback for callbacks analyzer ([dbcfb1a](https://github.com/seuros/rails_lens/commit/dbcfb1ae0730d813b3e05e4df2f9bb00167bc5a6))
+* Merge pull request [#32](https://github.com/seuros/rails_lens/issues/32) from seuros/feat/compact-toml-annotations ([4b9171d](https://github.com/seuros/rails_lens/commit/4b9171d2eabf78409acdeaf3a906f4d0d54cb0c9))
+
 ## [0.2.13](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.12...rails_lens/v0.2.13) (2025-11-28)
 
 
