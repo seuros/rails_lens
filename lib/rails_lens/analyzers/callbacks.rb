@@ -24,8 +24,8 @@ module RailsLens
         around: 'around_'
       }.freeze
 
-      # Callbacks that commonly come from ActiveRecord internals
-      INTERNAL_CALLBACKS = %w[
+      # Callbacks that commonly come from ActiveRecord internals (symbol-based)
+      INTERNAL_CALLBACK_PREFIXES = %w[
         autosave_associated_records_for_
         around_save_collection_association
         _ensure_no_duplicate_errors
@@ -35,6 +35,19 @@ module RailsLens
         add_to_transaction
         sync_with_transaction_state
         trigger_transactional_callbacks
+      ].freeze
+
+      # Known callback order for formatting output
+      CALLBACK_ORDER = %i[
+        before_validation after_validation
+        before_save around_save after_save
+        before_create around_create after_create
+        before_update around_update after_update
+        before_destroy around_destroy after_destroy
+        before_commit around_commit after_commit
+        before_rollback around_rollback after_rollback
+        after_touch
+        after_initialize after_find
       ].freeze
 
       def analyze
@@ -58,49 +71,74 @@ module RailsLens
 
           chain.each do |callback|
             next if internal_callback?(callback)
-            next if inherited_from_base?(callback)
+            next unless defined_in_model_hierarchy?(callback)
 
             callback_info = parse_callback(callback, chain_name)
             callbacks << callback_info if callback_info
           end
         end
 
-        callbacks.uniq { |c| [c[:type], c[:method], c[:options]] }
+        # Keep order, dedupe only exact duplicates (same type, method, and options hash)
+        seen = Set.new
+        callbacks.select do |c|
+          key = [c[:type], c[:method], c[:options].to_a.sort]
+          seen.add?(key)
+        end
       end
 
       def internal_callback?(callback)
         filter = callback.filter
 
-        # Proc callbacks from dependent: :destroy or other association callbacks
-        return true if filter.is_a?(Proc)
+        case filter
+        when Symbol
+          filter_name = filter.to_s
+          INTERNAL_CALLBACK_PREFIXES.any? { |prefix| filter_name.start_with?(prefix) }
+        when Proc
+          # Check if proc is from Rails internals (association callbacks, dependent: :destroy)
+          source_location = filter.source_location rescue nil
+          return false if source_location.nil?
 
-        return false unless filter.is_a?(Symbol)
-
-        filter_name = filter.to_s
-        INTERNAL_CALLBACKS.any? { |prefix| filter_name.start_with?(prefix) }
+          # Filter out procs defined in activerecord/activesupport gems
+          source_file = source_location[0].to_s
+          source_file.include?('/activerecord') || source_file.include?('/activesupport')
+        else
+          false
+        end
       end
 
-      def inherited_from_base?(callback)
+      def defined_in_model_hierarchy?(callback)
         filter = callback.filter
 
-        # Symbol callbacks - check if method is defined in model or its concerns
-        if filter.is_a?(Symbol)
-          return false if model_class.instance_methods(false).include?(filter)
-          return false if model_class.private_instance_methods(false).include?(filter)
+        case filter
+        when Symbol
+          # Check if method is defined in the model class itself
+          return true if model_class.instance_methods(false).include?(filter)
+          return true if model_class.private_instance_methods(false).include?(filter)
 
-          # Check if defined in included modules (concerns)
+          # Check if defined in included concerns (non-Rails modules)
           model_class.included_modules.each do |mod|
             next if mod.name.nil?
             next if mod.name.start_with?('ActiveRecord', 'ActiveModel', 'ActiveSupport')
 
-            return false if mod.instance_methods(false).include?(filter)
-            return false if mod.private_instance_methods(false).include?(filter)
+            return true if mod.instance_methods(false).include?(filter)
+            return true if mod.private_instance_methods(false).include?(filter)
           end
 
+          # For STI: check parent classes up to (but not including) ActiveRecord::Base
+          klass = model_class.superclass
+          while klass && klass < ActiveRecord::Base
+            return true if klass.instance_methods(false).include?(filter)
+            return true if klass.private_instance_methods(false).include?(filter)
+            klass = klass.superclass
+          end
+
+          false
+        when Proc
+          # User-defined procs - already filtered internal ones in internal_callback?
           true
         else
-          # Proc/lambda/object callbacks - assume they're from the model
-          false
+          # Callback objects - assume user-defined
+          true
         end
       end
 
@@ -138,13 +176,15 @@ module RailsLens
         # Extract :if condition
         if callback.instance_variable_defined?(:@if) && callback.instance_variable_get(:@if).present?
           conditions = callback.instance_variable_get(:@if)
-          options[:if] = format_conditions(conditions)
+          formatted = format_conditions(conditions)
+          options[:if] = formatted if formatted.any?
         end
 
         # Extract :unless condition
         if callback.instance_variable_defined?(:@unless) && callback.instance_variable_get(:@unless).present?
           conditions = callback.instance_variable_get(:@unless)
-          options[:unless] = format_conditions(conditions)
+          formatted = format_conditions(conditions)
+          options[:unless] = formatted if formatted.any?
         end
 
         # Extract :on option (for validation and commit callbacks)
@@ -153,8 +193,7 @@ module RailsLens
           options[:on] = Array(on_value).map(&:to_s)
         end
 
-        # Extract :prepend option - check if this callback was prepended
-        # In Rails 8, prepended callbacks appear first in the chain
+        # Extract :prepend option
         if callback.respond_to?(:options) && callback.options[:prepend]
           options[:prepend] = true
         end
@@ -168,9 +207,10 @@ module RailsLens
           when Symbol
             condition.to_s
           when Proc
-            # Check if it's a simple lambda or a Rails internal conditional
             source_location = condition.source_location rescue nil
-            if source_location && source_location[0]&.include?('active')
+            if source_location.nil?
+              'proc'
+            elsif source_location[0].to_s.match?(%r{/active(record|support|model)})
               # Skip Rails internal conditionals
               nil
             else
@@ -179,39 +219,37 @@ module RailsLens
           when String
             condition
           else
-            # Skip internal Rails classes like ActiveSupport::Callbacks::Conditionals::Value
             class_name = condition.class.name rescue nil
-            next if class_name&.start_with?('ActiveSupport::Callbacks', 'ActiveRecord')
-
-            class_name
+            # Skip internal Rails callback condition classes
+            if class_name&.start_with?('ActiveSupport::Callbacks', 'ActiveRecord')
+              nil
+            else
+              class_name
+            end
           end
-        end.compact
+        end
       end
 
       def format_callbacks(callbacks)
         lines = []
         lines << '[callbacks]'
 
-        # Group by callback type and sort by common order
+        # Group by callback type
         grouped = callbacks.group_by { |c| c[:type] }
 
-        # Order: validation, save, create, update, destroy, commit, rollback, touch, initialize, find
-        callback_order = %i[
-          before_validation after_validation
-          before_save around_save after_save
-          before_create around_create after_create
-          before_update around_update after_update
-          before_destroy around_destroy after_destroy
-          after_commit after_rollback
-          after_touch
-          after_initialize after_find
-        ]
-
-        callback_order.each do |callback_type|
-          type_callbacks = grouped[callback_type]
+        # Output known types in order first
+        CALLBACK_ORDER.each do |callback_type|
+          type_callbacks = grouped.delete(callback_type)
           next unless type_callbacks&.any?
 
-          # Format as TOML array of inline tables
+          formatted = type_callbacks.map { |c| format_single_callback(c) }
+          lines << "#{callback_type} = [#{formatted.join(', ')}]"
+        end
+
+        # Output any remaining unknown callback types (future Rails versions)
+        grouped.each do |callback_type, type_callbacks|
+          next unless type_callbacks&.any?
+
           formatted = type_callbacks.map { |c| format_single_callback(c) }
           lines << "#{callback_type} = [#{formatted.join(', ')}]"
         end
@@ -223,7 +261,6 @@ module RailsLens
         parts = []
         parts << "method = \"#{escape_toml(callback[:method])}\""
 
-        # Add options
         if callback[:options][:if]&.any?
           if_values = callback[:options][:if].map { |v| "\"#{escape_toml(v)}\"" }.join(', ')
           parts << "if = [#{if_values}]"
