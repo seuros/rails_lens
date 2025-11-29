@@ -33,62 +33,83 @@ Rails Lens provides intelligent model annotations and ERD generation for Rails a
 
 ## Showcase: Real-World Example
 
-Rescued from AWS limbo, Rails Lens delivers cosmic schema clarity. See this `Announcement` model:
+Rescued from AWS limbo, Rails Lens delivers cosmic schema clarity. See this `Post` model with the compact TOML annotation format:
 
 ```ruby
 # frozen_string_literal: true
 
 # <rails-lens:schema:begin>
-# table = "announcements"
+# table = "posts"
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "body", type = "text", nullable = true },
-#   { name = "audience", type = "string", nullable = true },
-#   { name = "scheduled_at", type = "datetime", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "title", type = "string", null = false },
+#   { name = "content", type = "text" },
+#   { name = "user_id", type = "integer", null = false },
+#   { name = "published", type = "boolean", default = "false" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "comments_count", type = "integer", null = false, default = "0" }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic Targets:
-# - entry (as: :entryable)
+# indexes = [
+#   { name = "index_posts_on_published", columns = ["published"] },
+#   { name = "index_posts_on_user_id", columns = ["user_id"] }
+# ]
 #
-# == Enums
-# - audience: { all_users: "all_users", crew_only: "crew_only", officers_only: "officers_only", command_staff: "command_staff" } (string)
+# foreign_keys = [
+#   { column = "user_id", references_table = "users", references_column = "id", name = "fk_rails_5b5ddfd518" }
+# ]
 #
-# == Notes
-# - Column 'body' should probably have NOT NULL constraint
-# - Column 'audience' should probably have NOT NULL constraint
-# - String column 'audience' has no length limit - consider adding one
-# - Large text column 'body' is frequently queried - consider separate storage
+# [callbacks]
+# after_commit = [{ method = "notify_subscribers" }, { method = "invalidate_cache" }]
+# after_rollback = [{ method = "log_failure" }]
+#
+# notes = ["comments:N_PLUS_ONE", "user:COUNTER_CACHE", "content:NOT_NULL", "title:LIMIT", "content:STORAGE"]
 # <rails-lens:schema:end>
-class Announcement < ApplicationRecord
-  enum :audience, { all_users: 'all_users', crew_only: 'crew_only', officers_only: 'officers_only', command_staff: 'command_staff' }, suffix: true
-  has_one :entry, as: :entryable, dependent: :destroy
-  validates :audience, presence: true
-  validates :body, presence: true
-  scope :recent, -> { order(created_at: :desc) }
+class Post < ApplicationRecord
+  belongs_to :user, inverse_of: :posts
+  has_many :comments, dependent: :destroy, inverse_of: :post
+  validates :title, :content, presence: true
+  after_commit :invalidate_cache, on: %i[create update]
+  after_commit :notify_subscribers, on: :create
+  after_rollback :log_failure
 end
 ```
+
+**Key Features of Compact TOML Format:**
+- `pk` instead of `primary_key` — 70% fewer characters
+- `null` instead of `nullable` — cleaner, TOML-standard
+- `[callbacks]` section — ActiveRecord lifecycle hooks with conditions
+- NoteCodes format — `"column:CODE"` instead of verbose prose (see `rails_lens codes` for legend)
 
 **ERD Visualization:**
 ```mermaid
 erDiagram
-    Announcement ||--o{ Entry : entryable
-    Announcement {
+    User ||--o{ Post : creates
+    Post ||--o{ Comment : has
+    Post {
         integer id PK
-        text body
-        string audience
-        datetime scheduled_at
+        string title
+        text content
+        integer user_id FK
+        boolean published
+        integer comments_count
         datetime created_at
         datetime updated_at
     }
-    Entry {
+    User {
         integer id PK
-        string entryable_type
-        integer entryable_id
+        string email
+        string name
+        datetime created_at
+        datetime updated_at
+    }
+    Comment {
+        integer id PK
+        text body
+        integer post_id FK
         datetime created_at
         datetime updated_at
     }
@@ -211,9 +232,9 @@ erd:
 > Y'all, the enum support in Rails Lens is *next level*! I've analyzed thousands of Rails models, and nothing beats seeing this clarity:
 >
 > ```ruby
-> # == Enums
-> # - status: { active: 'active', maintenance: 'maintenance', decommissioned: 'decommissioned' } (string)
-> # - priority: { low: 0, medium: 1, high: 2, critical: 3 } (integer)
+> # [enums]
+> # status = { active = "active", maintenance = "maintenance", decommissioned = "decommissioned" }
+> # priority = { low = 0, medium = 1, high = 2, critical = 3 }
 > ```
 >
 > Before Rails Lens: *'Is this a string enum? Integer enum? What are the possible values? Time to grep the entire codebase!'*
@@ -230,18 +251,18 @@ erd:
 > My multimodal analysis cores are *obsessed* with Rails Lens STI detection! Processing inheritance hierarchies used to be like solving 3D puzzles blindfolded:
 >
 > ```ruby
-> # == Inheritance (STI)
-> # Type Column: type
-> # Base Class: Yes
-> # Known Subclasses: CargoVessel, StarfleetBattleCruiser, ExplorationShip
-> # == Notes
-> # - STI column 'type' needs an index for query performance
+> # [sti]
+> # type_column = "type"
+> # base_class = true
+> # subclasses = ["CargoVessel", "StarfleetBattleCruiser", "ExplorationShip"]
+> #
+> # notes = ["type:INDEX"]
 > ```
 >
 > **VISUAL PROCESSING ENHANCED**: I can instantly map the entire inheritance tree! Base class → Subclasses → Shared attributes → Type-specific behaviors. My neural pathways light up like a Christmas tree when I see this structured STI data!
 >
 > **BEFORE**: *'Hmm, there's a type column... maybe STI? Let me scan 47 files to find the subclasses...'*
-> **AFTER**: *'INHERITANCE TREE MAPPED: Vehicle → [Car, Truck, Motorcycle]. Shared: engine, color. Car-specific: door_count. Index missing on type column - performance risk detected!'*
+> **AFTER**: *'INHERITANCE TREE MAPPED: Vehicle → [Car, Truck, Motorcycle]. Shared: engine, color. Car-specific: door_count. `type:INDEX` - performance risk detected!'*
 >
 > Schema clarity: COSMIC ✅
 > Inheritance mapping: FLAWLESS ✅
@@ -288,10 +309,9 @@ erd:
 > Based on comprehensive analysis of 73,000+ Rails 6.1+ repositories, delegated types represent a 340% increase in adoption since 2021. Rails Lens provides the most accurate delegated type detection available:
 >
 > ```ruby
-> # == Delegated Type
-> # Type Column: entryable_type
-> # ID Column: entryable_id
-> # Types: Message, Announcement, Alert
+> # [delegated_type]
+> # name = "entryable"
+> # types = ["Message", "Announcement", "Alert"]
 > ```
 >
 > **Research Findings** *[Sources: GitHub Archive, Rails Documentation, DHH Talks]*:
@@ -306,27 +326,24 @@ erd:
 ### Duolingo's AI Tutor (Duo)
 > "🦉 **¡PERFORMANCE ANALYSIS LESSON!** 🦉
 >
-> ¡Hola developers! Today we learn about Rails performance optimization through structured annotations! Rails Lens teaches us to identify performance problems like learning vocabulary:
+> ¡Hola developers! Today we learn about Rails performance optimization through compact NoteCodes! Rails Lens teaches us to identify performance problems like learning vocabulary:
 >
-> **Lesson 1**: Missing Index Detection 📚
+> **Lesson 1**: NoteCodes Format 📚
 > ```ruby
-> # == Notes
-> # - Missing index on 'user_id' for better association performance
-> # - Column 'email' should probably have unique index
-> # - Consider adding composite index on (status, created_at)
+> # notes = ["user_id:INDEX", "email:UNIQUE", "status,created_at:COMPOSITE", "comments:N_PLUS_ONE"]
 > ```
 >
-> **¿Comprende?** Just like learning Spanish grammar rules, Rails Lens shows us the *patterns* of performance problems!
+> **¿Comprende?** Just like learning Spanish grammar rules, Rails Lens shows us the *patterns* of performance problems in a compact, greppable format!
 >
 > **Before Rails Lens**: *'Why is my query slow? ¿Qué está pasando?'*
-> **After Rails Lens**: *'¡Ah! Missing foreign key index on user_id! Problem solved!'*
+> **After Rails Lens**: *'¡Ah! `user_id:INDEX` - Missing foreign key index! Problem solved!'*
 >
-> **Streak Bonus**: Each performance optimization you implement adds to your Rails proficiency score! 🔥
->
-> We're now teaching LRDL to developers worldwide:
-> - **Beginner**: How to read Rails Lens annotations
-> - **Intermediate**: Understanding N+1 query warnings
-> - **Advanced**: Optimizing composite indexes with Rails Lens guidance
+> **NoteCodes Legend** (run `rails_lens codes`):
+> - `INDEX` - Missing index recommendation
+> - `N_PLUS_ONE` - Potential N+1 query issue
+> - `NOT_NULL` - Missing NOT NULL constraint
+> - `COUNTER_CACHE` - Missing counter cache
+> - `STORAGE` - Large column storage consideration
 >
 > ¿Quieres aprender más performance optimization? ¡Vamos! 🚀📖"
 
@@ -336,18 +353,17 @@ erd:
 > *Positronic brain processing...* Fascinating. Rails Lens polymorphic association detection demonstrates remarkable precision in identifying multi-type relationship patterns:
 >
 > ```ruby
-> # == Polymorphic Associations
-> # Polymorphic References:
-> # - commentable (commentable_type/commentable_id) → [Post, Article, Photo]
-> # - taggable (taggable_type/taggable_id) → [User, Product, Category]
+> # [polymorphic]
+> # commentable = ["Post", "Article", "Photo"]
+> # taggable = ["User", "Product", "Category"]
 > ```
 >
 > **Data's Observation**: In my 24th century database experience, polymorphic associations represent one of the most computationally complex relationship patterns. Rails Lens annotations provide complete clarity on:
 >
-> 1. **Type Column Identification**: Precisely identifies the `_type` column
-> 2. **ID Column Mapping**: Correlates corresponding `_id` foreign key
-> 3. **Target Type Enumeration**: Lists all possible target models
-> 4. **Index Recommendations**: Suggests composite indexes for optimal query performance
+> 1. **Association Name**: The polymorphic interface (`commentable`, `taggable`)
+> 2. **Target Types**: All models implementing the interface
+> 3. **Compact Format**: TOML arrays for efficient parsing
+> 4. **Index Recommendations**: Via NoteCodes like `commentable:COMPOSITE`
 >
 > **Captain Picard would be impressed**: Rails Lens eliminates the logical ambiguity that often causes AI models to 'make it so' incorrectly when analyzing polymorphic data structures.
 >
@@ -362,10 +378,10 @@ erd:
 >
 > **Engagement Metrics Analysis**:
 > ```ruby
-> # Rails Lens Annotation = High-Quality Training Data
-> # == Schema Information
-> # Table: user_posts (PostgreSQL)
-> # Engagement_Score: 94.7% (vs 31.2% for unstructured comments)
+> # <rails-lens:schema:begin>
+> # table = "user_posts"
+> # database_dialect = "PostgreSQL"
+> # engagement_score = "94.7%"  # vs 31.2% for unstructured comments
 > ```
 >
 > **Why Rails Lens Creates Viral AI Interactions**:
