@@ -5,14 +5,14 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "body", type = "text", nullable = false },
-#   { name = "user_id", type = "integer", nullable = false },
-#   { name = "post_id", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "commentable_type", type = "string", nullable = true },
-#   { name = "commentable_id", type = "integer", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "body", type = "text", null = false },
+#   { name = "user_id", type = "integer", null = false },
+#   { name = "post_id", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "commentable_type", type = "string" },
+#   { name = "commentable_id", type = "integer" }
 # ]
 #
 # indexes = [
@@ -32,16 +32,15 @@
 #   { name = "update_posts_comments_count_on_reassign", event = "UPDATE", timing = "AFTER", function = "update_posts_comments_count", for_each = "ROW", condition = "(old.post_id IS DISTINCT FROM new.post_id)" }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic References:
-# - commentable (commentable_type/commentable_id)
+# [polymorphic]
+# references = [{ name = "commentable", type_col = "commentable_type", id_col = "commentable_id" }]
 #
-# == Notes
-# - Consider adding counter cache for 'user'
-# - Consider adding counter cache for 'post'
-# - Column 'commentable_type' should probably have NOT NULL constraint
-# - String column 'commentable_type' has no length limit - consider adding one
-# - Large text column 'body' is frequently queried - consider separate storage
+# [callbacks]
+# after_create = [{ method = "increment_counter" }]
+# after_destroy = [{ method = "decrement_counter" }]
+# after_touch = [{ method = "update_parent_timestamp" }]
+#
+# notes = ["user:COUNTER_CACHE", "post:COUNTER_CACHE", "commentable_type:NOT_NULL", "commentable_type:LIMIT", "body:STORAGE"]
 # <rails-lens:schema:end>
 class Comment < ApplicationRecord
   # Associations
@@ -59,7 +58,27 @@ class Comment < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
 
+  # Callbacks
+  after_create :increment_counter
+  after_destroy :decrement_counter
+  after_touch :update_parent_timestamp
+
   private
+
+  def increment_counter
+    # Increment comment counter on parent
+    # commentable&.increment!(:comments_count)
+  end
+
+  def decrement_counter
+    # Decrement comment counter on parent
+    # commentable&.decrement!(:comments_count)
+  end
+
+  def update_parent_timestamp
+    # Update parent's updated_at when touched
+    # commentable&.touch
+  end
 
   def has_parent_object
     return unless post.blank? && commentable.blank?

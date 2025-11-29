@@ -11,15 +11,15 @@ module RailsLens
         result = analyzer.analyze
 
         assert_not_nil result, 'Entry should be detected as having delegated types'
-        assert_match(/== Delegated Type/, result)
-        assert_match(/Type Column: entryable_type/, result)
-        assert_match(/ID Column: entryable_id/, result)
-        assert_match(/Types:/, result)
+        assert_match(/\[delegated_type\]/, result)
+        assert_match(/type_column = "entryable_type"/, result)
+        assert_match(/id_column = "entryable_id"/, result)
+        assert_match(/types = \[/, result)
 
-        # Should list the known types
-        assert_match(/Alert/, result)
-        assert_match(/Announcement/, result)
-        assert_match(/Message/, result)
+        # Should list the known types in TOML array format
+        assert_match(/"Alert"/, result)
+        assert_match(/"Announcement"/, result)
+        assert_match(/"Message"/, result)
       end
 
       def test_analyze_with_models_without_delegated_types
@@ -33,19 +33,19 @@ module RailsLens
       end
 
       def test_analyze_delegated_type_formatting
-        # Test that delegated type info is properly formatted
+        # Test that delegated type info is properly formatted in TOML
         analyzer = DelegatedTypes.new(Entry)
         result = analyzer.analyze
 
         assert_not_nil result, 'Entry should have delegated type analysis'
 
-        # Should have proper section header
-        assert_match(/^== Delegated Type$/, result)
+        # Should have proper TOML section header
+        assert_match(/^\[delegated_type\]$/, result)
 
-        # Should have proper field formatting
+        # Should have proper TOML key=value formatting
         lines = result.split("\n")
-        type_column_line = lines.find { |line| line.include?('Type Column:') }
-        id_column_line = lines.find { |line| line.include?('ID Column:') }
+        type_column_line = lines.find { |line| line.include?('type_column =') }
+        id_column_line = lines.find { |line| line.include?('id_column =') }
 
         assert_not_nil type_column_line, 'Should have type column line'
         assert_not_nil id_column_line, 'Should have ID column line'
@@ -98,7 +98,7 @@ module RailsLens
         result = analyzer.analyze
 
         assert_not_nil result, 'Entry (PostgreSQL) should have delegated type analysis'
-        assert_match(/== Delegated Type/, result)
+        assert_match(/\[delegated_type\]/, result)
 
         # Models from other databases should not have delegated types
         mysql_result = DelegatedTypes.new(Vehicle).analyze  # MySQL
@@ -128,7 +128,7 @@ module RailsLens
         result = analyzer.analyze
 
         assert_not_nil result, 'Entry should have delegated type analysis'
-        assert_match(/Delegated Type/, result)
+        assert_match(/delegated_type/, result)
       end
 
       def test_analyze_delegated_type_with_real_rails_methods

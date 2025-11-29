@@ -52,6 +52,9 @@ module RailsLens
         # Detect adapter
         adapter_name = base_class.connection.adapter_name
 
+        # Always add database dialect for abstract classes
+        annotation.add_line("database_dialect = \"#{adapter_name}\"")
+
         case adapter_name
         when /PostgreSQL/i
           add_postgresql_functions(annotation)
@@ -153,8 +156,7 @@ module RailsLens
       def add_functions_annotation(annotation, functions)
         return if functions.empty?
 
-        annotation.add_line('== Database Functions')
-        annotation.add_line('')
+        annotation.add_line('[database_functions]')
         annotation.add_line('functions = [')
 
         functions.each_with_index do |func, index|

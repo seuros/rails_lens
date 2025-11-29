@@ -5,13 +5,13 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "tenant_id", type = "integer", nullable = false },
-#   { name = "key", type = "string", nullable = false },
-#   { name = "value", type = "text", nullable = true },
-#   { name = "description", type = "text", nullable = true },
-#   { name = "encrypted", type = "boolean", nullable = true, default = "false" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "tenant_id", type = "integer", null = false },
+#   { name = "key", type = "string", null = false },
+#   { name = "value", type = "text" },
+#   { name = "description", type = "text" },
+#   { name = "encrypted", type = "boolean", default = "false" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -19,17 +19,19 @@
 #   { name = "index_tenant_settings_on_tenant_id", columns = ["tenant_id"] }
 # ]
 #
-# == Composite Primary Key
-# Primary Keys: tenant_id, key
+# [composite_pk]
+# keys = ["tenant_id", "key"]
 #
-# == Notes
-# - Column 'value' should probably have NOT NULL constraint
-# - Column 'description' should probably have NOT NULL constraint
-# - Column 'encrypted' should probably have NOT NULL constraint
-# - String column 'key' has no length limit - consider adding one
-# - Large text column 'description' is frequently queried - consider separate storage
+# [callbacks]
+# after_create = [{ method = "audit_creation" }]
+# after_update = [{ method = "audit_update" }]
+# after_destroy = [{ method = "audit_destruction" }]
+#
+# notes = ["value:NOT_NULL", "description:NOT_NULL", "encrypted:NOT_NULL", "key:LIMIT", "value:STORAGE", "description:STORAGE"]
 # <rails-lens:schema:end>
 class TenantSetting < ApplicationRecord
+  include Auditable
+
   # Composite primary key: [tenant_id, key]
   # Note: Rails doesn't natively support composite primary keys
   # Consider using a gem like composite_primary_keys if needed

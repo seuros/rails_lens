@@ -10,13 +10,13 @@ module RailsLens
         existing_foreign_keys = connection.foreign_keys(table_name)
 
         belongs_to_associations.each do |association|
-          next if association.polymorphic? # Can't have FK constraints on polymorphic associations
+          next if association.polymorphic?
 
           foreign_key = association.foreign_key
           referenced_table = association.klass.table_name
 
           unless foreign_key_exists?(foreign_key, referenced_table, existing_foreign_keys)
-            notes << "Missing foreign key constraint on '#{foreign_key}' referencing '#{referenced_table}'"
+            notes << NoteCodes.note(foreign_key, NoteCodes::FK_CONSTRAINT)
           end
         end
 

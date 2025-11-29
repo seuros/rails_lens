@@ -5,25 +5,12 @@ module RailsLens
     class PerformanceAnalyzer < Base
       def analyze
         notes = []
-        notes.concat(analyze_large_text_columns)
         notes.concat(analyze_uuid_indexes)
         notes.concat(analyze_query_performance)
         notes
       end
 
       private
-
-      def analyze_large_text_columns
-        notes = []
-
-        text_columns.each do |column|
-          if frequently_queried_column?(column)
-            notes << "Large text column '#{column.name}' is frequently queried - consider separate storage"
-          end
-        end
-
-        notes
-      end
 
       def analyze_uuid_indexes
         notes = []
@@ -32,7 +19,7 @@ module RailsLens
           next if column.name == 'id' # Primary keys are already indexed
 
           if should_be_indexed?(column) && !indexed?(column)
-            notes << "UUID column '#{column.name}' should be indexed for better query performance"
+            notes << NoteCodes.note(column.name, NoteCodes::INDEX)
           end
         end
 
@@ -46,34 +33,24 @@ module RailsLens
         commonly_queried_columns.each do |column|
           next if indexed?(column)
 
-          notes << "Column '#{column.name}' is commonly used in queries - consider adding an index"
+          notes << NoteCodes.note(column.name, NoteCodes::INDEX)
         end
 
         # Check for missing indexes on scoped columns
         scoped_columns.each do |column|
           next if indexed?(column)
 
-          notes << "Scope column '#{column.name}' should be indexed"
+          notes << NoteCodes.note(column.name, NoteCodes::INDEX)
         end
 
         notes
-      end
-
-      def text_columns
-        model_class.columns.select { |c| c.type == :text }
       end
 
       def uuid_columns
         model_class.columns.select { |c| c.type == :uuid || (c.type == :string && c.name.match?(/uuid|guid/i)) }
       end
 
-      def frequently_queried_column?(column)
-        # Heuristic: columns with certain names are likely to be queried frequently
-        column.name.match?(/title|name|slug|description|summary|content|body/i)
-      end
-
       def should_be_indexed?(column)
-        # UUID columns used as foreign keys or identifiers should be indexed
         column.name.end_with?('_id', '_uuid', '_guid') ||
           column.name.match?(/identifier|reference|token/i)
       end

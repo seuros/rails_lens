@@ -5,16 +5,16 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = false },
-#   { name = "description", type = "text", nullable = true },
-#   { name = "price", type = "decimal", nullable = false },
-#   { name = "category", type = "string", nullable = true },
-#   { name = "active", type = "boolean", nullable = false, default = "true" },
-#   { name = "sku", type = "string", nullable = true },
-#   { name = "stock_quantity", type = "integer", nullable = true, default = "0" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string", null = false },
+#   { name = "description", type = "text" },
+#   { name = "price", type = "decimal", null = false },
+#   { name = "category", type = "string" },
+#   { name = "active", type = "boolean", null = false, default = "true" },
+#   { name = "sku", type = "string" },
+#   { name = "stock_quantity", type = "integer", default = "0" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -24,19 +24,19 @@
 #   { name = "index_products_on_sku", columns = ["sku"], unique = true }
 # ]
 #
-# == Notes
-# - Association 'product_metrics' should specify inverse_of
-# - Association 'product_metrics' has N+1 query risk. Consider using includes/preload
-# - Column 'description' should probably have NOT NULL constraint
-# - Column 'category' should probably have NOT NULL constraint
-# - Column 'sku' should probably have NOT NULL constraint
-# - Column 'stock_quantity' should probably have NOT NULL constraint
-# - String column 'name' has no length limit - consider adding one
-# - String column 'category' has no length limit - consider adding one
-# - String column 'sku' has no length limit - consider adding one
-# - Large text column 'description' is frequently queried - consider separate storage
+# [callbacks]
+# after_save = [{ method = "log_changes" }]
+# before_create = [{ method = "set_tracking_id" }]
+# after_create = [{ method = "audit_creation" }]
+# after_update = [{ method = "audit_update" }]
+# after_destroy = [{ method = "audit_destruction" }]
+#
+# notes = ["product_metrics:INVERSE_OF", "product_metrics:N_PLUS_ONE", "description:NOT_NULL", "category:NOT_NULL", "sku:NOT_NULL", "stock_quantity:NOT_NULL", "name:LIMIT", "category:LIMIT", "sku:LIMIT", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Product < ApplicationRecord
+  include Trackable
+  include Auditable
+
   # Associations
   has_many :product_metrics, dependent: :destroy
 

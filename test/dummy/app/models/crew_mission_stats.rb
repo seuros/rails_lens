@@ -7,23 +7,19 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", nullable = true },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "rank", type = "string", nullable = true },
-#   { name = "specialization", type = "string", nullable = true },
-#   { name = "ships_served", type = "integer", nullable = true },
-#   { name = "missions_participated", type = "integer", nullable = true },
-#   { name = "last_assignment", type = "datetime", nullable = true },
-#   { name = "rank_category", type = "text", nullable = true }
+#   { name = "id", type = "integer" },
+#   { name = "name", type = "string" },
+#   { name = "rank", type = "string" },
+#   { name = "specialization", type = "string" },
+#   { name = "ships_served", type = "integer" },
+#   { name = "missions_participated", type = "integer" },
+#   { name = "last_assignment", type = "datetime" },
+#   { name = "rank_category", type = "text" }
 # ]
 #
-# == View Information
-# View Type: regular
-# Updatable: No
-# Definition: SELECT cm.id, cm.name, cm.rank, cm.specialization, count(DISTINCT scm.spaceship_id) AS ships_served, count(DISTINCT m.id) AS missions_participated, max(scm.assigned_at) AS last_...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
+# [view]
+# type = "regular"
+# updatable = false
 # <rails-lens:schema:end>
 # PostgreSQL View: Complex crew mission statistics and analysis
 class CrewMissionStats < ApplicationRecord

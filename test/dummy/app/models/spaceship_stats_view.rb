@@ -7,24 +7,20 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", nullable = true },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "class_type", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "warp_capability", type = "boolean", nullable = true },
-#   { name = "active_crew_count", type = "integer", nullable = true },
-#   { name = "mission_count", type = "integer", nullable = true },
-#   { name = "coordinate_records", type = "integer", nullable = true },
-#   { name = "special_configuration", type = "text", nullable = true }
+#   { name = "id", type = "integer" },
+#   { name = "name", type = "string" },
+#   { name = "class_type", type = "string" },
+#   { name = "status", type = "string" },
+#   { name = "warp_capability", type = "boolean" },
+#   { name = "active_crew_count", type = "integer" },
+#   { name = "mission_count", type = "integer" },
+#   { name = "coordinate_records", type = "integer" },
+#   { name = "special_configuration", type = "text" }
 # ]
 #
-# == View Information
-# View Type: regular
-# Updatable: No
-# Definition: SELECT s.id, s.name, s.class_type, s.status, s.warp_capability, count(DISTINCT scm.crew_member_id) FILTER (WHERE (scm.active = true)) AS active_crew_count, count(DISTINCT m.id) ...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
+# [view]
+# type = "regular"
+# updatable = false
 # <rails-lens:schema:end>
 # PostgreSQL View: Comprehensive statistics for spaceships
 class SpaceshipStatsView < ApplicationRecord

@@ -12,12 +12,13 @@ module RailsLens
         check_constraints = connection.check_constraints(table_name)
         return nil if check_constraints.empty?
 
-        constraints << '== Check Constraints'
-        check_constraints.each do |constraint|
+        constraints << '[check_constraints]'
+        formatted = check_constraints.map do |constraint|
           name = constraint.options[:name] || constraint.name
           expression = constraint.expression || constraint.options[:validate]
-          constraints << "- #{name}: #{expression}"
+          "{ name = \"#{name}\", expr = \"#{expression.to_s.gsub('"', '\\"')}\" }"
         end
+        constraints << "constraints = [#{formatted.join(', ')}]"
 
         constraints.empty? ? nil : constraints.join("\n")
       rescue ActiveRecord::StatementInvalid => e

@@ -5,38 +5,29 @@
 # database_dialect = "SQLite"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "species", type = "string", nullable = true },
-#   { name = "period", type = "string", nullable = true },
-#   { name = "diet", type = "string", nullable = true },
-#   { name = "length", type = "decimal", nullable = true },
-#   { name = "weight", type = "decimal", nullable = true },
-#   { name = "discovered_at", type = "date", nullable = true },
-#   { name = "extinction_date", type = "date", nullable = true },
-#   { name = "fossil_count", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "species", type = "string" },
+#   { name = "period", type = "string" },
+#   { name = "diet", type = "string" },
+#   { name = "length", type = "decimal" },
+#   { name = "weight", type = "decimal" },
+#   { name = "discovered_at", type = "date" },
+#   { name = "extinction_date", type = "date" },
+#   { name = "fossil_count", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Enums
-# - period: { triassic: "triassic", jurassic: "jurassic", cretaceous: "cretaceous" } (string)
-# - diet: { herbivore: "herbivore", carnivore: "carnivore", omnivore: "omnivore", piscivore: "piscivore" } (string)
+# [enums]
+# period = { triassic = "triassic", jurassic = "jurassic", cretaceous = "cretaceous" }
+# diet = { herbivore = "herbivore", carnivore = "carnivore", omnivore = "omnivore", piscivore = "piscivore" }
 #
-# == Notes
-# - Association 'fossil_discoveries' should specify inverse_of
-# - Association 'fossil_discoveries' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'species' should probably have NOT NULL constraint
-# - Column 'period' should probably have NOT NULL constraint
-# - Column 'diet' should probably have NOT NULL constraint
-# - Column 'length' should probably have NOT NULL constraint
-# - Column 'weight' should probably have NOT NULL constraint
-# - Column 'fossil_count' should probably have NOT NULL constraint
-# - String column 'name' has no length limit - consider adding one
-# - String column 'species' has no length limit - consider adding one
-# - String column 'period' has no length limit - consider adding one
-# - String column 'diet' has no length limit - consider adding one
+# [callbacks]
+# before_destroy = [{ method = "archive_research_data" }, { method = "notify_researchers" }]
+# after_destroy = [{ method = "update_period_statistics" }, { method = "cleanup_external_references" }]
+#
+# notes = ["fossil_discoveries:INVERSE_OF", "fossil_discoveries:N_PLUS_ONE", "name:NOT_NULL", "species:NOT_NULL", "period:NOT_NULL", "diet:NOT_NULL", "length:NOT_NULL", "weight:NOT_NULL", "fossil_count:NOT_NULL", "name:LIMIT", "species:LIMIT", "period:LIMIT", "diet:LIMIT"]
 # <rails-lens:schema:end>
 class Dinosaur < PrehistoricRecord
   # Enums
@@ -70,5 +61,29 @@ class Dinosaur < PrehistoricRecord
   scope :by_period, ->(period) { where(period: period) }
   scope :by_diet, ->(diet) { where(diet: diet) }
   scope :discovered_after, ->(date) { where('discovered_at > ?', date) }
+
+  # Callbacks - Destroy chain (cleanup before dependent destruction)
+  before_destroy :archive_research_data
+  before_destroy :notify_researchers
+  after_destroy :cleanup_external_references
+  after_destroy :update_period_statistics
+
+  private
+
+  def archive_research_data
+    ResearchArchive.store(self, fossil_discoveries.to_a)
+  end
+
+  def notify_researchers
+    ResearchNotifier.dinosaur_removed(self)
+  end
+
+  def cleanup_external_references
+    ExternalMuseumAPI.remove_references(name, species)
+  end
+
+  def update_period_statistics
+    PeriodStatistics.recalculate(period)
+  end
 end
 

@@ -8,62 +8,39 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "model", type = "string", nullable = true },
-#   { name = "year", type = "integer", nullable = true },
-#   { name = "price", type = "decimal", nullable = true },
-#   { name = "mileage", type = "integer", nullable = true },
-#   { name = "fuel_type", type = "string", nullable = true },
-#   { name = "transmission", type = "string", nullable = true },
-#   { name = "color", type = "string", nullable = true },
-#   { name = "vin", type = "string", nullable = true },
-#   { name = "description", type = "text", nullable = true },
-#   { name = "available", type = "boolean", nullable = true, default = "1" },
-#   { name = "purchase_date", type = "date", nullable = true },
-#   { name = "service_time", type = "time", nullable = true },
-#   { name = "image_data", type = "binary", nullable = true },
-#   { name = "condition", type = "string", nullable = true, default = "used" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "vehicle_type", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "maintenance_count", type = "integer", nullable = false, default = "0" }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "model", type = "string" },
+#   { name = "year", type = "integer" },
+#   { name = "price", type = "decimal" },
+#   { name = "mileage", type = "integer" },
+#   { name = "fuel_type", type = "string" },
+#   { name = "transmission", type = "string" },
+#   { name = "color", type = "string" },
+#   { name = "vin", type = "string" },
+#   { name = "description", type = "text" },
+#   { name = "available", type = "boolean", default = "1" },
+#   { name = "purchase_date", type = "date" },
+#   { name = "service_time", type = "time" },
+#   { name = "image_data", type = "binary" },
+#   { name = "condition", type = "string", default = "used" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "vehicle_type", type = "string" },
+#   { name = "status", type = "string" },
+#   { name = "maintenance_count", type = "integer", null = false, default = "0" }
 # ]
 #
-# == Enums
-# - vehicle_type: { car: "car", truck: "truck", motorcycle: "motorcycle", bus: "bus", van: "van", suv: "suv", electric: "electric", hybrid: "hybrid" } (string)
-# - status: { active: "active", maintenance: "maintenance", impounded: "impounded", scrapped: "scrapped" } (string)
+# [enums]
+# vehicle_type = { car = "car", truck = "truck", motorcycle = "motorcycle", bus = "bus", van = "van", suv = "suv", electric = "electric", hybrid = "hybrid" }
+# status = { active = "active", maintenance = "maintenance", impounded = "impounded", scrapped = "scrapped" }
 #
-# == Notes
-# - Missing index on foreign key 'manufacturer_id'
-# - Missing foreign key constraint on 'manufacturer_id' referencing 'manufacturers'
-# - Association 'vehicle_owners' has N+1 query risk. Consider using includes/preload
-# - Association 'owners' has N+1 query risk. Consider using includes/preload
-# - Association 'maintenance_records' has N+1 query risk. Consider using includes/preload
-# - Association 'trips' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'manufacturer'
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'model' should probably have NOT NULL constraint
-# - Column 'year' should probably have NOT NULL constraint
-# - Column 'price' should probably have NOT NULL constraint
-# - Column 'mileage' should probably have NOT NULL constraint
-# - Column 'fuel_type' should probably have NOT NULL constraint
-# - Column 'transmission' should probably have NOT NULL constraint
-# - Column 'color' should probably have NOT NULL constraint
-# - Column 'vin' should probably have NOT NULL constraint
-# - Column 'description' should probably have NOT NULL constraint
-# - Column 'available' should probably have NOT NULL constraint
-# - Column 'service_time' should probably have NOT NULL constraint
-# - Column 'image_data' should probably have NOT NULL constraint
-# - Column 'condition' should probably have NOT NULL constraint
-# - Column 'vehicle_type' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - Status column 'status' should have a default value
-# - Large text column 'description' is frequently queried - consider separate storage
-# - Column 'fuel_type' is commonly used in queries - consider adding an index
-# - Column 'vehicle_type' is commonly used in queries - consider adding an index
-# - Column 'status' is commonly used in queries - consider adding an index
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "update_mileage_category", if = ["mileage_changed?"], unless = ["new_record?"] }]
+# after_update = [{ method = "schedule_maintenance", if = ["proc"] }]
+#
+# notes = ["manufacturer_id:INDEX", "manufacturer_id:FK_CONSTRAINT", "vehicle_owners:N_PLUS_ONE", "owners:N_PLUS_ONE", "maintenance_records:N_PLUS_ONE", "trips:N_PLUS_ONE", "manufacturer:COUNTER_CACHE", "name:NOT_NULL", "model:NOT_NULL", "year:NOT_NULL", "price:NOT_NULL", "mileage:NOT_NULL", "fuel_type:NOT_NULL", "transmission:NOT_NULL", "color:NOT_NULL", "vin:NOT_NULL", "description:NOT_NULL", "available:NOT_NULL", "service_time:NOT_NULL", "image_data:NOT_NULL", "condition:NOT_NULL", "vehicle_type:NOT_NULL", "status:NOT_NULL", "status:DEFAULT", "fuel_type:INDEX", "vehicle_type:INDEX", "status:INDEX", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Vehicle < VehicleRecord
   # Enums
@@ -117,12 +94,22 @@ class Vehicle < VehicleRecord
 
   # Callbacks
   before_validation :set_defaults, on: :create
+  before_save :update_mileage_category, if: :mileage_changed?, unless: :new_record?
+  after_update :schedule_maintenance, if: -> { mileage > 50_000 }
 
   private
 
   def set_defaults
     self.available = true if available.nil?
     self.condition ||= 'used'
+  end
+
+  def update_mileage_category
+    self.condition = mileage > 100_000 ? 'high_mileage' : 'used'
+  end
+
+  def schedule_maintenance
+    MaintenanceScheduler.schedule_checkup(self) if mileage_previously_changed?
   end
 end
 

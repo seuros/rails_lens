@@ -9,10 +9,11 @@ module RailsLens
         generated_columns = detect_generated_columns
         return nil if generated_columns.empty?
 
-        lines = ['== Generated Columns']
-        generated_columns.each do |column|
-          lines << "- #{column[:name]} (#{column[:expression]})"
+        lines = ['[generated_columns]']
+        formatted = generated_columns.map do |column|
+          "{ name = \"#{column[:name]}\", expr = \"#{column[:expression].to_s.gsub('"', '\\"')}\" }"
         end
+        lines << "columns = [#{formatted.join(', ')}]"
 
         lines.join("\n")
       end

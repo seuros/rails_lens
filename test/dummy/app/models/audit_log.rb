@@ -6,20 +6,21 @@
 # schema = "audit"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "table_name", type = "string", nullable = false },
-#   { name = "record_id", type = "integer", nullable = false },
-#   { name = "action", type = "string", nullable = false },
-#   { name = "user_id", type = "integer", nullable = false },
-#   { name = "changes", type = "jsonb", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "table_name", type = "string", null = false },
+#   { name = "record_id", type = "integer", null = false },
+#   { name = "action", type = "string", null = false },
+#   { name = "user_id", type = "integer", null = false },
+#   { name = "changes", type = "jsonb" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Notes
-# - Column 'changes' should probably have NOT NULL constraint
-# - String column 'table_name' has no length limit - consider adding one
-# - String column 'action' has no length limit - consider adding one
+# [callbacks]
+# after_initialize = [{ method = "set_defaults" }]
+# after_find = [{ method = "decrypt_sensitive_data" }]
+#
+# notes = ["changes:NOT_NULL", "table_name:LIMIT", "action:LIMIT"]
 # <rails-lens:schema:end>
 class AuditLog < ApplicationRecord
   self.table_name = 'audit.audit_logs'
@@ -37,4 +38,20 @@ class AuditLog < ApplicationRecord
   scope :for_table, ->(table_name) { where(table_name: table_name) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
   scope :for_record, ->(table_name, record_id) { where(table_name: table_name, record_id: record_id) }
+
+  # Callbacks
+  after_find :decrypt_sensitive_data
+  after_initialize :set_defaults
+
+  private
+
+  def decrypt_sensitive_data
+    # Decrypt sensitive fields when loading from database
+    # self.changes = EncryptionService.decrypt(changes) if changes.present?
+  end
+
+  def set_defaults
+    # Set default values for new records
+    # self.changes ||= {}
+  end
 end

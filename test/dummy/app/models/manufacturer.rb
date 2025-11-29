@@ -8,62 +8,38 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "country", type = "string", nullable = true },
-#   { name = "founded_year", type = "integer", nullable = true },
-#   { name = "headquarters", type = "text", nullable = true },
-#   { name = "website", type = "string", nullable = true },
-#   { name = "annual_revenue", type = "decimal", nullable = true },
-#   { name = "active", type = "boolean", nullable = true },
-#   { name = "logo_url", type = "string", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "company_type", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "country", type = "string" },
+#   { name = "founded_year", type = "integer" },
+#   { name = "headquarters", type = "text" },
+#   { name = "website", type = "string" },
+#   { name = "annual_revenue", type = "decimal" },
+#   { name = "active", type = "boolean" },
+#   { name = "logo_url", type = "string" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "status", type = "string" },
+#   { name = "company_type", type = "string" }
 # ]
 #
-# == Extensions
-# == Hierarchy (ClosureTree)
-# Parent Column: parent_id
-# Hierarchy Table: manufacturer_hierarchies
-# Order Column: name
+# [extensions]
+# [closure_tree]
+# parent_column = "parent_id"
+# hierarchy_table = "manufacturer_hierarchies"
+# order_column = "name"
 #
-# == Enums
-# - status: { active: "active", defunct: "defunct", acquired: "acquired" } (string)
-# - company_type: { conglomerate: "conglomerate", parent_company: "parent_company", subsidiary: "subsidiary", division: "division", brand: "brand", factory: "factory" } (string)
+# [enums]
+# status = { active = "active", defunct = "defunct", acquired = "acquired" }
+# company_type = { conglomerate = "conglomerate", parent_company = "parent_company", subsidiary = "subsidiary", division = "division", brand = "brand", factory = "factory" }
 #
-# == Notes
-# - Missing index on foreign key 'parent_id'
-# - Missing foreign key constraint on 'parent_id' referencing 'manufacturers'
-# - Association 'ancestor_hierarchies' should specify inverse_of
-# - Association 'descendant_hierarchies' should specify inverse_of
-# - Association 'vehicles' should specify inverse_of
-# - Association 'children' has N+1 query risk. Consider using includes/preload
-# - Association 'ancestor_hierarchies' has N+1 query risk. Consider using includes/preload
-# - Association 'self_and_ancestors' has N+1 query risk. Consider using includes/preload
-# - Association 'descendant_hierarchies' has N+1 query risk. Consider using includes/preload
-# - Association 'self_and_descendants' has N+1 query risk. Consider using includes/preload
-# - Association 'vehicles' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'parent'
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'country' should probably have NOT NULL constraint
-# - Column 'founded_year' should probably have NOT NULL constraint
-# - Column 'headquarters' should probably have NOT NULL constraint
-# - Column 'website' should probably have NOT NULL constraint
-# - Column 'annual_revenue' should probably have NOT NULL constraint
-# - Column 'active' should probably have NOT NULL constraint
-# - Column 'logo_url' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - Column 'company_type' should probably have NOT NULL constraint
-# - Boolean column 'active' should have a default value
-# - Status column 'status' should have a default value
-# - Column 'status' is commonly used in queries - consider adding an index
-# - Column 'company_type' is commonly used in queries - consider adding an index
-# - Missing index on parent column 'parent_id'
-# - Hierarchy table 'manufacturer_hierarchies' needs compound index on (ancestor_id, descendant_id)
-# - Consider adding index on generations column in hierarchy table for depth queries
-# - Consider adding counter cache 'children_count' for children count
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "_ct_before_save" }]
+# after_save = [{ method = "_ct_after_save" }]
+# before_destroy = [{ method = "_ct_before_destroy" }]
+#
+# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "vehicles:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "vehicles:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "country:NOT_NULL", "founded_year:NOT_NULL", "headquarters:NOT_NULL", "website:NOT_NULL", "annual_revenue:NOT_NULL", "active:NOT_NULL", "logo_url:NOT_NULL", "status:NOT_NULL", "company_type:NOT_NULL", "active:DEFAULT", "status:DEFAULT", "status:INDEX", "company_type:INDEX", "headquarters:STORAGE", "manufacturer_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
 # <rails-lens:schema:end>
 class Manufacturer < VehicleRecord
   # Include ClosureTree for hierarchy

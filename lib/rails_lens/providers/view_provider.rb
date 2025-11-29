@@ -14,7 +14,7 @@ module RailsLens
         return nil unless view_metadata.view_exists?
 
         {
-          title: '== View Information',
+          title: '[view]',
           content: generate_view_content(view_metadata)
         }
       end
@@ -25,39 +25,25 @@ module RailsLens
         lines = []
 
         # View type (regular or materialized)
-        if view_metadata.view_type
-          lines << "View Type: #{view_metadata.view_type}"
-        end
+        lines << "type = \"#{view_metadata.view_type}\"" if view_metadata.view_type
 
         # Updatable status
-        lines << "Updatable: #{view_metadata.updatable? ? 'Yes' : 'No'}"
+        lines << "updatable = #{view_metadata.updatable?}"
 
         # Dependencies
         dependencies = view_metadata.dependencies
         if dependencies.any?
-          lines << "Dependencies: #{dependencies.join(', ')}"
+          lines << "dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
         end
 
         # Refresh strategy for materialized views
         if view_metadata.materialized_view? && view_metadata.refresh_strategy
-          lines << "Refresh Strategy: #{view_metadata.refresh_strategy}"
+          lines << "refresh_strategy = \"#{view_metadata.refresh_strategy}\""
         end
 
         # Last refreshed timestamp for materialized views
         if view_metadata.materialized_view? && view_metadata.last_refreshed
-          lines << "Last Refreshed: #{view_metadata.last_refreshed}"
-        end
-
-        # View definition (truncated for readability)
-        if view_metadata.view_definition
-          definition = view_metadata.view_definition
-          # Truncate long definitions
-          if definition.length > 200
-            definition = "#{definition[0..200]}..."
-          end
-          # Remove extra whitespace and newlines
-          definition = definition.gsub(/\s+/, ' ').strip
-          lines << "Definition: #{definition}"
+          lines << "last_refreshed = \"#{view_metadata.last_refreshed}\""
         end
 
         lines.join("\n")

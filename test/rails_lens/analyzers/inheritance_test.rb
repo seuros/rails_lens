@@ -10,14 +10,14 @@ module RailsLens
         analyzer = Inheritance.new(Spaceship)
         result = analyzer.analyze
 
-        assert_match(/== Inheritance \(STI\)/, result)
-        assert_match(/Base Class: Yes/, result)
-        assert_match(/Type Column: type/, result)
+        assert_match(/\[sti\]/, result)
+        assert_match(/base = true/, result)
+        assert_match(/type_column = "type"/, result)
 
-        # Should list known subclasses
-        assert_match(/Known Subclasses:/, result)
-        assert_match(/CargoVessel/, result)
-        assert_match(/StarfleetBattleCruiser/, result)
+        # Should list known subclasses in TOML array format
+        assert_match(/subclasses = \[/, result)
+        assert_match(/"CargoVessel"/, result)
+        assert_match(/"StarfleetBattleCruiser"/, result)
       end
 
       def test_analyze_with_cargo_vessel_sti_subclass
@@ -25,13 +25,12 @@ module RailsLens
         analyzer = Inheritance.new(CargoVessel)
         result = analyzer.analyze
 
-        assert_match(/== Inheritance \(STI\)/, result)
-        assert_match(/Base Class: Spaceship/, result)
-        assert_match(/Type Column: type/, result)
-        assert_match(/Type Value: CargoVessel/, result)
+        assert_match(/\[sti\]/, result)
+        assert_match(/base_class = "Spaceship"/, result)
+        assert_match(/type_column = "type"/, result)
+        assert_match(/type_value = "CargoVessel"/, result)
 
-        # Sibling classes might not always be detected in test environment
-        # Just ensure basic STI info is present
+        # Ensure no errors in output
         assert_no_match(/ERROR/, result)
       end
 
@@ -40,10 +39,10 @@ module RailsLens
         analyzer = Inheritance.new(StarfleetBattleCruiser)
         result = analyzer.analyze
 
-        assert_match(/== Inheritance \(STI\)/, result)
-        assert_match(/Base Class: Spaceship/, result)
-        assert_match(/Type Column: type/, result)
-        assert_match(/Type Value: StarfleetBattleCruiser/, result)
+        assert_match(/\[sti\]/, result)
+        assert_match(/base_class = "Spaceship"/, result)
+        assert_match(/type_column = "type"/, result)
+        assert_match(/type_value = "StarfleetBattleCruiser"/, result)
 
         # Ensure no errors in output
         assert_no_match(/ERROR/, result)
@@ -82,15 +81,15 @@ module RailsLens
         spaceship_result = Inheritance.new(Spaceship).analyze
         # In test environment, subclass detection might not work due to class loading
         # Just ensure the base analysis works
-        assert_match(/== Inheritance \(STI\)/, spaceship_result)
-        assert_match(/Base Class: Yes/, spaceship_result)
+        assert_match(/\[sti\]/, spaceship_result)
+        assert_match(/base = true/, spaceship_result)
 
         # Each subclass should have proper base info
         cargo_result = Inheritance.new(CargoVessel).analyze
         starfleet_result = Inheritance.new(StarfleetBattleCruiser).analyze
 
-        assert_match(/Base Class: Spaceship/, cargo_result)
-        assert_match(/Base Class: Spaceship/, starfleet_result)
+        assert_match(/base_class = "Spaceship"/, cargo_result)
+        assert_match(/base_class = "Spaceship"/, starfleet_result)
       end
 
       def test_analyze_sti_type_column_detection
@@ -100,9 +99,9 @@ module RailsLens
         cargo_result = Inheritance.new(CargoVessel).analyze
         starfleet_result = Inheritance.new(StarfleetBattleCruiser).analyze
 
-        # All should have the same type column
+        # All should have the same type column in TOML format
         [spaceship_result, cargo_result, starfleet_result].each do |result|
-          assert_match(/Type Column: type/, result)
+          assert_match(/type_column = "type"/, result)
         end
       end
 
@@ -112,14 +111,14 @@ module RailsLens
         # Spaceship is the base class
         spaceship_result = Inheritance.new(Spaceship).analyze
 
-        assert_match(/Base Class: Yes/, spaceship_result)
+        assert_match(/base = true/, spaceship_result)
 
         # Subclasses should point to Spaceship as base
         cargo_result = Inheritance.new(CargoVessel).analyze
         starfleet_result = Inheritance.new(StarfleetBattleCruiser).analyze
 
-        assert_match(/Base Class: Spaceship/, cargo_result)
-        assert_match(/Base Class: Spaceship/, starfleet_result)
+        assert_match(/base_class = "Spaceship"/, cargo_result)
+        assert_match(/base_class = "Spaceship"/, starfleet_result)
       end
 
       def test_analyze_sti_type_value_detection
@@ -127,16 +126,16 @@ module RailsLens
 
         cargo_result = Inheritance.new(CargoVessel).analyze
 
-        assert_match(/Type Value: CargoVessel/, cargo_result)
+        assert_match(/type_value = "CargoVessel"/, cargo_result)
 
         starfleet_result = Inheritance.new(StarfleetBattleCruiser).analyze
 
-        assert_match(/Type Value: StarfleetBattleCruiser/, starfleet_result)
+        assert_match(/type_value = "StarfleetBattleCruiser"/, starfleet_result)
 
         # Base class should not have a specific type value
         spaceship_result = Inheritance.new(Spaceship).analyze
 
-        assert_no_match(/Type Value:/, spaceship_result)
+        assert_no_match(/type_value =/, spaceship_result)
       end
 
       def test_analyze_handles_inheritance_edge_cases
@@ -161,18 +160,18 @@ module RailsLens
       end
 
       def test_analyze_sti_formatting
-        # Test that STI inheritance info is properly formatted
+        # Test that STI inheritance info is properly formatted in TOML
 
         result = Inheritance.new(CargoVessel).analyze
 
-        # Should have proper section header
-        assert_match(/^== Inheritance \(STI\)$/, result)
+        # Should have proper TOML section header
+        assert_match(/^\[sti\]$/, result)
 
-        # Should have proper field formatting
+        # Should have proper TOML key=value formatting
         lines = result.split("\n")
-        type_column_line = lines.find { |line| line.include?('Type Column:') }
-        base_class_line = lines.find { |line| line.include?('Base Class:') }
-        type_value_line = lines.find { |line| line.include?('Type Value:') }
+        type_column_line = lines.find { |line| line.include?('type_column =') }
+        base_class_line = lines.find { |line| line.include?('base_class =') }
+        type_value_line = lines.find { |line| line.include?('type_value =') }
 
         assert_not_nil type_column_line
         assert_not_nil base_class_line

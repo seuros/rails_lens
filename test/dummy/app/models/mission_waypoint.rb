@@ -5,16 +5,16 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "mission_id", type = "integer", nullable = false },
-#   { name = "sequence", type = "integer", nullable = true },
-#   { name = "coordinates", type = "string", nullable = true },
-#   { name = "eta", type = "datetime", nullable = true },
-#   { name = "notes", type = "text", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "waypoint_type", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "mission_id", type = "integer", null = false },
+#   { name = "sequence", type = "integer" },
+#   { name = "coordinates", type = "string" },
+#   { name = "eta", type = "datetime" },
+#   { name = "notes", type = "text" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "waypoint_type", type = "string" },
+#   { name = "status", type = "string" }
 # ]
 #
 # indexes = [
@@ -25,22 +25,14 @@
 #   { column = "mission_id", references_table = "missions", references_column = "id", name = "fk_rails_e40edbce49" }
 # ]
 #
-# == Enums
-# - waypoint_type: { start: "start", checkpoint: "checkpoint", destination: "destination", emergency: "emergency" } (string)
-# - status: { pending: "pending", reached: "reached", skipped: "skipped" } (string)
+# [enums]
+# waypoint_type = { start = "start", checkpoint = "checkpoint", destination = "destination", emergency = "emergency" }
+# status = { pending = "pending", reached = "reached", skipped = "skipped" }
 #
-# == Notes
-# - Association 'mission' should specify inverse_of
-# - Column 'sequence' should probably have NOT NULL constraint
-# - Column 'coordinates' should probably have NOT NULL constraint
-# - Column 'eta' should probably have NOT NULL constraint
-# - Column 'notes' should probably have NOT NULL constraint
-# - Column 'waypoint_type' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - Status column 'status' should have a default value
-# - String column 'coordinates' has no length limit - consider adding one
-# - Column 'waypoint_type' is commonly used in queries - consider adding an index
-# - Column 'status' is commonly used in queries - consider adding an index
+# [callbacks]
+# before_validation = [{ method = "set_default_status" }]
+#
+# notes = ["mission:INVERSE_OF", "sequence:NOT_NULL", "coordinates:NOT_NULL", "eta:NOT_NULL", "notes:NOT_NULL", "waypoint_type:NOT_NULL", "status:NOT_NULL", "status:DEFAULT", "coordinates:LIMIT", "waypoint_type:INDEX", "status:INDEX", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class MissionWaypoint < ApplicationRecord
   # Enums

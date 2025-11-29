@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 # <rails-lens:schema:begin>
-# connection = "primary"
 # database_dialect = "PostgreSQL"
-# database_version = "180000"
-# database_name = "rails_lens_test"
-#
-# # This is an abstract class that establishes a database connection
-# # but does not have an associated table.
+# [database_functions]
+# functions = [
+#   { name = "update_posts_comments_count", schema = "public", language = "plpgsql", return_type = "trigger", description = "Maintains the comments_count cache counter on the posts table" }
+# ]
 # <rails-lens:schema:end>
 class ApplicationRecord < ActiveRecord::Base
   self.abstract_class = true

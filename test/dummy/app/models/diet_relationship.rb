@@ -5,14 +5,14 @@
 # database_dialect = "SQLite"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "predator_id", type = "integer", nullable = false },
-#   { name = "prey_id", type = "integer", nullable = false },
-#   { name = "relationship_type", type = "string", nullable = true },
-#   { name = "intensity", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "evidence_type", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "predator_id", type = "integer", null = false },
+#   { name = "prey_id", type = "integer", null = false },
+#   { name = "relationship_type", type = "string" },
+#   { name = "intensity", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "evidence_type", type = "string" }
 # ]
 #
 # indexes = [
@@ -25,17 +25,10 @@
 #   { column = "predator_id", references_table = "species", references_column = "id" }
 # ]
 #
-# == Enums
-# - evidence_type: { stomach_contents: "stomach_contents", coprolite: "coprolite", bite_marks: "bite_marks", tooth_marks: "tooth_marks", behavioral: "behavioral", anatomical: "anatomical" } (string)
+# [enums]
+# evidence_type = { stomach_contents = "stomach_contents", coprolite = "coprolite", bite_marks = "bite_marks", tooth_marks = "tooth_marks", behavioral = "behavioral", anatomical = "anatomical" }
 #
-# == Notes
-# - Consider composite index on [predator_id, prey_id] for common query pattern
-# - Column 'relationship_type' should probably have NOT NULL constraint
-# - Column 'intensity' should probably have NOT NULL constraint
-# - Column 'evidence_type' should probably have NOT NULL constraint
-# - String column 'relationship_type' has no length limit - consider adding one
-# - Column 'relationship_type' is commonly used in queries - consider adding an index
-# - Column 'evidence_type' is commonly used in queries - consider adding an index
+# notes = ["predator_id+prey_id:COMP_INDEX", "relationship_type:NOT_NULL", "intensity:NOT_NULL", "evidence_type:NOT_NULL", "relationship_type:LIMIT", "relationship_type:INDEX", "evidence_type:INDEX"]
 # <rails-lens:schema:end>
 class DietRelationship < PrehistoricRecord
   # Enums

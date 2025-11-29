@@ -5,27 +5,24 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "email", type = "string", nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true, default = "active" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "email", type = "string", null = false },
+#   { name = "name", type = "string" },
+#   { name = "status", type = "string", default = "active" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
 #   { name = "index_users_on_email", columns = ["email"], unique = true }
 # ]
 #
-# == Notes
-# - Association 'posts' has N+1 query risk. Consider using includes/preload
-# - Association 'comments' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - String column 'email' has no length limit - consider adding one
-# - String column 'name' has no length limit - consider adding one
-# - String column 'status' has no length limit - consider adding one
-# - Column 'status' is commonly used in queries - consider adding an index
+# [callbacks]
+# before_validation = [{ method = "set_default_status" }, { method = "normalize_email", if = ["email_changed?"] }]
+# after_save = [{ method = "sync_to_crm", if = ["proc"] }]
+# after_commit = [{ method = "send_welcome_email" }]
+#
+# notes = ["posts:N_PLUS_ONE", "comments:N_PLUS_ONE", "name:NOT_NULL", "status:NOT_NULL", "email:LIMIT", "name:LIMIT", "status:LIMIT", "status:INDEX"]
 # <rails-lens:schema:end>
 class User < ApplicationRecord
   # Associations
@@ -46,11 +43,29 @@ class User < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_status, on: :create
+  before_validation :normalize_email, if: :email_changed?
+  after_save :sync_to_crm, if: -> { saved_change_to_status? }
+  after_commit :send_welcome_email, on: :create
 
   private
 
   def set_default_status
     self.status ||= 'active'
+  end
+
+  def normalize_email
+    # Downcase and strip whitespace from email
+    # self.email = email.downcase.strip
+  end
+
+  def sync_to_crm
+    # Sync user status change to external CRM
+    # CrmService.update_contact(self, status: status)
+  end
+
+  def send_welcome_email
+    # Send welcome email after user is committed to database
+    # UserMailer.welcome(self).deliver_later
   end
 end
 
