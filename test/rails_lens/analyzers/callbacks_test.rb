@@ -97,7 +97,7 @@ module RailsLens
         assert_match(/set_fuel_consumption/, result)
         assert_match(/update_trip_category/, result)
 
-        # Note: prepend option is not exposed by Rails 8 callback API
+        # NOTE: prepend option is not exposed by Rails 8 callback API
         # The order in the chain reflects prepend, but it's not queryable
       end
 
@@ -136,9 +136,9 @@ module RailsLens
         result = analyzer.analyze
 
         # Result can be nil or have callbacks
-        if result
-          assert_match(/\[callbacks\]/, result)
-        end
+        skip unless result
+
+        assert_match(/\[callbacks\]/, result)
       end
 
       def test_analyze_returns_nil_for_model_with_only_inherited_callbacks
@@ -156,8 +156,9 @@ module RailsLens
         # Should have proper TOML array format for callback types
         # Format: callback_type = [{ method = "...", ... }, ...]
         lines = result.split("\n")
-        callback_lines = lines.select { |line| line.match?(/^\w+_\w+ = \[/) }
-        assert callback_lines.any?, 'Should have callback type definitions'
+        callback_lines = lines.grep(/^\w+_\w+ = \[/)
+
+        assert_predicate callback_lines, :any?, 'Should have callback type definitions'
       end
 
       def test_callback_conditions_are_captured
@@ -203,14 +204,17 @@ module RailsLens
       def test_analyze_across_different_databases
         # MySQL model
         mysql_result = Callbacks.new(Vehicle).analyze
+
         assert_not_nil mysql_result
 
         # SQLite model
         sqlite_result = Callbacks.new(Dinosaur).analyze
+
         assert_not_nil sqlite_result
 
         # PostgreSQL model
         pg_result = Callbacks.new(Post).analyze
+
         assert_not_nil pg_result
       end
     end

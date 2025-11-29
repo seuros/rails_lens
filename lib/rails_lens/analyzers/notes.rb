@@ -58,11 +58,9 @@ module RailsLens
         notes = []
 
         # Check if this model is backed by a database view
-        if ModelDetector.view_exists?(model_class)
-          # Only note if readonly protection is missing (view status is already obvious)
-          unless has_readonly_implementation?
-            notes << NoteCodes::ADD_READONLY
-          end
+        # Only note if readonly protection is missing (view status is already obvious)
+        if ModelDetector.view_exists?(model_class) && !has_readonly_implementation?
+          notes << NoteCodes::ADD_READONLY
         end
 
         notes
@@ -76,10 +74,8 @@ module RailsLens
         view_metadata = ViewMetadata.new(model_class)
 
         # Check for materialized view specific issues
-        if view_metadata.materialized_view?
-          unless has_refresh_methods?
-            notes << NoteCodes::ADD_REFRESH
-          end
+        if view_metadata.materialized_view? && !has_refresh_methods?
+          notes << NoteCodes::ADD_REFRESH
         end
 
         # Check for nested views (view depending on other views)

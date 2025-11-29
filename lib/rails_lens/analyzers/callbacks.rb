@@ -67,7 +67,7 @@ module RailsLens
           next unless model_class.respond_to?(chain_method)
 
           chain = model_class.public_send(chain_method)
-          next if chain.nil? || chain.empty?
+          next if chain.blank?
 
           chain.each do |callback|
             next if internal_callback?(callback)
@@ -95,7 +95,11 @@ module RailsLens
           INTERNAL_CALLBACK_PREFIXES.any? { |prefix| filter_name.start_with?(prefix) }
         when Proc
           # Check if proc is from Rails internals (association callbacks, dependent: :destroy)
-          source_location = filter.source_location rescue nil
+          source_location = begin
+            filter.source_location
+          rescue
+            nil
+          end
           return false if source_location.nil?
 
           # Filter out procs defined in activerecord/activesupport gems
@@ -129,6 +133,7 @@ module RailsLens
           while klass && klass < ActiveRecord::Base
             return true if klass.instance_methods(false).include?(filter)
             return true if klass.private_instance_methods(false).include?(filter)
+
             klass = klass.superclass
           end
 
@@ -160,7 +165,7 @@ module RailsLens
                       end
 
         # Build full callback type (e.g., :before + :save = :before_save)
-        callback_type = "#{KIND_PREFIXES[kind]}#{chain_name}".to_sym
+        callback_type = :"#{KIND_PREFIXES[kind]}#{chain_name}"
 
         {
           type: callback_type,
@@ -207,7 +212,11 @@ module RailsLens
           when Symbol
             condition.to_s
           when Proc
-            source_location = condition.source_location rescue nil
+            source_location = begin
+              condition.source_location
+            rescue
+              nil
+            end
             if source_location.nil?
               'proc'
             elsif source_location[0].to_s.match?(%r{/active(record|support|model)})
@@ -219,7 +228,11 @@ module RailsLens
           when String
             condition
           else
-            class_name = condition.class.name rescue nil
+            class_name = begin
+              condition.class.name
+            rescue
+              nil
+            end
             # Skip internal Rails callback condition classes
             if class_name&.start_with?('ActiveSupport::Callbacks', 'ActiveRecord')
               nil
