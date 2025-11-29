@@ -29,6 +29,11 @@
 # [enums]
 # status = { active = "active", maintenance = "maintenance", decommissioned = "decommissioned", obliterated = "obliterated" }
 #
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "calculate_crew_capacity" }]
+# after_update = [{ method = "notify_fleet_command" }]
+#
 # notes = ["spaceship_crew_members:N_PLUS_ONE", "crew_members:N_PLUS_ONE", "missions:N_PLUS_ONE", "spatial_coordinates:N_PLUS_ONE", "comments:N_PLUS_ONE", "name:NOT_NULL", "class_type:NOT_NULL", "warp_capability:NOT_NULL", "status:NOT_NULL", "type:NOT_NULL", "cargo_capacity:NOT_NULL", "cargo_type:NOT_NULL", "battle_status:NOT_NULL", "warp_capability:DEFAULT", "status:DEFAULT", "battle_status:DEFAULT", "name:LIMIT", "class_type:LIMIT", "status:LIMIT", "type:LIMIT", "cargo_type:LIMIT", "battle_status:LIMIT", "class_type:INDEX", "status:INDEX", "type:INDEX", "cargo_type:INDEX", "battle_status:INDEX", "type:STI_NOT_NULL"]
 # <rails-lens:schema:end>
 class Spaceship < ApplicationRecord
@@ -61,12 +66,24 @@ class Spaceship < ApplicationRecord
 
   # Callbacks
   before_validation :set_defaults, on: :create
+  before_save :calculate_crew_capacity
+  after_update :notify_fleet_command
 
   private
 
   def set_defaults
     self.warp_capability = false if warp_capability.nil?
     self.status ||= 'active'
+  end
+
+  def calculate_crew_capacity
+    # Calculate crew capacity based on class_type
+    # self.max_crew = ClassCapacities[class_type] || 100
+  end
+
+  def notify_fleet_command
+    # Notify fleet command of spaceship changes
+    # FleetCommandService.notify(self, :updated, saved_changes)
   end
 end
 

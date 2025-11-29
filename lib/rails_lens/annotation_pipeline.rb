@@ -75,6 +75,7 @@ module RailsLens
       register(Providers::CompositeKeysProvider.new)
       register(Providers::DatabaseConstraintsProvider.new)
       register(Providers::GeneratedColumnsProvider.new)
+      register(Providers::CallbacksProvider.new)
 
       # Notes providers (analysis and recommendations)
       return unless RailsLens.config.schema[:include_notes]

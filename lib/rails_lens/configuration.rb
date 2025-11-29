@@ -42,7 +42,8 @@ module RailsLens
           show_indexes: true,
           show_check_constraints: true,
           show_triggers: true,
-          show_functions: true
+          show_functions: true,
+          show_callbacks: true
         }
       }
 

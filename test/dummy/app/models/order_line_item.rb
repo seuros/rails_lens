@@ -24,9 +24,15 @@
 # [composite_pk]
 # keys = ["order_id", "line_number"]
 #
+# [callbacks]
+# after_save = [{ method = "log_changes" }]
+# before_create = [{ method = "set_tracking_id" }]
+#
 # notes = ["total_price:NOT_NULL", "product_name:NOT_NULL", "notes:NOT_NULL", "product_name:LIMIT", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class OrderLineItem < ApplicationRecord
+  include Trackable
+
   # Composite primary key using PostgreSQL
   self.primary_key = [:order_id, :line_number]
 

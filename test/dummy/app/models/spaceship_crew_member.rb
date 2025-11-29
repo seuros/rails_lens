@@ -25,6 +25,9 @@
 #   { column = "spaceship_id", references_table = "spaceships", references_column = "id", name = "fk_rails_7135c9d1a6" }
 # ]
 #
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+#
 # notes = ["spaceship:COUNTER_CACHE", "crew_member:COUNTER_CACHE", "position:NOT_NULL", "active:NOT_NULL", "active:DEFAULT", "position:LIMIT"]
 # <rails-lens:schema:end>
 class SpaceshipCrewMember < ApplicationRecord

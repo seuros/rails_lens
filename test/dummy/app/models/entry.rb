@@ -22,6 +22,9 @@
 # id_column = "entryable_id"
 # types = ["Message", "Announcement", "Alert"]
 #
+# [callbacks]
+# before_validation = [{ method = "set_default_published" }]
+#
 # notes = ["entryable:POLY_INDEX", "title:NOT_NULL", "published:NOT_NULL", "entryable_type:NOT_NULL", "published:DEFAULT", "title:LIMIT", "entryable_type:LIMIT", "entryable_type:INDEX"]
 # <rails-lens:schema:end>
 class Entry < ApplicationRecord

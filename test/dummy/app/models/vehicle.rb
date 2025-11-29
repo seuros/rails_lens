@@ -35,6 +35,11 @@
 # vehicle_type = { car = "car", truck = "truck", motorcycle = "motorcycle", bus = "bus", van = "van", suv = "suv", electric = "electric", hybrid = "hybrid" }
 # status = { active = "active", maintenance = "maintenance", impounded = "impounded", scrapped = "scrapped" }
 #
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "update_mileage_category", if = ["mileage_changed?"], unless = ["new_record?"] }]
+# after_update = [{ method = "schedule_maintenance", if = ["proc"] }]
+#
 # notes = ["manufacturer_id:INDEX", "manufacturer_id:FK_CONSTRAINT", "vehicle_owners:N_PLUS_ONE", "owners:N_PLUS_ONE", "maintenance_records:N_PLUS_ONE", "trips:N_PLUS_ONE", "manufacturer:COUNTER_CACHE", "name:NOT_NULL", "model:NOT_NULL", "year:NOT_NULL", "price:NOT_NULL", "mileage:NOT_NULL", "fuel_type:NOT_NULL", "transmission:NOT_NULL", "color:NOT_NULL", "vin:NOT_NULL", "description:NOT_NULL", "available:NOT_NULL", "service_time:NOT_NULL", "image_data:NOT_NULL", "condition:NOT_NULL", "vehicle_type:NOT_NULL", "status:NOT_NULL", "status:DEFAULT", "fuel_type:INDEX", "vehicle_type:INDEX", "status:INDEX", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Vehicle < VehicleRecord
@@ -89,12 +94,22 @@ class Vehicle < VehicleRecord
 
   # Callbacks
   before_validation :set_defaults, on: :create
+  before_save :update_mileage_category, if: :mileage_changed?, unless: :new_record?
+  after_update :schedule_maintenance, if: -> { mileage > 50_000 }
 
   private
 
   def set_defaults
     self.available = true if available.nil?
     self.condition ||= 'used'
+  end
+
+  def update_mileage_category
+    self.condition = mileage > 100_000 ? 'high_mileage' : 'used'
+  end
+
+  def schedule_maintenance
+    MaintenanceScheduler.schedule_checkup(self) if mileage_previously_changed?
   end
 end
 

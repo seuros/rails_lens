@@ -19,6 +19,9 @@
 # [enums]
 # priority = { low = 0, normal = 1, high = 2, urgent = 3 }
 #
+# [callbacks]
+# before_validation = [{ method = "set_default_priority" }]
+#
 # notes = ["content:NOT_NULL", "recipient:NOT_NULL", "priority:NOT_NULL", "recipient:LIMIT", "content:STORAGE"]
 # <rails-lens:schema:end>
 class Message < ApplicationRecord

@@ -16,6 +16,10 @@
 #   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
+# [callbacks]
+# after_initialize = [{ method = "set_defaults" }]
+# after_find = [{ method = "decrypt_sensitive_data" }]
+#
 # notes = ["changes:NOT_NULL", "table_name:LIMIT", "action:LIMIT"]
 # <rails-lens:schema:end>
 class AuditLog < ApplicationRecord
@@ -34,4 +38,20 @@ class AuditLog < ApplicationRecord
   scope :for_table, ->(table_name) { where(table_name: table_name) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
   scope :for_record, ->(table_name, record_id) { where(table_name: table_name, record_id: record_id) }
+
+  # Callbacks
+  after_find :decrypt_sensitive_data
+  after_initialize :set_defaults
+
+  private
+
+  def decrypt_sensitive_data
+    # Decrypt sensitive fields when loading from database
+    # self.changes = EncryptionService.decrypt(changes) if changes.present?
+  end
+
+  def set_defaults
+    # Set default values for new records
+    # self.changes ||= {}
+  end
 end

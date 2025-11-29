@@ -34,6 +34,10 @@
 # [enums]
 # service_type = { oil_change = "oil_change", tire_rotation = "tire_rotation", brake_service = "brake_service", transmission = "transmission", engine_repair = "engine_repair", inspection = "inspection", warranty = "warranty", recall = "recall" }
 #
+# [callbacks]
+# after_create = [{ method = "schedule_next_appointment" }, { method = "update_vehicle_last_service" }]
+# after_destroy = [{ method = "recalculate_vehicle_costs" }]
+#
 # notes = ["vehicle:COUNTER_CACHE", "service_type:NOT_NULL", "cost:NOT_NULL", "notes:NOT_NULL", "service_type:INDEX", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class MaintenanceRecord < VehicleRecord
@@ -62,5 +66,24 @@ class MaintenanceRecord < VehicleRecord
   scope :by_type, ->(type) { where(service_type: type) }
   scope :expensive, -> { where('cost > ?', 500) }
   scope :for_year, ->(year) { where(service_date: Date.new(year).beginning_of_year..Date.new(year).end_of_year) }
+
+  # Callbacks - Cross-record effects (updating related records)
+  after_create :update_vehicle_last_service
+  after_create :schedule_next_appointment
+  after_destroy :recalculate_vehicle_costs
+
+  private
+
+  def update_vehicle_last_service
+    vehicle.update_column(:last_service_date, service_date)
+  end
+
+  def schedule_next_appointment
+    ServiceScheduler.schedule_followup(vehicle, service_type, service_date + 6.months)
+  end
+
+  def recalculate_vehicle_costs
+    vehicle.update_column(:total_maintenance_cost, vehicle.maintenance_records.sum(:cost))
+  end
 end
 

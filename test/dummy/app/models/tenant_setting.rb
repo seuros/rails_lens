@@ -22,9 +22,16 @@
 # [composite_pk]
 # keys = ["tenant_id", "key"]
 #
+# [callbacks]
+# after_create = [{ method = "audit_creation" }]
+# after_update = [{ method = "audit_update" }]
+# after_destroy = [{ method = "audit_destruction" }]
+#
 # notes = ["value:NOT_NULL", "description:NOT_NULL", "encrypted:NOT_NULL", "key:LIMIT", "value:STORAGE", "description:STORAGE"]
 # <rails-lens:schema:end>
 class TenantSetting < ApplicationRecord
+  include Auditable
+
   # Composite primary key: [tenant_id, key]
   # Note: Rails doesn't natively support composite primary keys
   # Consider using a gem like composite_primary_keys if needed

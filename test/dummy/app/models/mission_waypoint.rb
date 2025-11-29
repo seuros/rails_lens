@@ -29,6 +29,9 @@
 # waypoint_type = { start = "start", checkpoint = "checkpoint", destination = "destination", emergency = "emergency" }
 # status = { pending = "pending", reached = "reached", skipped = "skipped" }
 #
+# [callbacks]
+# before_validation = [{ method = "set_default_status" }]
+#
 # notes = ["mission:INVERSE_OF", "sequence:NOT_NULL", "coordinates:NOT_NULL", "eta:NOT_NULL", "notes:NOT_NULL", "waypoint_type:NOT_NULL", "status:NOT_NULL", "status:DEFAULT", "coordinates:LIMIT", "waypoint_type:INDEX", "status:INDEX", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class MissionWaypoint < ApplicationRecord

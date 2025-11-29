@@ -24,6 +24,10 @@
 #   { column = "user_id", references_table = "users", references_column = "id", name = "fk_rails_5b5ddfd518" }
 # ]
 #
+# [callbacks]
+# after_commit = [{ method = "notify_subscribers" }, { method = "invalidate_cache" }]
+# after_rollback = [{ method = "log_failure" }]
+#
 # notes = ["comments:N_PLUS_ONE", "user:COUNTER_CACHE", "content:NOT_NULL", "published:NOT_NULL", "title:LIMIT", "content:STORAGE"]
 # <rails-lens:schema:end>
 # Test annotation
@@ -42,6 +46,11 @@ class Post < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :by_user, ->(user) { where(user: user) }
 
+  # Callbacks
+  after_commit :invalidate_cache, on: %i[create update]
+  after_commit :notify_subscribers, on: :create
+  after_rollback :log_failure
+
   # Methods
   def publish!
     update!(published: true)
@@ -51,5 +60,22 @@ class Post < ApplicationRecord
     update!(published: false)
   end
 
+  private
+
+  def invalidate_cache
+    # Clear cached post data after create/update
+    # Rails.cache.delete("post:#{id}")
+    # Rails.cache.delete("user:#{user_id}:posts")
+  end
+
+  def notify_subscribers
+    # Notify subscribers about new post
+    # NotificationService.new_post(self)
+  end
+
+  def log_failure
+    # Log transaction rollback for debugging
+    # Rails.logger.error("Post transaction rolled back: #{id}")
+  end
 end
 

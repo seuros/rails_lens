@@ -33,6 +33,12 @@
 # status = { active = "active", defunct = "defunct", acquired = "acquired" }
 # company_type = { conglomerate = "conglomerate", parent_company = "parent_company", subsidiary = "subsidiary", division = "division", brand = "brand", factory = "factory" }
 #
+# [callbacks]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "_ct_before_save" }]
+# after_save = [{ method = "_ct_after_save" }]
+# before_destroy = [{ method = "_ct_before_destroy" }]
+#
 # notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "vehicles:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "vehicles:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "country:NOT_NULL", "founded_year:NOT_NULL", "headquarters:NOT_NULL", "website:NOT_NULL", "annual_revenue:NOT_NULL", "active:NOT_NULL", "logo_url:NOT_NULL", "status:NOT_NULL", "company_type:NOT_NULL", "active:DEFAULT", "status:DEFAULT", "status:INDEX", "company_type:INDEX", "headquarters:STORAGE", "manufacturer_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
 # <rails-lens:schema:end>
 class Manufacturer < VehicleRecord

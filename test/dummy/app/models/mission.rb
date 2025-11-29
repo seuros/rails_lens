@@ -23,6 +23,10 @@
 # status = { planned = "planned", active = "active", completed = "completed", failed = "failed", aborted = "aborted" }
 # classification = { exploration = "exploration", diplomatic = "diplomatic", military = "military", scientific = "scientific", rescue = "rescue" }
 #
+# [callbacks]
+# around_save = [{ method = "log_mission_changes" }]
+# around_destroy = [{ method = "archive_before_destroy" }]
+#
 # notes = ["spaceship_id:INDEX", "spaceship_id:FK_CONSTRAINT", "mission_waypoints:N_PLUS_ONE", "spaceship:COUNTER_CACHE", "name:NOT_NULL", "objective:NOT_NULL", "status:NOT_NULL", "priority:NOT_NULL", "estimated_duration:NOT_NULL", "classification_level:NOT_NULL", "classification:NOT_NULL", "status:DEFAULT", "name:LIMIT", "status:LIMIT", "classification_level:LIMIT", "status:INDEX", "objective:STORAGE"]
 # <rails-lens:schema:end>
 class Mission < ApplicationRecord
@@ -65,7 +69,27 @@ class Mission < ApplicationRecord
   scope :high_priority, -> { where('priority >= ?', 8) }
   scope :recent, -> { order(created_at: :desc) }
 
+  # Callbacks
+  around_save :log_mission_changes
+  around_destroy :archive_before_destroy
+
   private
+
+  def log_mission_changes
+    # Log state before save
+    # Rails.logger.info("Mission #{id} before: #{changes}")
+    yield
+    # Log state after save
+    # Rails.logger.info("Mission #{id} after: #{saved_changes}")
+  end
+
+  def archive_before_destroy
+    # Archive mission data before destruction
+    # MissionArchive.create!(mission_data: attributes)
+    yield
+    # Clean up related archives if needed
+    # MissionArchive.cleanup_orphans
+  end
 
   def end_date_after_start_date
     return if end_date.blank? || start_date.blank?
