@@ -15,7 +15,7 @@ module RailsLens
 
       def analyze_null_constraints
         columns_needing_not_null.map do |column|
-          "Column '#{column.name}' should probably have NOT NULL constraint"
+          NoteCodes.note(column.name, NoteCodes::NOT_NULL)
         end
       end
 
@@ -24,11 +24,11 @@ module RailsLens
 
         columns.each do |column|
           if column.type == :boolean && column.default.nil? && column.null
-            notes << "Boolean column '#{column.name}' should have a default value"
+            notes << NoteCodes.note(column.name, NoteCodes::DEFAULT)
           end
 
           if status_column?(column) && column.default.nil?
-            notes << "Status column '#{column.name}' should have a default value"
+            notes << NoteCodes.note(column.name, NoteCodes::DEFAULT)
           end
         end
 
@@ -41,17 +41,17 @@ module RailsLens
         columns.each do |column|
           # Check for float columns used for money
           if money_column?(column) && column.type == :float
-            notes << "Column '#{column.name}' appears to store monetary values - use decimal instead of float"
+            notes << NoteCodes.note(column.name, NoteCodes::USE_DECIMAL)
           end
 
           # Check for string columns that should be integers
           if counter_column?(column) && column.type != :integer
-            notes << "Counter column '#{column.name}' should be integer type, not #{column.type}"
+            notes << NoteCodes.note(column.name, NoteCodes::USE_INTEGER)
           end
 
           # Check for inappropriately large string columns
           if column.type == :string && column.limit.nil?
-            notes << "String column '#{column.name}' has no length limit - consider adding one"
+            notes << NoteCodes.note(column.name, NoteCodes::LIMIT)
           end
         end
 

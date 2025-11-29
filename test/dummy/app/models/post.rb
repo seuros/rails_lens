@@ -5,14 +5,14 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "title", type = "string", nullable = false },
-#   { name = "content", type = "text", nullable = true },
-#   { name = "user_id", type = "integer", nullable = false },
-#   { name = "published", type = "boolean", nullable = true, default = "false" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "comments_count", type = "integer", nullable = false, default = "0" }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "title", type = "string", null = false },
+#   { name = "content", type = "text" },
+#   { name = "user_id", type = "integer", null = false },
+#   { name = "published", type = "boolean", default = "false" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "comments_count", type = "integer", null = false, default = "0" }
 # ]
 #
 # indexes = [
@@ -24,13 +24,7 @@
 #   { column = "user_id", references_table = "users", references_column = "id", name = "fk_rails_5b5ddfd518" }
 # ]
 #
-# == Notes
-# - Association 'comments' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'user'
-# - Column 'content' should probably have NOT NULL constraint
-# - Column 'published' should probably have NOT NULL constraint
-# - String column 'title' has no length limit - consider adding one
-# - Large text column 'content' is frequently queried - consider separate storage
+# notes = ["comments:N_PLUS_ONE", "user:COUNTER_CACHE", "content:NOT_NULL", "published:NOT_NULL", "title:LIMIT", "content:STORAGE"]
 # <rails-lens:schema:end>
 # Test annotation
 class Post < ApplicationRecord

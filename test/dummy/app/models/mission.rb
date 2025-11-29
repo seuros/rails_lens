@@ -5,41 +5,25 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "objective", type = "text", nullable = true },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "priority", type = "integer", nullable = true },
-#   { name = "start_date", type = "date", nullable = true },
-#   { name = "end_date", type = "date", nullable = true },
-#   { name = "estimated_duration", type = "interval", nullable = true },
-#   { name = "classification_level", type = "string", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "classification", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "objective", type = "text" },
+#   { name = "status", type = "string" },
+#   { name = "priority", type = "integer" },
+#   { name = "start_date", type = "date" },
+#   { name = "end_date", type = "date" },
+#   { name = "estimated_duration", type = "interval" },
+#   { name = "classification_level", type = "string" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "classification", type = "string" }
 # ]
 #
-# == Enums
-# - status: { planned: "planned", active: "active", completed: "completed", failed: "failed", aborted: "aborted" } (string)
-# - classification: { exploration: "exploration", diplomatic: "diplomatic", military: "military", scientific: "scientific", rescue: "rescue" } (string)
+# [enums]
+# status = { planned = "planned", active = "active", completed = "completed", failed = "failed", aborted = "aborted" }
+# classification = { exploration = "exploration", diplomatic = "diplomatic", military = "military", scientific = "scientific", rescue = "rescue" }
 #
-# == Notes
-# - Missing index on foreign key 'spaceship_id'
-# - Missing foreign key constraint on 'spaceship_id' referencing 'spaceships'
-# - Association 'mission_waypoints' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'spaceship'
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'objective' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - Column 'priority' should probably have NOT NULL constraint
-# - Column 'estimated_duration' should probably have NOT NULL constraint
-# - Column 'classification_level' should probably have NOT NULL constraint
-# - Column 'classification' should probably have NOT NULL constraint
-# - Status column 'status' should have a default value
-# - String column 'name' has no length limit - consider adding one
-# - String column 'status' has no length limit - consider adding one
-# - String column 'classification_level' has no length limit - consider adding one
-# - Column 'status' is commonly used in queries - consider adding an index
+# notes = ["spaceship_id:INDEX", "spaceship_id:FK_CONSTRAINT", "mission_waypoints:N_PLUS_ONE", "spaceship:COUNTER_CACHE", "name:NOT_NULL", "objective:NOT_NULL", "status:NOT_NULL", "priority:NOT_NULL", "estimated_duration:NOT_NULL", "classification_level:NOT_NULL", "classification:NOT_NULL", "status:DEFAULT", "name:LIMIT", "status:LIMIT", "classification_level:LIMIT", "status:INDEX", "objective:STORAGE"]
 # <rails-lens:schema:end>
 class Mission < ApplicationRecord
   # Enums

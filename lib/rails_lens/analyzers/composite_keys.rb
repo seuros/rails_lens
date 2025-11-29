@@ -28,8 +28,8 @@ module RailsLens
       private
 
       def format_composite_keys(keys)
-        lines = ['== Composite Primary Key']
-        lines << "Primary Keys: #{keys.join(', ')}"
+        lines = ['[composite_pk]']
+        lines << "keys = [#{keys.map { |k| "\"#{k}\"" }.join(', ')}]"
         lines.join("\n")
       end
 

@@ -6,20 +6,20 @@ module RailsLens
       def analyze
         return nil unless delegated_type_model?
 
-        lines = ['== Delegated Type']
+        lines = ['[delegated_type]']
 
         # Find delegated type configuration
         delegated_type_info = find_delegated_type_info
         return nil unless delegated_type_info
 
-        lines << "Type Column: #{delegated_type_info[:type_column]}"
-        lines << "ID Column: #{delegated_type_info[:id_column]}"
+        lines << "type_column = \"#{delegated_type_info[:type_column]}\""
+        lines << "id_column = \"#{delegated_type_info[:id_column]}\""
         types_list = if delegated_type_info[:types].respond_to?(:keys)
                        delegated_type_info[:types].keys
                      else
                        Array(delegated_type_info[:types])
                      end
-        lines << "Types: #{types_list.join(', ')}"
+        lines << "types = [#{types_list.map { |t| "\"#{t}\"" }.join(', ')}]"
 
         lines.join("\n")
       end

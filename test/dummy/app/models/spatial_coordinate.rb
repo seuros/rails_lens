@@ -5,20 +5,20 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "location", type = "st_geometry", nullable = true },
-#   { name = "coordinates", type = "st_point", nullable = true },
-#   { name = "sensor_data", type = "jsonb", nullable = true },
-#   { name = "metadata", type = "json", nullable = true },
-#   { name = "ip_address", type = "inet", nullable = true },
-#   { name = "tracking_id", type = "uuid", nullable = true },
-#   { name = "altitude", type = "float", nullable = true },
-#   { name = "longitude", type = "decimal", nullable = true },
-#   { name = "latitude", type = "decimal", nullable = true },
-#   { name = "recorded_at", type = "datetime", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "spaceship_id", type = "integer", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "location", type = "st_geometry" },
+#   { name = "coordinates", type = "st_point" },
+#   { name = "sensor_data", type = "jsonb" },
+#   { name = "metadata", type = "json" },
+#   { name = "ip_address", type = "inet" },
+#   { name = "tracking_id", type = "uuid" },
+#   { name = "altitude", type = "float" },
+#   { name = "longitude", type = "decimal" },
+#   { name = "latitude", type = "decimal" },
+#   { name = "recorded_at", type = "datetime" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "spaceship_id", type = "integer", null = false }
 # ]
 #
 # indexes = [
@@ -31,17 +31,7 @@
 #   { column = "spaceship_id", references_table = "spaceships", references_column = "id", name = "fk_rails_69751d644a" }
 # ]
 #
-# == Notes
-# - Association 'spaceship' should specify inverse_of
-# - Column 'location' should probably have NOT NULL constraint
-# - Column 'coordinates' should probably have NOT NULL constraint
-# - Column 'sensor_data' should probably have NOT NULL constraint
-# - Column 'metadata' should probably have NOT NULL constraint
-# - Column 'ip_address' should probably have NOT NULL constraint
-# - Column 'altitude' should probably have NOT NULL constraint
-# - Column 'longitude' should probably have NOT NULL constraint
-# - Column 'latitude' should probably have NOT NULL constraint
-# - UUID column 'tracking_id' should be indexed for better query performance
+# notes = ["spaceship:INVERSE_OF", "location:NOT_NULL", "coordinates:NOT_NULL", "sensor_data:NOT_NULL", "metadata:NOT_NULL", "ip_address:NOT_NULL", "altitude:NOT_NULL", "longitude:NOT_NULL", "latitude:NOT_NULL", "tracking_id:INDEX"]
 # <rails-lens:schema:end>
 class SpatialCoordinate < ApplicationRecord
   belongs_to :spaceship

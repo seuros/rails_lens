@@ -8,36 +8,24 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "email", type = "string", nullable = true },
-#   { name = "phone", type = "string", nullable = true },
-#   { name = "address", type = "text", nullable = true },
-#   { name = "date_of_birth", type = "date", nullable = true },
-#   { name = "license_number", type = "string", nullable = true },
-#   { name = "credit_score", type = "integer", nullable = true },
-#   { name = "net_worth", type = "decimal", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "license_class", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "email", type = "string" },
+#   { name = "phone", type = "string" },
+#   { name = "address", type = "text" },
+#   { name = "date_of_birth", type = "date" },
+#   { name = "license_number", type = "string" },
+#   { name = "credit_score", type = "integer" },
+#   { name = "net_worth", type = "decimal" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "license_class", type = "string" }
 # ]
 #
-# == Enums
-# - license_class: { class_a: "class_a", class_b: "class_b", class_c: "class_c", motorcycle: "motorcycle", cdl: "cdl" } (string)
+# [enums]
+# license_class = { class_a = "class_a", class_b = "class_b", class_c = "class_c", motorcycle = "motorcycle", cdl = "cdl" }
 #
-# == Notes
-# - Association 'vehicle_owners' has N+1 query risk. Consider using includes/preload
-# - Association 'vehicles' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'email' should probably have NOT NULL constraint
-# - Column 'phone' should probably have NOT NULL constraint
-# - Column 'address' should probably have NOT NULL constraint
-# - Column 'date_of_birth' should probably have NOT NULL constraint
-# - Column 'license_number' should probably have NOT NULL constraint
-# - Column 'credit_score' should probably have NOT NULL constraint
-# - Column 'net_worth' should probably have NOT NULL constraint
-# - Column 'license_class' should probably have NOT NULL constraint
-# - Column 'email' is commonly used in queries - consider adding an index
+# notes = ["vehicle_owners:N_PLUS_ONE", "vehicles:N_PLUS_ONE", "name:NOT_NULL", "email:NOT_NULL", "phone:NOT_NULL", "address:NOT_NULL", "date_of_birth:NOT_NULL", "license_number:NOT_NULL", "credit_score:NOT_NULL", "net_worth:NOT_NULL", "license_class:NOT_NULL", "email:INDEX", "address:STORAGE"]
 # <rails-lens:schema:end>
 class Owner < VehicleRecord
   # Enums

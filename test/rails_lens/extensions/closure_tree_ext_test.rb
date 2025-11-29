@@ -42,10 +42,10 @@ module RailsLens
         extension = ClosureTreeExt.new(@model)
         result = extension.annotate
 
-        assert_match(/== Hierarchy \(ClosureTree\)/, result)
-        assert_match(/Parent Column: parent_id/, result)
-        assert_match(/Hierarchy Table: family_hierarchies/, result)
-        assert_match(/Order Column: name/, result)
+        assert_match(/\[closure_tree\]/, result)
+        assert_match(/parent_column = "parent_id"/, result)
+        assert_match(/hierarchy_table = "family_hierarchies"/, result)
+        assert_match(/order_column = "name"/, result)
       end
 
       def test_notes_without_closure_tree
@@ -91,9 +91,9 @@ module RailsLens
         extension = ClosureTreeExt.new(@model)
         result = extension.annotate
 
-        # Should work with normal ClosureTree configuration
-        assert_match(/Parent Column: parent_id/, result)
-        assert_match(/Hierarchy Table: family_hierarchies/, result)
+        # Should work with normal ClosureTree configuration (TOML format)
+        assert_match(/parent_column = "parent_id"/, result)
+        assert_match(/hierarchy_table = "family_hierarchies"/, result)
       end
 
       def test_invalid_closure_tree_configuration

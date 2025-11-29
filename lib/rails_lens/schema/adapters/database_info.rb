@@ -13,30 +13,24 @@ module RailsLens
 
         def generate_annotation
           lines = []
-          lines << '== Database Information'
-          lines << "Adapter: #{adapter_name}"
-          lines << "Database: #{database_name}"
-          lines << "Version: #{database_version}"
-          lines << "Encoding: #{database_encoding}" if respond_to?(:database_encoding)
-          lines << "Collation: #{database_collation}" if respond_to?(:database_collation)
-          lines << ''
+          lines << '[database_info]'
+          lines << "adapter = \"#{adapter_name}\""
+          lines << "database = \"#{database_name}\""
+          lines << "version = \"#{database_version}\""
+          enc = database_encoding
+          lines << "encoding = \"#{enc}\"" if enc
+          coll = database_collation
+          lines << "collation = \"#{coll}\"" if coll
 
           # Add extensions for PostgreSQL
           if adapter_name == 'PostgreSQL' && extensions.any?
-            lines << 'Enabled Extensions:'
-            extensions.each do |ext|
-              lines << "  - #{ext['name']} (#{ext['version']})"
-            end
-            lines << ''
+            ext_list = extensions.map { |e| "{ name = \"#{e['name']}\", version = \"#{e['version']}\" }" }
+            lines << "extensions = [#{ext_list.join(', ')}]"
           end
 
           # Add schemas for PostgreSQL
           if adapter_name == 'PostgreSQL' && schemas.any?
-            lines << 'Database Schemas:'
-            schemas.each do |schema|
-              lines << "  - #{schema}"
-            end
-            lines << ''
+            lines << "schemas = [#{schemas.map { |s| "\"#{s}\"" }.join(', ')}]"
           end
 
           lines.join("\n")

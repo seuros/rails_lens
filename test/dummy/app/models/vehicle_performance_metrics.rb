@@ -7,34 +7,30 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", nullable = false, default = "0" },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "model", type = "string", nullable = true },
-#   { name = "year", type = "integer", nullable = true },
-#   { name = "vehicle_type", type = "string", nullable = true },
-#   { name = "fuel_type", type = "string", nullable = true },
-#   { name = "price", type = "decimal", nullable = true },
-#   { name = "mileage", type = "integer", nullable = true },
-#   { name = "maintenance_events", type = "integer", nullable = false, default = "0" },
-#   { name = "total_maintenance_cost", type = "decimal", nullable = false, default = "0" },
-#   { name = "trip_count", type = "integer", nullable = false, default = "0" },
-#   { name = "total_distance", type = "decimal", nullable = false, default = "0" },
-#   { name = "cost_per_mile", type = "decimal", nullable = true },
-#   { name = "days_owned", type = "integer", nullable = true },
-#   { name = "maintenance_category", type = "string", nullable = false, default = "" },
-#   { name = "availability_tier", type = "string", nullable = false, default = "" }
+#   { name = "id", type = "integer", null = false, default = "0" },
+#   { name = "name", type = "string" },
+#   { name = "model", type = "string" },
+#   { name = "year", type = "integer" },
+#   { name = "vehicle_type", type = "string" },
+#   { name = "fuel_type", type = "string" },
+#   { name = "price", type = "decimal" },
+#   { name = "mileage", type = "integer" },
+#   { name = "maintenance_events", type = "integer", null = false, default = "0" },
+#   { name = "total_maintenance_cost", type = "decimal", null = false, default = "0" },
+#   { name = "trip_count", type = "integer", null = false, default = "0" },
+#   { name = "total_distance", type = "decimal", null = false, default = "0" },
+#   { name = "cost_per_mile", type = "decimal" },
+#   { name = "days_owned", type = "integer" },
+#   { name = "maintenance_category", type = "string", null = false, default = "" },
+#   { name = "availability_tier", type = "string", null = false, default = "" }
 # ]
 #
 # view_dependencies = ["maintenance_records", "trips", "vehicles"]
 #
-# == View Information
-# View Type: regular
-# Updatable: No
-# Dependencies: maintenance_records, trips, vehicles
-# Definition: select `v`.`id` AS `id`,`v`.`name` AS `name`,`v`.`model` AS `model`,`v`.`year` AS `year`,`v`.`vehicle_type` AS `vehicle_type`,`v`.`fuel_type` AS `fuel_type`,`v`.`price` AS `price`,`v`.`mileage` AS `mil...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
+# [view]
+# type = "regular"
+# updatable = false
+# dependencies = ["maintenance_records", "trips", "vehicles"]
 # <rails-lens:schema:end>
 # MySQL View: Comprehensive vehicle performance and cost analysis
 class VehiclePerformanceMetrics < VehicleRecord

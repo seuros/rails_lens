@@ -288,8 +288,9 @@ module RailsLens
             attrs = []
             attrs << "name = \"#{column.name}\""
             attrs << "type = \"#{column.type}\""
-            attrs << 'primary_key = true' if primary_key?(column)
-            attrs << "nullable = #{column.null}"
+            attrs << 'pk = true' if primary_key?(column)
+            # Only add null = false when NOT nullable (omit when nullable for brevity)
+            attrs << 'null = false' unless column.null
             attrs << "default = #{format_toml_value(column.default)}" if column.default && show_defaults?
             line += attrs.join(', ')
             line += ' }'

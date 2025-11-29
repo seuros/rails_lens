@@ -5,61 +5,31 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "class_type", type = "string", nullable = true },
-#   { name = "warp_capability", type = "boolean", nullable = true },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "type", type = "string", nullable = true },
-#   { name = "cargo_capacity", type = "integer", nullable = true },
-#   { name = "cargo_type", type = "string", nullable = true },
-#   { name = "battle_status", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "class_type", type = "string" },
+#   { name = "warp_capability", type = "boolean" },
+#   { name = "status", type = "string" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "type", type = "string" },
+#   { name = "cargo_capacity", type = "integer" },
+#   { name = "cargo_type", type = "string" },
+#   { name = "battle_status", type = "string" }
 # ]
 #
-# == Inheritance (STI)
-# Type Column: type
-# Known Subclasses: CargoVessel, StarfleetBattleCruiser
-# Base Class: Yes
+# [sti]
+# type_column = "type"
+# subclasses = ["CargoVessel", "StarfleetBattleCruiser"]
+# base = true
 #
-# == Polymorphic Associations
-# Polymorphic Targets:
-# - comments (as: :commentable)
+# [polymorphic]
+# targets = [{ name = "comments", as = "commentable" }]
 #
-# == Enums
-# - status: { active: "active", maintenance: "maintenance", decommissioned: "decommissioned", obliterated: "obliterated" } (string)
+# [enums]
+# status = { active = "active", maintenance = "maintenance", decommissioned = "decommissioned", obliterated = "obliterated" }
 #
-# == Notes
-# - Association 'spaceship_crew_members' has N+1 query risk. Consider using includes/preload
-# - Association 'crew_members' has N+1 query risk. Consider using includes/preload
-# - Association 'missions' has N+1 query risk. Consider using includes/preload
-# - Association 'spatial_coordinates' has N+1 query risk. Consider using includes/preload
-# - Association 'comments' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'class_type' should probably have NOT NULL constraint
-# - Column 'warp_capability' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - Column 'type' should probably have NOT NULL constraint
-# - Column 'cargo_capacity' should probably have NOT NULL constraint
-# - Column 'cargo_type' should probably have NOT NULL constraint
-# - Column 'battle_status' should probably have NOT NULL constraint
-# - Boolean column 'warp_capability' should have a default value
-# - Status column 'status' should have a default value
-# - Status column 'battle_status' should have a default value
-# - String column 'name' has no length limit - consider adding one
-# - String column 'class_type' has no length limit - consider adding one
-# - String column 'status' has no length limit - consider adding one
-# - String column 'type' has no length limit - consider adding one
-# - String column 'cargo_type' has no length limit - consider adding one
-# - String column 'battle_status' has no length limit - consider adding one
-# - Column 'class_type' is commonly used in queries - consider adding an index
-# - Column 'status' is commonly used in queries - consider adding an index
-# - Column 'type' is commonly used in queries - consider adding an index
-# - Column 'cargo_type' is commonly used in queries - consider adding an index
-# - Column 'battle_status' is commonly used in queries - consider adding an index
-# - STI type column 'type' should be indexed
-# - STI type column 'type' should have NOT NULL constraint
+# notes = ["spaceship_crew_members:N_PLUS_ONE", "crew_members:N_PLUS_ONE", "missions:N_PLUS_ONE", "spatial_coordinates:N_PLUS_ONE", "comments:N_PLUS_ONE", "name:NOT_NULL", "class_type:NOT_NULL", "warp_capability:NOT_NULL", "status:NOT_NULL", "type:NOT_NULL", "cargo_capacity:NOT_NULL", "cargo_type:NOT_NULL", "battle_status:NOT_NULL", "warp_capability:DEFAULT", "status:DEFAULT", "battle_status:DEFAULT", "name:LIMIT", "class_type:LIMIT", "status:LIMIT", "type:LIMIT", "cargo_type:LIMIT", "battle_status:LIMIT", "class_type:INDEX", "status:INDEX", "type:INDEX", "cargo_type:INDEX", "battle_status:INDEX", "type:STI_NOT_NULL"]
 # <rails-lens:schema:end>
 class Spaceship < ApplicationRecord
   # Enums

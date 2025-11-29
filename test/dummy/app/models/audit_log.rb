@@ -6,20 +6,17 @@
 # schema = "audit"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "table_name", type = "string", nullable = false },
-#   { name = "record_id", type = "integer", nullable = false },
-#   { name = "action", type = "string", nullable = false },
-#   { name = "user_id", type = "integer", nullable = false },
-#   { name = "changes", type = "jsonb", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "table_name", type = "string", null = false },
+#   { name = "record_id", type = "integer", null = false },
+#   { name = "action", type = "string", null = false },
+#   { name = "user_id", type = "integer", null = false },
+#   { name = "changes", type = "jsonb" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Notes
-# - Column 'changes' should probably have NOT NULL constraint
-# - String column 'table_name' has no length limit - consider adding one
-# - String column 'action' has no length limit - consider adding one
+# notes = ["changes:NOT_NULL", "table_name:LIMIT", "action:LIMIT"]
 # <rails-lens:schema:end>
 class AuditLog < ApplicationRecord
   self.table_name = 'audit.audit_logs'

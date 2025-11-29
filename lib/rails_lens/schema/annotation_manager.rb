@@ -138,13 +138,10 @@ module RailsLens
           annotation.add_lines(section[:content].split("\n"))
         end
 
-        # Add notes
+        # Add notes as TOML array (already in compact format from analyzers)
         if results[:notes].any?
           annotation.add_line('')
-          annotation.add_line('== Notes')
-          results[:notes].uniq.each do |note|
-            annotation.add_line("- #{note}")
-          end
+          annotation.add_line("notes = [#{results[:notes].uniq.map { |n| "\"#{n}\"" }.join(', ')}]")
         end
 
         annotation.to_s

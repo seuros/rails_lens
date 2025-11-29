@@ -5,27 +5,19 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "email", type = "string", nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true, default = "active" },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "email", type = "string", null = false },
+#   { name = "name", type = "string" },
+#   { name = "status", type = "string", default = "active" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
 #   { name = "index_users_on_email", columns = ["email"], unique = true }
 # ]
 #
-# == Notes
-# - Association 'posts' has N+1 query risk. Consider using includes/preload
-# - Association 'comments' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'status' should probably have NOT NULL constraint
-# - String column 'email' has no length limit - consider adding one
-# - String column 'name' has no length limit - consider adding one
-# - String column 'status' has no length limit - consider adding one
-# - Column 'status' is commonly used in queries - consider adding an index
+# notes = ["posts:N_PLUS_ONE", "comments:N_PLUS_ONE", "name:NOT_NULL", "status:NOT_NULL", "email:LIMIT", "name:LIMIT", "status:LIMIT", "status:INDEX"]
 # <rails-lens:schema:end>
 class User < ApplicationRecord
   # Associations

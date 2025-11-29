@@ -20,7 +20,7 @@ module RailsLens
         foreign_key_columns.each do |column|
           next if indexed?(column)
 
-          notes << "Missing index on foreign key '#{column}'"
+          notes << NoteCodes.note(column, NoteCodes::INDEX)
         end
 
         # Check for missing indexes on polymorphic associations
@@ -29,7 +29,7 @@ module RailsLens
           id_column = "#{assoc.name}_id"
 
           unless composite_index_exists?([type_column, id_column])
-            notes << "Missing composite index on polymorphic association '#{assoc.name}' columns [#{type_column}, #{id_column}]"
+            notes << NoteCodes.note(assoc.name.to_s, NoteCodes::POLY_INDEX)
           end
         end
 
@@ -43,7 +43,7 @@ module RailsLens
         indexes.each_with_index do |index, i|
           indexes[(i + 1)..].each do |other_index|
             if index_redundant?(index, other_index)
-              notes << "Index '#{index.name}' might be redundant with '#{other_index.name}'"
+              notes << NoteCodes.note(index.name, NoteCodes::REDUND_IDX)
             end
           end
         end
@@ -54,7 +54,6 @@ module RailsLens
       def analyze_composite_indexes
         notes = []
 
-        # Check for common query patterns that could benefit from composite indexes
         association_pairs = model_class.reflect_on_all_associations(:belongs_to)
                                        .combination(2)
                                        .select { |a, b| common_query_pattern?(a, b) }
@@ -62,7 +61,7 @@ module RailsLens
         association_pairs.each do |assoc1, assoc2|
           columns = [assoc1.foreign_key, assoc2.foreign_key].sort
           unless composite_index_exists?(columns)
-            notes << "Consider composite index on [#{columns.join(', ')}] for common query pattern"
+            notes << NoteCodes.note(columns.join('+'), NoteCodes::COMP_INDEX)
           end
         end
 
@@ -93,7 +92,6 @@ module RailsLens
       end
 
       def index_redundant?(index1, index2)
-        # An index is redundant if it's a prefix of another index
         return false if index1.unique != index2.unique
 
         if index1.columns.length < index2.columns.length
@@ -104,15 +102,11 @@ module RailsLens
       end
 
       def common_query_pattern?(assoc1, assoc2)
-        # This is a simplified heuristic - in a real app, you might analyze actual queries
-        # For now, we'll assume associations to the same model or related models are commonly queried together
         assoc1.class_name == assoc2.class_name ||
           related_models?(assoc1.class_name, assoc2.class_name)
       end
 
       def related_models?(class1, class2)
-        # Simple heuristic: models are related if they share a common prefix
-        # e.g., "UserProfile" and "UserSettings" are likely related
         class1.split('::').last[/^[A-Z][a-z]+/] == class2.split('::').last[/^[A-Z][a-z]+/]
       end
 

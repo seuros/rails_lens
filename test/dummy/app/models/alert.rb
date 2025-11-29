@@ -5,33 +5,23 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "severity", type = "string", nullable = true },
-#   { name = "alert_type", type = "string", nullable = true },
-#   { name = "description", type = "text", nullable = true },
-#   { name = "resolved", type = "boolean", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "severity", type = "string" },
+#   { name = "alert_type", type = "string" },
+#   { name = "description", type = "text" },
+#   { name = "resolved", type = "boolean" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic Targets:
-# - entry (as: :entryable)
+# [polymorphic]
+# targets = [{ name = "entry", as = "entryable" }]
 #
-# == Enums
-# - severity: { info: "info", warning: "warning", error: "error", critical: "critical" } (string)
-# - alert_type: { system: "system", security: "security", maintenance: "maintenance", emergency: "emergency" } (string)
+# [enums]
+# severity = { info = "info", warning = "warning", error = "error", critical = "critical" }
+# alert_type = { system = "system", security = "security", maintenance = "maintenance", emergency = "emergency" }
 #
-# == Notes
-# - Column 'severity' should probably have NOT NULL constraint
-# - Column 'alert_type' should probably have NOT NULL constraint
-# - Column 'description' should probably have NOT NULL constraint
-# - Column 'resolved' should probably have NOT NULL constraint
-# - Boolean column 'resolved' should have a default value
-# - String column 'severity' has no length limit - consider adding one
-# - String column 'alert_type' has no length limit - consider adding one
-# - Large text column 'description' is frequently queried - consider separate storage
-# - Column 'alert_type' is commonly used in queries - consider adding an index
+# notes = ["severity:NOT_NULL", "alert_type:NOT_NULL", "description:NOT_NULL", "resolved:NOT_NULL", "resolved:DEFAULT", "severity:LIMIT", "alert_type:LIMIT", "alert_type:INDEX", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Alert < ApplicationRecord
   has_one :entry, as: :entryable, dependent: :destroy

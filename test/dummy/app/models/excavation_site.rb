@@ -5,42 +5,25 @@
 # database_dialect = "SQLite"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "location", type = "string", nullable = true },
-#   { name = "coordinates", type = "string", nullable = true },
-#   { name = "depth", type = "decimal", nullable = true },
-#   { name = "soil_type", type = "string", nullable = true },
-#   { name = "discovered_at", type = "date", nullable = true },
-#   { name = "active", type = "boolean", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "rock_formation", type = "string", nullable = true },
-#   { name = "climate_ancient", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "location", type = "string" },
+#   { name = "coordinates", type = "string" },
+#   { name = "depth", type = "decimal" },
+#   { name = "soil_type", type = "string" },
+#   { name = "discovered_at", type = "date" },
+#   { name = "active", type = "boolean" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "rock_formation", type = "string" },
+#   { name = "climate_ancient", type = "string" }
 # ]
 #
-# == Enums
-# - rock_formation: { morrison: "morrison", hell_creek: "hell_creek", tendaguru: "tendaguru", nemegt: "nemegt", judith_river: "judith_river", solnhofen: "solnhofen", burgess_shale: "burgess_shale" } (string)
-# - climate_ancient: { tropical: "tropical", subtropical: "subtropical", temperate: "temperate", arid: "arid", coastal: "coastal", swamp: "swamp" } (string)
+# [enums]
+# rock_formation = { morrison = "morrison", hell_creek = "hell_creek", tendaguru = "tendaguru", nemegt = "nemegt", judith_river = "judith_river", solnhofen = "solnhofen", burgess_shale = "burgess_shale" }
+# climate_ancient = { tropical = "tropical", subtropical = "subtropical", temperate = "temperate", arid = "arid", coastal = "coastal", swamp = "swamp" }
 #
-# == Notes
-# - Association 'fossil_discoveries' should specify inverse_of
-# - Association 'fossil_discoveries' has N+1 query risk. Consider using includes/preload
-# - Association 'dinosaurs' has N+1 query risk. Consider using includes/preload
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'location' should probably have NOT NULL constraint
-# - Column 'coordinates' should probably have NOT NULL constraint
-# - Column 'depth' should probably have NOT NULL constraint
-# - Column 'soil_type' should probably have NOT NULL constraint
-# - Column 'active' should probably have NOT NULL constraint
-# - Column 'rock_formation' should probably have NOT NULL constraint
-# - Column 'climate_ancient' should probably have NOT NULL constraint
-# - Boolean column 'active' should have a default value
-# - String column 'name' has no length limit - consider adding one
-# - String column 'location' has no length limit - consider adding one
-# - String column 'coordinates' has no length limit - consider adding one
-# - String column 'soil_type' has no length limit - consider adding one
-# - Column 'soil_type' is commonly used in queries - consider adding an index
+# notes = ["fossil_discoveries:INVERSE_OF", "fossil_discoveries:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "name:NOT_NULL", "location:NOT_NULL", "coordinates:NOT_NULL", "depth:NOT_NULL", "soil_type:NOT_NULL", "active:NOT_NULL", "rock_formation:NOT_NULL", "climate_ancient:NOT_NULL", "active:DEFAULT", "name:LIMIT", "location:LIMIT", "coordinates:LIMIT", "soil_type:LIMIT", "soil_type:INDEX"]
 # <rails-lens:schema:end>
 class ExcavationSite < PrehistoricRecord
   # Enums

@@ -39,23 +39,23 @@ module RailsLens
 
       def analyze_sti
         lines = []
-        lines << '== Inheritance (STI)'
-        lines << "Type Column: #{model_class.inheritance_column}"
+        lines << '[sti]'
+        lines << "type_column = \"#{model_class.inheritance_column}\""
 
         # Check if this is a base class or subclass
         if model_class.base_class == model_class
           # This is the base class
           subclasses = find_sti_subclasses
-          lines << "Known Subclasses: #{subclasses.join(', ')}" if subclasses.any?
-          lines << 'Base Class: Yes'
+          lines << "subclasses = [#{subclasses.map { |s| "\"#{s}\"" }.join(', ')}]" if subclasses.any?
+          lines << 'base = true'
         else
           # This is a subclass
-          lines << "Base Class: #{model_class.base_class.name}"
-          lines << "Type Value: #{model_class.sti_name}"
+          lines << "base_class = \"#{model_class.base_class.name}\""
+          lines << "type_value = \"#{model_class.sti_name}\""
 
           # Find siblings
           siblings = find_sti_siblings
-          lines << "Sibling Classes: #{siblings.join(', ')}" if siblings.any?
+          lines << "siblings = [#{siblings.map { |s| "\"#{s}\"" }.join(', ')}]" if siblings.any?
         end
 
         lines.join("\n")
@@ -66,14 +66,14 @@ module RailsLens
         return nil unless reflection
 
         lines = []
-        lines << '== Delegated Type'
-        lines << "Delegate: #{reflection.name}"
-        lines << "Type Column: #{reflection.foreign_type}"
-        lines << "ID Column: #{reflection.foreign_key}"
+        lines << '[delegated_type]'
+        lines << "delegate = \"#{reflection.name}\""
+        lines << "type_column = \"#{reflection.foreign_type}\""
+        lines << "id_column = \"#{reflection.foreign_key}\""
 
         # Try to find known types
         types = find_delegated_types(reflection)
-        lines << "Known Types: #{types.join(', ')}" if types.any?
+        lines << "types = [#{types.map { |t| "\"#{t}\"" }.join(', ')}]" if types.any?
 
         lines.join("\n")
       end
@@ -148,38 +148,40 @@ module RailsLens
 
       def analyze_polymorphic
         lines = []
-        lines << '== Polymorphic Associations'
+        lines << '[polymorphic]'
 
-        # Find polymorphic belongs_to associations
+        # Find polymorphic belongs_to associations (references)
         polymorphic_belongs_to = model_class.reflect_on_all_associations(:belongs_to).select do |r|
           r.options[:polymorphic]
         end
 
         if polymorphic_belongs_to.any?
-          lines << 'Polymorphic References:'
-          polymorphic_belongs_to.each do |reflection|
-            lines << "- #{reflection.name} (#{reflection.foreign_type}/#{reflection.foreign_key})"
-
-            # Try to find what types are actually used
-            next unless model_class.table_exists? && model_class.columns_hash[reflection.foreign_type.to_s]
-
-            types = find_polymorphic_types(reflection)
-            lines << "  Types: #{types.join(', ')}" if types.any?
+          refs = polymorphic_belongs_to.map do |reflection|
+            types = if model_class.table_exists? && model_class.columns_hash[reflection.foreign_type.to_s]
+                      find_polymorphic_types(reflection)
+                    else
+                      []
+                    end
+            if types.any?
+              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\", types = [#{types.map { |t| "\"#{t}\"" }.join(', ')}] }"
+            else
+              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\" }"
+            end
           end
+          lines << "references = [#{refs.join(', ')}]"
         end
 
-        # Find associations that reference this model polymorphically
+        # Find associations that reference this model polymorphically (targets)
         polymorphic_has_many = model_class.reflect_on_all_associations.select do |r|
           r.options[:as]
         end
 
         if polymorphic_has_many.any?
-          lines << '' if polymorphic_belongs_to.any?
-          lines << 'Polymorphic Targets:'
-          polymorphic_has_many.each do |reflection|
+          targets = polymorphic_has_many.map do |reflection|
             as_name = reflection.options[:as]
-            lines << "- #{reflection.name} (as: :#{as_name})"
+            "{ name = \"#{reflection.name}\", as = \"#{as_name}\" }"
           end
+          lines << "targets = [#{targets.join(', ')}]"
         end
 
         return nil if lines.size == 1 # Only header

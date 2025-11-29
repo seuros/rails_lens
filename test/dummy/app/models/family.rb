@@ -5,52 +5,27 @@
 # database_dialect = "SQLite"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "classification", type = "string", nullable = true },
-#   { name = "taxonomic_rank", type = "string", nullable = true },
-#   { name = "parent_id", type = "integer", nullable = true },
-#   { name = "description", type = "text", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "classification", type = "string" },
+#   { name = "taxonomic_rank", type = "string" },
+#   { name = "parent_id", type = "integer" },
+#   { name = "description", type = "text" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Extensions
-# == Hierarchy (ClosureTree)
-# Parent Column: parent_id
-# Hierarchy Table: family_hierarchies
-# Order Column: name
+# [extensions]
+# [closure_tree]
+# parent_column = "parent_id"
+# hierarchy_table = "family_hierarchies"
+# order_column = "name"
 #
-# == Enums
-# - classification: { theropod: "theropod", sauropod: "sauropod", ornithopod: "ornithopod", ceratopsian: "ceratopsian", ankylosaur: "ankylosaur", stegosaur: "stegosaur", pterosaur: "pterosaur", marine: "marine" } (string)
-# - taxonomic_rank: { kingdom: "kingdom", phylum: "phylum", class_rank: "class_rank", order_rank: "order", family: "family", genus: "genus", species: "species" } (string)
+# [enums]
+# classification = { theropod = "theropod", sauropod = "sauropod", ornithopod = "ornithopod", ceratopsian = "ceratopsian", ankylosaur = "ankylosaur", stegosaur = "stegosaur", pterosaur = "pterosaur", marine = "marine" }
+# taxonomic_rank = { kingdom = "kingdom", phylum = "phylum", class_rank = "class_rank", order_rank = "order", family = "family", genus = "genus", species = "species" }
 #
-# == Notes
-# - Missing index on foreign key 'parent_id'
-# - Missing foreign key constraint on 'parent_id' referencing 'families'
-# - Association 'ancestor_hierarchies' should specify inverse_of
-# - Association 'descendant_hierarchies' should specify inverse_of
-# - Association 'species' should specify inverse_of
-# - Association 'children' has N+1 query risk. Consider using includes/preload
-# - Association 'ancestor_hierarchies' has N+1 query risk. Consider using includes/preload
-# - Association 'self_and_ancestors' has N+1 query risk. Consider using includes/preload
-# - Association 'descendant_hierarchies' has N+1 query risk. Consider using includes/preload
-# - Association 'self_and_descendants' has N+1 query risk. Consider using includes/preload
-# - Association 'species' has N+1 query risk. Consider using includes/preload
-# - Association 'dinosaurs' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'parent'
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'classification' should probably have NOT NULL constraint
-# - Column 'taxonomic_rank' should probably have NOT NULL constraint
-# - Column 'description' should probably have NOT NULL constraint
-# - String column 'name' has no length limit - consider adding one
-# - String column 'classification' has no length limit - consider adding one
-# - String column 'taxonomic_rank' has no length limit - consider adding one
-# - Large text column 'description' is frequently queried - consider separate storage
-# - Missing index on parent column 'parent_id'
-# - Hierarchy table 'family_hierarchies' needs compound index on (ancestor_id, descendant_id)
-# - Consider adding index on generations column in hierarchy table for depth queries
-# - Consider adding counter cache 'children_count' for children count
+# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "species:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "species:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "classification:NOT_NULL", "taxonomic_rank:NOT_NULL", "description:NOT_NULL", "name:LIMIT", "classification:LIMIT", "taxonomic_rank:LIMIT", "description:STORAGE", "family_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
 # <rails-lens:schema:end>
 class Family < PrehistoricRecord
   has_closure_tree order: 'name'

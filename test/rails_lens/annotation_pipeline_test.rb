@@ -22,7 +22,7 @@ module RailsLens
           model_class == User
         end
 
-        def process(model_class)
+        def process(model_class, _connection = nil)
           "table = \"#{model_class.table_name}\"\ncolumns = []"
         end
       end.new
@@ -46,8 +46,8 @@ module RailsLens
           model_class == User
         end
 
-        def process(_model_class)
-          { title: '== Enums', content: 'status: active, inactive' }
+        def process(_model_class, _connection = nil)
+          { title: '[enums]', content: 'status = { active = "active", inactive = "inactive" }' }
         end
       end.new
 
@@ -56,8 +56,8 @@ module RailsLens
 
       assert_nil results[:schema]
       assert_equal 1, results[:sections].length
-      assert_equal '== Enums', results[:sections].first[:title]
-      assert_equal 'status: active, inactive', results[:sections].first[:content]
+      assert_equal '[enums]', results[:sections].first[:title]
+      assert_equal 'status = { active = "active", inactive = "inactive" }', results[:sections].first[:content]
     end
 
     def test_process_with_notes_provider
@@ -71,7 +71,7 @@ module RailsLens
           model_class == User
         end
 
-        def process(_model_class)
+        def process(_model_class, _connection = nil)
           ['Missing index on user_id', 'Consider adding NOT NULL']
         end
       end.new
@@ -97,7 +97,7 @@ module RailsLens
           model_class != User # Not applicable to User
         end
 
-        def process(_model_class)
+        def process(_model_class, _connection = nil)
           ['Should not be processed']
         end
       end.new
@@ -119,7 +119,7 @@ module RailsLens
           :notes
         end
 
-        def process(_model_class)
+        def process(_model_class, _connection = nil)
           raise StandardError, 'Provider failed'
         end
       end.new

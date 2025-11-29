@@ -20,13 +20,13 @@ module RailsLens
         return nil unless model_uses_closure_tree?
 
         lines = []
-        lines << '== Hierarchy (ClosureTree)'
-        lines << "Parent Column: #{parent_column_name}"
-        lines << "Hierarchy Table: #{hierarchy_table_name}"
+        lines << '[closure_tree]'
+        lines << "parent_column = \"#{parent_column_name}\""
+        lines << "hierarchy_table = \"#{hierarchy_table_name}\""
 
-        lines << "Order Column: #{order_column}" if order_column
+        lines << "order_column = \"#{order_column}\"" if order_column
 
-        lines << "Depth Column: #{depth_column}" if depth_column && has_column?(depth_column)
+        lines << "depth_column = \"#{depth_column}\"" if depth_column && has_column?(depth_column)
 
         lines.join("\n")
       end
@@ -37,29 +37,29 @@ module RailsLens
         notes = []
 
         # Check parent column index
-        notes << "Missing index on parent column '#{parent_column_name}'" unless has_index?(parent_column_name)
+        notes << NoteCodes.note(parent_column_name, NoteCodes::INDEX) unless has_index?(parent_column_name)
 
         # Check hierarchy table existence and indexes
         if hierarchy_table_exists?
           unless has_hierarchy_indexes?
-            notes << "Hierarchy table '#{hierarchy_table_name}' needs compound index on (ancestor_id, descendant_id)"
+            notes << NoteCodes.note(hierarchy_table_name, NoteCodes::COMP_INDEX)
           end
 
           unless has_hierarchy_depth_index?
-            notes << 'Consider adding index on generations column in hierarchy table for depth queries'
+            notes << NoteCodes.note('generations', NoteCodes::INDEX)
           end
         else
-          notes << "Hierarchy table '#{hierarchy_table_name}' does not exist - run migrations"
+          notes << NoteCodes.note(hierarchy_table_name, NoteCodes::MISSING)
         end
 
         # Check for counter cache
         if should_have_counter_cache? && !has_counter_cache?
-          notes << "Consider adding counter cache '#{suggested_counter_cache_name}' for children count"
+          notes << NoteCodes.note('children', NoteCodes::COUNTER_CACHE)
         end
 
         # Check depth column
         if model_class.respond_to?(:cache_depth?) && model_class.cache_depth? && !has_column?(depth_column)
-          notes << "Depth caching enabled but column '#{depth_column}' is missing"
+          notes << NoteCodes.note(depth_column, NoteCodes::DEPTH_CACHE)
         end
 
         notes

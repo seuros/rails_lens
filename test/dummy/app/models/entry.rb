@@ -5,33 +5,24 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "title", type = "string", nullable = true },
-#   { name = "published", type = "boolean", nullable = true },
-#   { name = "entryable_type", type = "string", nullable = true },
-#   { name = "entryable_id", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "title", type = "string" },
+#   { name = "published", type = "boolean" },
+#   { name = "entryable_type", type = "string" },
+#   { name = "entryable_id", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic References:
-# - entryable (entryable_type/entryable_id)
+# [polymorphic]
+# references = [{ name = "entryable", type_col = "entryable_type", id_col = "entryable_id" }]
 #
-# == Delegated Type
-# Type Column: entryable_type
-# ID Column: entryable_id
-# Types: Message, Announcement, Alert
+# [delegated_type]
+# type_column = "entryable_type"
+# id_column = "entryable_id"
+# types = ["Message", "Announcement", "Alert"]
 #
-# == Notes
-# - Missing composite index on polymorphic association 'entryable' columns [entryable_type, entryable_id]
-# - Column 'title' should probably have NOT NULL constraint
-# - Column 'published' should probably have NOT NULL constraint
-# - Column 'entryable_type' should probably have NOT NULL constraint
-# - Boolean column 'published' should have a default value
-# - String column 'title' has no length limit - consider adding one
-# - String column 'entryable_type' has no length limit - consider adding one
-# - Column 'entryable_type' is commonly used in queries - consider adding an index
+# notes = ["entryable:POLY_INDEX", "title:NOT_NULL", "published:NOT_NULL", "entryable_type:NOT_NULL", "published:DEFAULT", "title:LIMIT", "entryable_type:LIMIT", "entryable_type:INDEX"]
 # <rails-lens:schema:end>
 class Entry < ApplicationRecord
   # Delegated type

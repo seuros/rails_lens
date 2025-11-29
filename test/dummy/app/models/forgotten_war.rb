@@ -5,33 +5,22 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "start_year", type = "integer", nullable = true },
-#   { name = "end_year", type = "integer", nullable = true },
-#   { name = "region", type = "string", nullable = true },
-#   { name = "war_type", type = "string", nullable = true },
-#   { name = "outcome", type = "string", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "start_year", type = "integer" },
+#   { name = "end_year", type = "integer" },
+#   { name = "region", type = "string" },
+#   { name = "war_type", type = "string" },
+#   { name = "outcome", type = "string" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Enums
-# - war_type: { territorial: "territorial", resource: "resource", extinction_war: "extinction", migration: "migration", climate: "climate" } (string)
-# - outcome: { victory: "victory", defeat: "defeat", stalemate: "stalemate", extinction_outcome: "extinction", unknown: "unknown" } (string)
+# [enums]
+# war_type = { territorial = "territorial", resource = "resource", extinction_war = "extinction", migration = "migration", climate = "climate" }
+# outcome = { victory = "victory", defeat = "defeat", stalemate = "stalemate", extinction_outcome = "extinction", unknown = "unknown" }
 #
-# == Notes
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'start_year' should probably have NOT NULL constraint
-# - Column 'end_year' should probably have NOT NULL constraint
-# - Column 'region' should probably have NOT NULL constraint
-# - Column 'war_type' should probably have NOT NULL constraint
-# - Column 'outcome' should probably have NOT NULL constraint
-# - String column 'name' has no length limit - consider adding one
-# - String column 'region' has no length limit - consider adding one
-# - String column 'war_type' has no length limit - consider adding one
-# - String column 'outcome' has no length limit - consider adding one
-# - Column 'war_type' is commonly used in queries - consider adding an index
+# notes = ["name:NOT_NULL", "start_year:NOT_NULL", "end_year:NOT_NULL", "region:NOT_NULL", "war_type:NOT_NULL", "outcome:NOT_NULL", "name:LIMIT", "region:LIMIT", "war_type:LIMIT", "outcome:LIMIT", "war_type:INDEX"]
 # <rails-lens:schema:end>
 class ForgottenWar < ApplicationRecord
   # Enums

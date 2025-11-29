@@ -7,25 +7,21 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", nullable = true },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "rank", type = "string", nullable = true },
-#   { name = "species", type = "string", nullable = true },
-#   { name = "specialization", type = "string", nullable = true },
-#   { name = "status", type = "string", nullable = true },
-#   { name = "spaceship_id", type = "integer", nullable = true },
-#   { name = "spaceship_name", type = "string", nullable = true },
-#   { name = "position", type = "string", nullable = true },
-#   { name = "assigned_at", type = "datetime", nullable = true }
+#   { name = "id", type = "integer" },
+#   { name = "name", type = "string" },
+#   { name = "rank", type = "string" },
+#   { name = "species", type = "string" },
+#   { name = "specialization", type = "string" },
+#   { name = "status", type = "string" },
+#   { name = "spaceship_id", type = "integer" },
+#   { name = "spaceship_name", type = "string" },
+#   { name = "position", type = "string" },
+#   { name = "assigned_at", type = "datetime" }
 # ]
 #
-# == View Information
-# View Type: regular
-# Updatable: No
-# Definition: SELECT cm.id, cm.name, cm.rank, cm.species, cm.specialization, cm.status, scm.spaceship_id, s.name AS spaceship_name, scm."position", scm.assigned_at FROM ((crew_...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
+# [view]
+# type = "regular"
+# updatable = false
 # <rails-lens:schema:end>
 # PostgreSQL View: Shows active crew members with their current assignments
 class ActiveCrewMembersView < ApplicationRecord

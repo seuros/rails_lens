@@ -13,7 +13,7 @@ module RailsLens
         return nil if results[:annotations].empty?
 
         {
-          title: '== Extensions',
+          title: '[extensions]',
           content: results[:annotations].join("\n")
         }
       end

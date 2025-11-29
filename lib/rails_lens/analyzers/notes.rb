@@ -59,11 +59,9 @@ module RailsLens
 
         # Check if this model is backed by a database view
         if ModelDetector.view_exists?(model_class)
-          notes << '👁️ View-backed model: read-only'
-
-          # Check if model has readonly implementation
+          # Only note if readonly protection is missing (view status is already obvious)
           unless has_readonly_implementation?
-            notes << 'Add readonly? method'
+            notes << NoteCodes::ADD_READONLY
           end
         end
 
@@ -79,21 +77,15 @@ module RailsLens
 
         # Check for materialized view specific issues
         if view_metadata.materialized_view?
-          notes << '🔄 Materialized view: data may be stale until refreshed'
           unless has_refresh_methods?
-            notes << 'Add refresh! method for manual updates'
+            notes << NoteCodes::ADD_REFRESH
           end
         end
 
         # Check for nested views (view depending on other views)
         dependencies = view_metadata.dependencies
         if dependencies.any? { |dep| view_exists_by_name?(dep) }
-          notes << '⚠️ Nested views detected: may impact query performance'
-        end
-
-        # Check for readonly implementation
-        unless has_readonly_implementation?
-          notes << '🔒 Add readonly protection to prevent write operations'
+          notes << NoteCodes::NESTED_VIEW
         end
 
         notes
@@ -107,19 +99,19 @@ module RailsLens
 
         # Check for missing indexes on foreign keys
         foreign_key_columns.each do |column|
-          notes << "Missing index on foreign key '#{column}'" unless has_index?(column)
+          notes << NoteCodes.note(column, NoteCodes::INDEX) unless has_index?(column)
         end
 
         # Check for missing composite indexes
         common_query_patterns.each do |columns|
           unless has_composite_index?(columns)
-            notes << "Consider composite index on (#{columns.join(', ')}) for common queries"
+            notes << NoteCodes.note(columns.join('+'), NoteCodes::COMP_INDEX)
           end
         end
 
         # Check for redundant indexes
         redundant_indexes.each do |index|
-          notes << "Index '#{index.name}' might be redundant"
+          notes << NoteCodes.note(index.name, NoteCodes::REDUND_IDX)
         end
 
         notes
@@ -134,7 +126,7 @@ module RailsLens
           next unless column_exists?(column)
 
           unless has_foreign_key_constraint?(column)
-            notes << "Missing foreign key constraint for '#{column}' (#{association.name})"
+            notes << NoteCodes.note(column, NoteCodes::FK_CONSTRAINT)
           end
         end
 
@@ -144,19 +136,19 @@ module RailsLens
       def analyze_associations
         # Check for missing inverse_of
         notes = associations_needing_inverse.map do |association|
-          "Association '#{association.name}' should specify inverse_of"
+          NoteCodes.note(association.name.to_s, NoteCodes::INVERSE_OF)
         end
 
         # Check for N+1 query risks
         has_many_associations.each do |association|
           if likely_n_plus_one?(association)
-            notes << "Association '#{association.name}' has N+1 query risk - consider includes/preload"
+            notes << NoteCodes.note(association.name.to_s, NoteCodes::N_PLUS_ONE)
           end
         end
 
         # Check for missing counter caches
         associations_needing_counter_cache.each do |association|
-          notes << "Consider adding counter cache for '#{association.name}'"
+          notes << NoteCodes.note(association.name.to_s, NoteCodes::COUNTER_CACHE)
         end
 
         notes
@@ -165,22 +157,22 @@ module RailsLens
       def analyze_columns
         # Check for missing NOT NULL constraints
         notes = columns_needing_not_null.map do |column|
-          "Column '#{column.name}' should probably have NOT NULL constraint"
+          NoteCodes.note(column.name, NoteCodes::NOT_NULL)
         end
 
         # Check for missing defaults
         columns_needing_defaults.each do |column|
-          notes << "Column '#{column.name}' should have a default value"
+          notes << NoteCodes.note(column.name, NoteCodes::DEFAULT)
         end
 
         # Check for inappropriate column types
         columns.each do |column|
           if column.name.end_with?('_count') && column.type != :integer
-            notes << "Counter column '#{column.name}' should be integer type"
+            notes << NoteCodes.note(column.name, NoteCodes::USE_INTEGER)
           end
 
           if column.name.match?(/price|amount|cost/) && column.type == :float
-            notes << "Monetary column '#{column.name}' should use decimal type, not float"
+            notes << NoteCodes.note(column.name, NoteCodes::USE_DECIMAL)
           end
         end
 
@@ -190,7 +182,7 @@ module RailsLens
       def analyze_performance
         # Large text columns without separate storage
         notes = large_text_columns.map do |column|
-          "Large text column '#{column.name}' might benefit from separate storage"
+          NoteCodes.note(column.name, NoteCodes::STORAGE)
         end
 
         # Polymorphic associations without indexes
@@ -201,14 +193,14 @@ module RailsLens
           foreign_key = association.foreign_key.to_s
           type_column = "#{association.foreign_type || association.name}_type"
           unless has_composite_index?([foreign_key, type_column])
-            notes << "Polymorphic association '#{association.name}' needs composite index on (#{foreign_key}, #{type_column})"
+            notes << NoteCodes.note(association.name.to_s, NoteCodes::POLY_INDEX)
           end
         end
 
         # UUID columns without proper indexes
         uuid_columns.each do |column|
           if column.name.end_with?('_id') && !has_index?(column.name)
-            notes << "UUID column '#{column.name}' needs an index"
+            notes << NoteCodes.note(column.name, NoteCodes::INDEX)
           end
         end
 
@@ -219,18 +211,23 @@ module RailsLens
         notes = []
 
         # Check for updated_at/created_at
-        notes << "Missing 'created_at' timestamp column" unless column_exists?('created_at')
+        has_created = column_exists?('created_at')
+        has_updated = column_exists?('updated_at')
 
-        notes << "Missing 'updated_at' timestamp column" unless column_exists?('updated_at')
+        if !has_created && !has_updated
+          notes << NoteCodes::NO_TIMESTAMPS
+        elsif !has_created || !has_updated
+          notes << NoteCodes::PARTIAL_TS
+        end
 
         # Check for soft deletes without index
         if column_exists?('deleted_at') && !has_index?('deleted_at')
-          notes << "Soft delete column 'deleted_at' needs an index"
+          notes << NoteCodes.note('deleted_at', NoteCodes::INDEX)
         end
 
         # Check for STI without index
         if model_class.inheritance_column && column_exists?(model_class.inheritance_column) && !has_index?(model_class.inheritance_column)
-          notes << "STI column '#{model_class.inheritance_column}' needs an index"
+          notes << NoteCodes.note(model_class.inheritance_column, NoteCodes::STI_INDEX)
         end
 
         notes

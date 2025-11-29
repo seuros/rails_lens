@@ -5,27 +5,21 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "content", type = "text", nullable = true },
-#   { name = "recipient", type = "string", nullable = true },
-#   { name = "priority", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "content", type = "text" },
+#   { name = "recipient", type = "string" },
+#   { name = "priority", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic Targets:
-# - entry (as: :entryable)
+# [polymorphic]
+# targets = [{ name = "entry", as = "entryable" }]
 #
-# == Enums
-# - priority: { low: 0, normal: 1, high: 2, urgent: 3 } (integer)
+# [enums]
+# priority = { low = 0, normal = 1, high = 2, urgent = 3 }
 #
-# == Notes
-# - Column 'content' should probably have NOT NULL constraint
-# - Column 'recipient' should probably have NOT NULL constraint
-# - Column 'priority' should probably have NOT NULL constraint
-# - String column 'recipient' has no length limit - consider adding one
-# - Large text column 'content' is frequently queried - consider separate storage
+# notes = ["content:NOT_NULL", "recipient:NOT_NULL", "priority:NOT_NULL", "recipient:LIMIT", "content:STORAGE"]
 # <rails-lens:schema:end>
 class Message < ApplicationRecord
   # Enums

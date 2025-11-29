@@ -7,36 +7,32 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", nullable = true },
-#   { name = "discovered_at", type = "date", nullable = true },
-#   { name = "completeness", type = "decimal", nullable = true },
-#   { name = "condition", type = "string", nullable = true },
-#   { name = "dinosaur_name", type = "string", nullable = true },
-#   { name = "species", type = "string", nullable = true },
-#   { name = "period", type = "string", nullable = true },
-#   { name = "diet", type = "string", nullable = true },
-#   { name = "excavation_site", type = "string", nullable = true },
-#   { name = "site_location", type = "string", nullable = true },
-#   { name = "excavation_depth", type = "decimal", nullable = true },
-#   { name = "soil_type", type = "string", nullable = true },
-#   { name = "rock_formation", type = "string", nullable = true },
-#   { name = "climate_ancient", type = "string", nullable = true },
-#   { name = "completeness_category", type = "", nullable = true },
-#   { name = "discovery_year", type = "", nullable = true },
-#   { name = "discovery_month", type = "", nullable = true },
-#   { name = "period_order", type = "", nullable = true }
+#   { name = "id", type = "integer" },
+#   { name = "discovered_at", type = "date" },
+#   { name = "completeness", type = "decimal" },
+#   { name = "condition", type = "string" },
+#   { name = "dinosaur_name", type = "string" },
+#   { name = "species", type = "string" },
+#   { name = "period", type = "string" },
+#   { name = "diet", type = "string" },
+#   { name = "excavation_site", type = "string" },
+#   { name = "site_location", type = "string" },
+#   { name = "excavation_depth", type = "decimal" },
+#   { name = "soil_type", type = "string" },
+#   { name = "rock_formation", type = "string" },
+#   { name = "climate_ancient", type = "string" },
+#   { name = "completeness_category", type = "" },
+#   { name = "discovery_year", type = "" },
+#   { name = "discovery_month", type = "" },
+#   { name = "period_order", type = "" }
 # ]
 #
 # view_dependencies = ["dinosaurs", "excavation_sites", "fossil_discoveries"]
 #
-# == View Information
-# View Type: regular
-# Updatable: No
-# Dependencies: dinosaurs, excavation_sites, fossil_discoveries
-# Definition: CREATE VIEW fossil_discovery_timeline AS SELECT fd.id, fd.discovered_at, fd.completeness, fd.condition, d.name as dinosaur_name, d.species, d.period, ...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
+# [view]
+# type = "regular"
+# updatable = false
+# dependencies = ["dinosaurs", "excavation_sites", "fossil_discoveries"]
 # <rails-lens:schema:end>
 # SQLite View: Fossil discovery timeline with geological analysis
 class FossilDiscoveryTimeline < PrehistoricRecord

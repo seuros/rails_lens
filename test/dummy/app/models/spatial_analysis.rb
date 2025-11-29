@@ -9,27 +9,22 @@
 # refresh_strategy = "manual"
 #
 # columns = [
-#   { name = "spaceship_id", type = "integer", nullable = true },
-#   { name = "spaceship_name", type = "string", nullable = true },
-#   { name = "class_type", type = "string", nullable = true },
-#   { name = "coordinate_records", type = "integer", nullable = true },
-#   { name = "coverage_area", type = "", nullable = true },
-#   { name = "avg_altitude", type = "float", nullable = true },
-#   { name = "first_recorded", type = "datetime", nullable = true },
-#   { name = "last_recorded", type = "datetime", nullable = true },
-#   { name = "mission_duration_hours", type = "decimal", nullable = true },
-#   { name = "active_days", type = "integer", nullable = true }
+#   { name = "spaceship_id", type = "integer" },
+#   { name = "spaceship_name", type = "string" },
+#   { name = "class_type", type = "string" },
+#   { name = "coordinate_records", type = "integer" },
+#   { name = "coverage_area", type = "" },
+#   { name = "avg_altitude", type = "float" },
+#   { name = "first_recorded", type = "datetime" },
+#   { name = "last_recorded", type = "datetime" },
+#   { name = "mission_duration_hours", type = "decimal" },
+#   { name = "active_days", type = "integer" }
 # ]
 #
-# == View Information
-# View Type: materialized
-# Updatable: No
-# Refresh Strategy: manual
-# Definition: SELECT s.id AS spaceship_id, s.name AS spaceship_name, s.class_type, count(sc.id) AS coordinate_records, st_extent(sc.location) AS coverage_area, avg(sc.altitude) AS avg_altitude, ...
-#
-# == Notes
-# - 👁️ View-backed model: read-only
-# - 🔄 Materialized view: data may be stale until refreshed
+# [view]
+# type = "materialized"
+# updatable = false
+# refresh_strategy = "manual"
 # <rails-lens:schema:end>
 # PostgreSQL Materialized View: Spatial coordinate analysis with PostGIS
 class SpatialAnalysis < ApplicationRecord

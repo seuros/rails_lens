@@ -5,15 +5,15 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "order_id", type = "integer", nullable = false },
-#   { name = "line_number", type = "integer", nullable = false },
-#   { name = "quantity", type = "integer", nullable = false, default = "1" },
-#   { name = "unit_price", type = "decimal", nullable = false },
-#   { name = "total_price", type = "decimal", nullable = true },
-#   { name = "product_name", type = "string", nullable = true },
-#   { name = "notes", type = "text", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "order_id", type = "integer", null = false },
+#   { name = "line_number", type = "integer", null = false },
+#   { name = "quantity", type = "integer", null = false, default = "1" },
+#   { name = "unit_price", type = "decimal", null = false },
+#   { name = "total_price", type = "decimal" },
+#   { name = "product_name", type = "string" },
+#   { name = "notes", type = "text" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -21,14 +21,10 @@
 #   { name = "index_order_line_items_on_order_id_and_line_number", columns = ["order_id", "line_number"], unique = true }
 # ]
 #
-# == Composite Primary Key
-# Primary Keys: order_id, line_number
+# [composite_pk]
+# keys = ["order_id", "line_number"]
 #
-# == Notes
-# - Column 'total_price' should probably have NOT NULL constraint
-# - Column 'product_name' should probably have NOT NULL constraint
-# - Column 'notes' should probably have NOT NULL constraint
-# - String column 'product_name' has no length limit - consider adding one
+# notes = ["total_price:NOT_NULL", "product_name:NOT_NULL", "notes:NOT_NULL", "product_name:LIMIT", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class OrderLineItem < ApplicationRecord
   # Composite primary key using PostgreSQL

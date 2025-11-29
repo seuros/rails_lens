@@ -8,14 +8,14 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "vehicle_id", type = "integer", nullable = false },
-#   { name = "service_type", type = "string", nullable = true },
-#   { name = "cost", type = "decimal", nullable = true },
-#   { name = "service_date", type = "date", nullable = true },
-#   { name = "notes", type = "text", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "vehicle_id", type = "integer", null = false },
+#   { name = "service_type", type = "string" },
+#   { name = "cost", type = "decimal" },
+#   { name = "service_date", type = "date" },
+#   { name = "notes", type = "text" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -31,15 +31,10 @@
 #   { name = "increment_vehicle_maintenance_count", event = "INSERT", timing = "AFTER", function = "inline", for_each = "ROW" }
 # ]
 #
-# == Enums
-# - service_type: { oil_change: "oil_change", tire_rotation: "tire_rotation", brake_service: "brake_service", transmission: "transmission", engine_repair: "engine_repair", inspection: "inspection", warranty: "warranty", recall: "recall" } (string)
+# [enums]
+# service_type = { oil_change = "oil_change", tire_rotation = "tire_rotation", brake_service = "brake_service", transmission = "transmission", engine_repair = "engine_repair", inspection = "inspection", warranty = "warranty", recall = "recall" }
 #
-# == Notes
-# - Consider adding counter cache for 'vehicle'
-# - Column 'service_type' should probably have NOT NULL constraint
-# - Column 'cost' should probably have NOT NULL constraint
-# - Column 'notes' should probably have NOT NULL constraint
-# - Column 'service_type' is commonly used in queries - consider adding an index
+# notes = ["vehicle:COUNTER_CACHE", "service_type:NOT_NULL", "cost:NOT_NULL", "notes:NOT_NULL", "service_type:INDEX", "notes:STORAGE"]
 # <rails-lens:schema:end>
 class MaintenanceRecord < VehicleRecord
   # Enums

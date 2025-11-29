@@ -8,16 +8,16 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "vehicle_id", type = "integer", nullable = false },
-#   { name = "owner_id", type = "integer", nullable = false },
-#   { name = "start_date", type = "date", nullable = true },
-#   { name = "end_date", type = "date", nullable = true },
-#   { name = "distance", type = "decimal", nullable = true },
-#   { name = "purpose", type = "string", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "trip_type", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "vehicle_id", type = "integer", null = false },
+#   { name = "owner_id", type = "integer", null = false },
+#   { name = "start_date", type = "date" },
+#   { name = "end_date", type = "date" },
+#   { name = "distance", type = "decimal" },
+#   { name = "purpose", type = "string" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "trip_type", type = "string" }
 # ]
 #
 # indexes = [
@@ -30,12 +30,7 @@
 #   { column = "owner_id", references_table = "owners", references_column = "id", name = "fk_rails_9b563cd750" }
 # ]
 #
-# == Notes
-# - Association 'vehicle' should specify inverse_of
-# - Column 'distance' should probably have NOT NULL constraint
-# - Column 'purpose' should probably have NOT NULL constraint
-# - Column 'trip_type' should probably have NOT NULL constraint
-# - Column 'trip_type' is commonly used in queries - consider adding an index
+# notes = ["vehicle:INVERSE_OF", "distance:NOT_NULL", "purpose:NOT_NULL", "trip_type:NOT_NULL", "trip_type:INDEX"]
 # <rails-lens:schema:end>
 class Trip < VehicleRecord
   belongs_to :vehicle

@@ -15,14 +15,13 @@ module RailsLens
 
       def analyze_inverse_of
         associations_needing_inverse.map do |association|
-          "Association '#{association.name}' should specify inverse_of"
+          NoteCodes.note(association.name.to_s, NoteCodes::INVERSE_OF)
         end
       end
 
       def analyze_n_plus_one_risks
         has_many_associations.map do |association|
-          # Warn about N+1 query risks for has_many associations
-          "Association '#{association.name}' has N+1 query risk. Consider using includes/preload"
+          NoteCodes.note(association.name.to_s, NoteCodes::N_PLUS_ONE)
         end
       end
 
@@ -32,9 +31,8 @@ module RailsLens
         belongs_to_associations.each do |association|
           next if association.polymorphic?
 
-          # Check if the associated model has a matching counter column
           if should_have_counter_cache?(association) && !has_counter_cache?(association)
-            notes << "Consider adding counter cache for '#{association.name}'"
+            notes << NoteCodes.note(association.name.to_s, NoteCodes::COUNTER_CACHE)
           end
         end
 
@@ -74,8 +72,6 @@ module RailsLens
       end
 
       def should_have_counter_cache?(association)
-        # A counter cache is needed if there is a has_many association
-        # on the other side of the belongs_to, and no counter_cache is defined.
         return false unless association.macro == :belongs_to
 
         inverse_association = association.inverse_of

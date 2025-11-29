@@ -8,13 +8,13 @@
 # collation = "utf8mb4_unicode_ci"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "vehicle_id", type = "integer", nullable = false },
-#   { name = "owner_id", type = "integer", nullable = false },
-#   { name = "ownership_start", type = "date", nullable = true },
-#   { name = "ownership_end", type = "date", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "vehicle_id", type = "integer", null = false },
+#   { name = "owner_id", type = "integer", null = false },
+#   { name = "ownership_start", type = "date" },
+#   { name = "ownership_end", type = "date" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -27,11 +27,7 @@
 #   { column = "owner_id", references_table = "owners", references_column = "id", name = "fk_rails_f12ecc0d84" }
 # ]
 #
-# == Notes
-# - Association 'vehicle' should specify inverse_of
-# - Association 'owner' should specify inverse_of
-# - Column 'ownership_start' should probably have NOT NULL constraint
-# - Column 'ownership_end' should probably have NOT NULL constraint
+# notes = ["vehicle:INVERSE_OF", "owner:INVERSE_OF", "ownership_start:NOT_NULL", "ownership_end:NOT_NULL"]
 # <rails-lens:schema:end>
 class VehicleOwner < VehicleRecord
   belongs_to :vehicle

@@ -5,14 +5,14 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "spaceship_id", type = "integer", nullable = false },
-#   { name = "crew_member_id", type = "integer", nullable = false },
-#   { name = "position", type = "string", nullable = true },
-#   { name = "assigned_at", type = "datetime", nullable = true },
-#   { name = "active", type = "boolean", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "spaceship_id", type = "integer", null = false },
+#   { name = "crew_member_id", type = "integer", null = false },
+#   { name = "position", type = "string" },
+#   { name = "assigned_at", type = "datetime" },
+#   { name = "active", type = "boolean" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
 # indexes = [
@@ -25,13 +25,7 @@
 #   { column = "spaceship_id", references_table = "spaceships", references_column = "id", name = "fk_rails_7135c9d1a6" }
 # ]
 #
-# == Notes
-# - Consider adding counter cache for 'spaceship'
-# - Consider adding counter cache for 'crew_member'
-# - Column 'position' should probably have NOT NULL constraint
-# - Column 'active' should probably have NOT NULL constraint
-# - Boolean column 'active' should have a default value
-# - String column 'position' has no length limit - consider adding one
+# notes = ["spaceship:COUNTER_CACHE", "crew_member:COUNTER_CACHE", "position:NOT_NULL", "active:NOT_NULL", "active:DEFAULT", "position:LIMIT"]
 # <rails-lens:schema:end>
 class SpaceshipCrewMember < ApplicationRecord
   # Associations

@@ -5,15 +5,15 @@
 # database_dialect = "SQLite"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "name", type = "string", nullable = true },
-#   { name = "family_id", type = "integer", nullable = false },
-#   { name = "average_lifespan", type = "integer", nullable = true },
-#   { name = "habitat", type = "text", nullable = true },
-#   { name = "danger_level", type = "integer", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false },
-#   { name = "locomotion", type = "string", nullable = true }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "name", type = "string" },
+#   { name = "family_id", type = "integer", null = false },
+#   { name = "average_lifespan", type = "integer" },
+#   { name = "habitat", type = "text" },
+#   { name = "danger_level", type = "integer" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false },
+#   { name = "locomotion", type = "string" }
 # ]
 #
 # indexes = [
@@ -24,16 +24,7 @@
 #   { column = "family_id", references_table = "families", references_column = "id" }
 # ]
 #
-# == Notes
-# - Association 'family' should specify inverse_of
-# - Association 'dinosaurs' has N+1 query risk. Consider using includes/preload
-# - Consider adding counter cache for 'family'
-# - Column 'name' should probably have NOT NULL constraint
-# - Column 'average_lifespan' should probably have NOT NULL constraint
-# - Column 'habitat' should probably have NOT NULL constraint
-# - Column 'danger_level' should probably have NOT NULL constraint
-# - Column 'locomotion' should probably have NOT NULL constraint
-# - String column 'name' has no length limit - consider adding one
+# notes = ["family:INVERSE_OF", "dinosaurs:N_PLUS_ONE", "family:COUNTER_CACHE", "name:NOT_NULL", "average_lifespan:NOT_NULL", "habitat:NOT_NULL", "danger_level:NOT_NULL", "locomotion:NOT_NULL", "name:LIMIT", "habitat:STORAGE"]
 # <rails-lens:schema:end>
 class Species < PrehistoricRecord
   belongs_to :family

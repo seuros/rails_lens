@@ -5,26 +5,21 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "id", type = "integer", primary_key = true, nullable = false },
-#   { name = "body", type = "text", nullable = true },
-#   { name = "audience", type = "string", nullable = true },
-#   { name = "scheduled_at", type = "datetime", nullable = true },
-#   { name = "created_at", type = "datetime", nullable = false },
-#   { name = "updated_at", type = "datetime", nullable = false }
+#   { name = "id", type = "integer", pk = true, null = false },
+#   { name = "body", type = "text" },
+#   { name = "audience", type = "string" },
+#   { name = "scheduled_at", type = "datetime" },
+#   { name = "created_at", type = "datetime", null = false },
+#   { name = "updated_at", type = "datetime", null = false }
 # ]
 #
-# == Polymorphic Associations
-# Polymorphic Targets:
-# - entry (as: :entryable)
+# [polymorphic]
+# targets = [{ name = "entry", as = "entryable" }]
 #
-# == Enums
-# - audience: { all_users: "all_users", crew_only: "crew_only", officers_only: "officers_only", command_staff: "command_staff" } (string)
+# [enums]
+# audience = { all_users = "all_users", crew_only = "crew_only", officers_only = "officers_only", command_staff = "command_staff" }
 #
-# == Notes
-# - Column 'body' should probably have NOT NULL constraint
-# - Column 'audience' should probably have NOT NULL constraint
-# - String column 'audience' has no length limit - consider adding one
-# - Large text column 'body' is frequently queried - consider separate storage
+# notes = ["body:NOT_NULL", "audience:NOT_NULL", "audience:LIMIT", "body:STORAGE"]
 # <rails-lens:schema:end>
 class Announcement < ApplicationRecord
   # Enums
