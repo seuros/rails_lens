@@ -211,14 +211,14 @@ module RailsLens
       File.write(rake_file, rake_task_template)
 
       output.say "Created rake task at #{rake_file}", :green
-      output.say '', :reset
+      output.say ''
       output.say 'The following task has been installed:', :blue
       output.say '  • rails_lens:annotate - Annotate models after migrations', :green
-      output.say '', :reset
+      output.say ''
       output.say 'Configuration options in lib/tasks/rails_lens.rake:', :blue
       output.say '  • AUTO_ANNOTATE (default: true in development)', :cyan
       output.say '  • RAILS_LENS_ENV (default: development)', :cyan
-      output.say '', :reset
+      output.say ''
       output.say 'Disable auto-annotation:', :blue
       output.say '  export AUTO_ANNOTATE=false', :cyan
 
