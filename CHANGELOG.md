@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.3.0...rails_lens/v0.5.0) (2025-12-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* refactor the extension modules
+
+### Features
+
+* refactor the extension modules ([de80a63](https://github.com/seuros/rails_lens/commit/de80a638f968cc24e1b8c7906054dbb2292df772))
+
 ## [0.3.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.2.13...rails_lens/v0.3.0) (2025-11-29)
 
 
