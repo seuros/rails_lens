@@ -3,7 +3,7 @@
 module RailsLens
   class Config
     attr_accessor :verbose, :debug, :raise_on_error, :logger,
-                  :annotations, :erd, :schema, :extensions, :routes, :mailers
+                  :annotations, :erd, :schema, :extensions, :routes, :mailers, :model_sources
 
     def initialize
       @verbose = false
@@ -75,6 +75,11 @@ module RailsLens
         include_defaults: true,
         pattern: '**/*_mailer.rb',
         exclusion_pattern: 'vendor/**/*_mailer.rb'
+      }
+
+      @model_sources = {
+        enabled: true,              # Enable gem-provided model sources
+        error_reporting: :warn      # :silent, :warn, :verbose
       }
     end
   end
