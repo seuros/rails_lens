@@ -138,12 +138,13 @@ module RailsLens
         # Check each loaded gem for RailsLens extensions
 
         Gem.loaded_specs.each_key do |gem_name|
-          # Try to find extension in the gem
-          gem_constant_name = gem_name.gsub('-', '_').split('_').map(&:capitalize).join
-          extension_constant_name = "#{gem_constant_name}::RailsLensExtension"
-
           # Skip gems that are likely to cause autoload issues
           next if %w[digest openssl uri net json].include?(gem_name)
+
+          # Try to find extension in the gem
+          # Use ActiveSupport's camelize for proper Rails-style conversion (e.g., 'activecypher' -> 'ActiveCypher')
+          gem_constant_name = gem_name.gsub('-', '_').camelize
+          extension_constant_name = "#{gem_constant_name}::RailsLensExtension"
 
           # First check if the gem constant exists without triggering autoload
           next unless Object.const_defined?(gem_constant_name, false)

@@ -148,6 +148,53 @@ module RailsLens
       end
 
       def self.annotate_all(options = {})
+        results = { annotated: [], skipped: [], failed: [] }
+
+        # Iterate through all model sources
+        ModelSourceLoader.load_sources.each do |source|
+          puts "Annotating #{source.source_name} models..." if options[:verbose]
+          source_results = annotate_source(source, options)
+          merge_results(results, source_results)
+        end
+
+        results
+      end
+
+      # Annotate models from a specific source
+      def self.annotate_source(source, options = {})
+        results = { annotated: [], skipped: [], failed: [] }
+
+        begin
+          models = source.models(options)
+          puts "  Found #{models.size} #{source.source_name} models" if options[:verbose]
+
+          models.each do |model|
+            result = source.annotate_model(model, options)
+            case result[:status]
+            when :annotated
+              results[:annotated] << result[:model]
+            when :skipped
+              results[:skipped] << result[:model]
+            when :failed
+              results[:failed] << { model: result[:model], error: result[:message] }
+            end
+          end
+        rescue StandardError => e
+          puts "  Error processing #{source.source_name} source: #{e.message}" if options[:verbose]
+        end
+
+        results
+      end
+
+      # Merge source results into main results
+      def self.merge_results(main, source)
+        main[:annotated].concat(source[:annotated] || [])
+        main[:skipped].concat(source[:skipped] || [])
+        main[:failed].concat(source[:failed] || [])
+      end
+
+      # Original ActiveRecord-specific annotation logic (used by ActiveRecordSource)
+      def self.annotate_active_record_models(options = {})
         # Convert models option to include option for ModelDetector
         if options[:models]
           options[:include] = options[:models]
@@ -265,10 +312,52 @@ module RailsLens
       end
 
       def self.remove_all(options = {})
-        # Use filesystem-based removal (doesn't require database)
-        remove_all_by_filesystem(options)
+        results = { removed: [], skipped: [], failed: [] }
+
+        # Iterate through all model sources
+        ModelSourceLoader.load_sources.each do |source|
+          puts "Removing annotations from #{source.source_name} models..." if options[:verbose]
+          source_results = remove_source(source, options)
+          merge_remove_results(results, source_results)
+        end
+
+        results
       end
 
+      # Remove annotations from a specific source
+      def self.remove_source(source, options = {})
+        results = { removed: [], skipped: [], failed: [] }
+
+        begin
+          models = source.models(options.merge(include_abstract: true))
+          puts "  Found #{models.size} #{source.source_name} models" if options[:verbose]
+
+          models.each do |model|
+            result = source.remove_annotation(model)
+            case result[:status]
+            when :removed
+              results[:removed] << result[:model]
+            when :skipped
+              results[:skipped] << result[:model]
+            when :failed
+              results[:failed] << { model: result[:model], error: result[:message] }
+            end
+          end
+        rescue StandardError => e
+          puts "  Error removing from #{source.source_name} source: #{e.message}" if options[:verbose]
+        end
+
+        results
+      end
+
+      # Merge removal results into main results
+      def self.merge_remove_results(main, source)
+        main[:removed].concat(source[:removed] || [])
+        main[:skipped].concat(source[:skipped] || [])
+        main[:failed].concat(source[:failed] || [])
+      end
+
+      # Original filesystem-based removal (kept for backwards compatibility)
       def self.remove_all_by_filesystem(options = {})
         base_path = options[:models_path] || default_models_path
         results = { removed: [], skipped: [], failed: [] }
