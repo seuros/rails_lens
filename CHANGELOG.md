@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.0...rails_lens/v0.5.1) (2025-12-07)
+
+
+### Bug Fixes
+
+* add by_source ([f6693f3](https://github.com/seuros/rails_lens/commit/f6693f384761de505eac0e525c7b70f4c053d14c))
+
 ## [0.5.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.3.0...rails_lens/v0.5.0) (2025-12-06)
 
 
