@@ -148,12 +148,13 @@ module RailsLens
       end
 
       def self.annotate_all(options = {})
-        results = { annotated: [], skipped: [], failed: [] }
+        results = { annotated: [], skipped: [], failed: [], by_source: {} }
 
         # Iterate through all model sources
         ModelSourceLoader.load_sources.each do |source|
           puts "Annotating #{source.source_name} models..." if options[:verbose]
           source_results = annotate_source(source, options)
+          results[:by_source][source.source_name] = source_results[:annotated].length
           merge_results(results, source_results)
         end
 
@@ -312,12 +313,13 @@ module RailsLens
       end
 
       def self.remove_all(options = {})
-        results = { removed: [], skipped: [], failed: [] }
+        results = { removed: [], skipped: [], failed: [], by_source: {} }
 
         # Iterate through all model sources
         ModelSourceLoader.load_sources.each do |source|
           puts "Removing annotations from #{source.source_name} models..." if options[:verbose]
           source_results = remove_source(source, options)
+          results[:by_source][source.source_name] = source_results[:removed].length
           merge_remove_results(results, source_results)
         end
 

@@ -11,7 +11,13 @@ namespace :rails_lens do
 
     results = RailsLens::Schema::AnnotationManager.annotate_all(options)
 
-    puts "Annotated #{results[:annotated].length} models"
+    if results[:by_source]&.any?
+      results[:by_source].each do |source_name, count|
+        puts "Annotated #{count} #{source_name} models" if count.positive?
+      end
+    else
+      puts "Annotated #{results[:annotated].length} models"
+    end
     puts "Skipped #{results[:skipped].length} models" if results[:skipped].any?
     if results[:failed].any?
       puts "Failed to annotate #{results[:failed].length} models:"
@@ -27,7 +33,13 @@ namespace :rails_lens do
 
     results = RailsLens::Schema::AnnotationManager.remove_all
 
-    puts "Removed annotations from #{results[:removed].length} models" if results[:removed].any?
+    if results[:by_source]&.any?
+      results[:by_source].each do |source_name, count|
+        puts "Removed annotations from #{count} #{source_name} models" if count.positive?
+      end
+    elsif results[:removed].any?
+      puts "Removed annotations from #{results[:removed].length} models"
+    end
     puts "Skipped #{results[:skipped].length} models (no annotations)" if results[:skipped].any?
     if results[:failed].any?
       puts "Failed to remove annotations from #{results[:failed].length} models:"
