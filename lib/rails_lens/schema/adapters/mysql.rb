@@ -211,12 +211,12 @@ module RailsLens
         def has_partitions?
           return false unless connection.respond_to?(:execute)
 
-          result = connection.execute(<<-SQL.squish)
-          SELECT COUNT(*) as count
-          FROM information_schema.partitions
-          WHERE table_schema = DATABASE()
-            AND table_name = '#{table_name}'
-            AND partition_name IS NOT NULL
+          result = connection.execute(<<~SQL.squish)
+            SELECT COUNT(*) as count
+            FROM information_schema.partitions
+            WHERE table_schema = DATABASE()
+              AND table_name = '#{table_name}'
+              AND partition_name IS NOT NULL
           SQL
 
           count = if result.first.is_a?(Hash)
@@ -241,13 +241,13 @@ module RailsLens
         def add_partitions(lines)
           return unless connection.respond_to?(:execute)
 
-          partitions = connection.execute(<<-SQL.squish)
-          SELECT partition_name, partition_expression, partition_description
-          FROM information_schema.partitions
-          WHERE table_schema = DATABASE()
-            AND table_name = '#{table_name}'
-            AND partition_name IS NOT NULL
-          ORDER BY partition_ordinal_position
+          partitions = connection.execute(<<~SQL.squish)
+            SELECT partition_name, partition_expression, partition_description
+            FROM information_schema.partitions
+            WHERE table_schema = DATABASE()
+              AND table_name = '#{table_name}'
+              AND partition_name IS NOT NULL
+            ORDER BY partition_ordinal_position
           SQL
 
           return if partitions.none?
@@ -269,13 +269,13 @@ module RailsLens
         def add_partitions_toml(lines)
           return unless connection.respond_to?(:execute)
 
-          partitions = connection.execute(<<-SQL.squish)
-          SELECT partition_name, partition_expression, partition_description
-          FROM information_schema.partitions
-          WHERE table_schema = DATABASE()
-            AND table_name = '#{table_name}'
-            AND partition_name IS NOT NULL
-          ORDER BY partition_ordinal_position
+          partitions = connection.execute(<<~SQL.squish)
+            SELECT partition_name, partition_expression, partition_description
+            FROM information_schema.partitions
+            WHERE table_schema = DATABASE()
+              AND table_name = '#{table_name}'
+              AND partition_name IS NOT NULL
+            ORDER BY partition_ordinal_position
           SQL
 
           return if partitions.none?

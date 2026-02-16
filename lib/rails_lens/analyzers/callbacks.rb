@@ -116,23 +116,23 @@ module RailsLens
         case filter
         when Symbol
           # Check if method is defined in the model class itself
-          return true if model_class.instance_methods(false).include?(filter)
-          return true if model_class.private_instance_methods(false).include?(filter)
+          return true if model_class.method_defined?(filter, false)
+          return true if model_class.private_method_defined?(filter, false)
 
           # Check if defined in included concerns (non-Rails modules)
           model_class.included_modules.each do |mod|
             next if mod.name.nil?
             next if mod.name.start_with?('ActiveRecord', 'ActiveModel', 'ActiveSupport')
 
-            return true if mod.instance_methods(false).include?(filter)
-            return true if mod.private_instance_methods(false).include?(filter)
+            return true if mod.method_defined?(filter, false)
+            return true if mod.private_method_defined?(filter, false)
           end
 
           # For STI: check parent classes up to (but not including) ActiveRecord::Base
           klass = model_class.superclass
           while klass && klass < ActiveRecord::Base
-            return true if klass.instance_methods(false).include?(filter)
-            return true if klass.private_instance_methods(false).include?(filter)
+            return true if klass.method_defined?(filter, false)
+            return true if klass.private_method_defined?(filter, false)
 
             klass = klass.superclass
           end

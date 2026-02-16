@@ -142,9 +142,9 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
       orphaned_comments = Comment.where.not(commentable_type: nil)
                                  .where.not(commentable_id: nil)
                                  .select do |comment|
-        comment.commentable.nil?
-      rescue StandardError
-        true
+                                   comment.commentable.nil?
+                                 rescue StandardError
+                                   true
       end
 
       integrity_checks << {
