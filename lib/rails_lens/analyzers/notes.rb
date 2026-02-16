@@ -312,8 +312,7 @@ module RailsLens
       def associations_needing_inverse
         associations.select do |association|
           association.options[:inverse_of].nil? &&
-            !association.options[:through] &&
-            !association.options[:as] &&
+            needs_explicit_inverse_of?(association) &&
             association.macro != :has_and_belongs_to_many
         end
       end
@@ -417,6 +416,16 @@ module RailsLens
       rescue StandardError => e
         RailsLens.logger.debug { "Error checking view existence for #{view_name}: #{e.message}" }
         false
+      end
+
+      def needs_explicit_inverse_of?(association)
+        # Rails can auto-infer inverse_of for vanilla associations
+        # Only require explicit inverse_of when using custom options
+        association.options[:class_name].present? ||
+          association.options[:foreign_key].present? ||
+          association.options[:as].present? ||
+          association.options[:source].present? ||
+          association.options[:through].present?
       end
     end
   end

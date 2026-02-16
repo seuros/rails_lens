@@ -42,7 +42,7 @@ module RailsLens
       def associations_needing_inverse
         all_associations.select do |association|
           association.options[:inverse_of].nil? &&
-            !association.options[:through] &&
+            needs_explicit_inverse_of?(association) &&
             !association.polymorphic? &&
             bidirectional_association?(association)
         end
@@ -69,6 +69,16 @@ module RailsLens
       rescue NoMethodError => e
         RailsLens.logger.debug { "Method error checking bidirectional association: #{e.message}" }
         false
+      end
+
+      def needs_explicit_inverse_of?(association)
+        # Rails can auto-infer inverse_of for vanilla associations
+        # Only require explicit inverse_of when using custom options
+        association.options[:class_name].present? ||
+          association.options[:foreign_key].present? ||
+          association.options[:as].present? ||
+          association.options[:source].present? ||
+          association.options[:through].present?
       end
 
       def should_have_counter_cache?(association)

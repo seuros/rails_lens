@@ -84,7 +84,7 @@ module RailsLens
         def extensions
           return [] unless adapter_name == 'PostgreSQL'
 
-          connection.select_all(<<-SQL.squish).to_a
+          connection.select_all(<<~SQL.squish).to_a
             SELECT extname as name, extversion as version
             FROM pg_extension
             WHERE extname NOT IN ('plpgsql')
@@ -97,7 +97,7 @@ module RailsLens
         def schemas
           return [] unless adapter_name == 'PostgreSQL'
 
-          connection.select_values(<<-SQL.squish)
+          connection.select_values(<<~SQL.squish)
             SELECT schema_name
             FROM information_schema.schemata
             WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')

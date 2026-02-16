@@ -35,7 +35,7 @@ module RailsLens
 
       def detect_composite_primary_key_from_db
         # Query PostgreSQL system catalogs to find composite primary keys
-        sql = <<-SQL.squish
+        sql = <<~SQL.squish
           SELECT a.attname
           FROM pg_index i
           JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)

@@ -22,7 +22,7 @@ module RailsLens
 
       def detect_generated_columns
         # PostgreSQL system query to find generated columns
-        sql = <<-SQL.squish
+        sql = <<~SQL.squish
           SELECT
             a.attname AS column_name,
             pg_get_expr(d.adbin, d.adrelid) AS generation_expression
