@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.1...rails_lens/v0.5.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* reduce INVERSE_OF false positives for vanilla associations ([#39](https://github.com/seuros/rails_lens/issues/39)) ([b209c2a](https://github.com/seuros/rails_lens/commit/b209c2a6b2a894193561e9aa30985c3043b40ac3))
+
 ## [0.5.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.0...rails_lens/v0.5.1) (2025-12-07)
 
 
