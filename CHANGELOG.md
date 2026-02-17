@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.2...rails_lens/v0.5.3) (2026-02-17)
+
+
+### Bug Fixes
+
+* handle edge cases table naming. ([dec95af](https://github.com/seuros/rails_lens/commit/dec95af7866a9ed3c5430974a1492749ca0a5f8e))
+
 ## [0.5.2](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.1...rails_lens/v0.5.2) (2026-02-16)
 
 
