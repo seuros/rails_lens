@@ -78,13 +78,38 @@ module RailsLens
 
       # rubocop:disable Naming/PredicateMethod
       def check_postgresql_view(connection, table_name)
+        # Handle schema-qualified table names (e.g., 'audit.audit_logs')
+        if table_name.include?('.')
+          schema_name, unqualified_name = table_name.split('.', 2)
+          schema_filter = "'#{connection.quote_string(schema_name)}'"
+          table_to_check = unqualified_name
+        else
+          # Extract search_path schemas for unqualified table names
+          search_path = connection.schema_search_path
+            .split(',')
+            .map(&:strip)
+            .reject { |s| s == '"$user"' || s.empty? }
+
+          # Default to 'public' if search_path is empty
+          search_path = ['public'] if search_path.empty?
+
+          schema_filter = search_path.map { |s| "'#{connection.quote_string(s)}'" }.join(', ')
+          table_to_check = table_name
+        end
+
         # Check both regular views and materialized views
+        # Exclude system schemas to prevent false positives when user table names
+        # match PostgreSQL system view names (e.g., 'triggers', 'tables', 'columns')
         result = connection.exec_query(<<~SQL.squish, 'Check PostgreSQL View')
           SELECT 1 FROM information_schema.views
-          WHERE table_name = '#{connection.quote_string(table_name)}'
+          WHERE table_name = '#{connection.quote_string(table_to_check)}'
+          AND table_schema IN (#{schema_filter})
+          AND table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
           UNION ALL
           SELECT 1 FROM pg_matviews
-          WHERE matviewname = '#{connection.quote_string(table_name)}'
+          WHERE matviewname = '#{connection.quote_string(table_to_check)}'
+          AND schemaname IN (#{schema_filter})
+          AND schemaname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
           LIMIT 1
         SQL
         result.rows.any?

@@ -418,6 +418,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_083442) do
     t.index ["tenant_id"], name: "index_tenant_settings_on_tenant_id"
   end
 
+  create_table "triggers", force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "trips", force: :cascade do |t|
     t.bigint "vehicle_id", null: false
     t.bigint "owner_id", null: false

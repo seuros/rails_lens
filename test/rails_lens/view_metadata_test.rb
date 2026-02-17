@@ -97,6 +97,15 @@ module RailsLens
       assert_includes hash.keys, :dependencies
     end
 
+    test 'does not detect system views as user views' do
+      # Trigger model has a table name that collides with information_schema.triggers
+      metadata = ViewMetadata.new(Trigger)
+
+      assert_not metadata.view_exists?,
+        "ViewMetadata should not detect information_schema.triggers for Trigger model"
+      assert_nil metadata.view_type
+    end
+
     class MockNonexistentViewModel < ApplicationRecord
       self.table_name = 'nonexistent_view_that_does_not_exist'
     end
