@@ -5,6 +5,8 @@ module RailsLens
     # Annotates abstract base classes (ApplicationRecord, etc.) with database-level objects
     # like functions, sequences, types, etc.
     class DatabaseAnnotator
+      include AnnotationRemoval
+
       attr_reader :base_class
 
       def initialize(base_class)
@@ -28,21 +30,6 @@ module RailsLens
           true
         else
           false
-        end
-      end
-
-      def remove_annotations(file_path = nil)
-        file_path ||= model_file_path
-        return unless file_path && File.exist?(file_path)
-
-        content = File.read(file_path)
-        cleaned_content = Annotation.remove(content)
-
-        if cleaned_content == content
-          false
-        else
-          File.write(file_path, cleaned_content)
-          true
         end
       end
 

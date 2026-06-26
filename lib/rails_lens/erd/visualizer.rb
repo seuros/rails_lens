@@ -3,6 +3,14 @@
 module RailsLens
   module ERD
     class Visualizer
+      # Cardinality pair (near-side, far-side) for each association macro.
+      RELATIONSHIP_CARDINALITIES = {
+        belongs_to: %i[ZERO_OR_MORE ONE_ONLY],
+        has_one: %i[ONE_ONLY ZERO_OR_ONE],
+        has_many: %i[ONE_ONLY ZERO_OR_MORE],
+        has_and_belongs_to_many: %i[ZERO_OR_MORE ZERO_OR_MORE]
+      }.freeze
+
       attr_reader :options, :config
 
       def initialize(options: {})
@@ -139,16 +147,7 @@ module RailsLens
           next if target_model.abstract_class?
           next unless target_model.table_exists? && target_model.columns.present?
 
-          case association.macro
-          when :belongs_to
-            add_belongs_to_relationship(diagram, model, association, target_model)
-          when :has_one
-            add_has_one_relationship(diagram, model, association, target_model)
-          when :has_many
-            add_has_many_relationship(diagram, model, association, target_model)
-          when :has_and_belongs_to_many
-            add_habtm_relationship(diagram, model, association, target_model)
-          end
+          add_association_relationship(diagram, model, association, target_model)
         end
 
         # Check for closure_tree self-reference - but only if model is not abstract
@@ -164,63 +163,21 @@ module RailsLens
         )
       end
 
-      def add_belongs_to_relationship(diagram, model, association, target_model)
-        diagram.add_relationship(
-          entity1: model.name,
-          entity2: target_model.name,
-          cardinality1: :ZERO_OR_MORE,
-          cardinality2: :ONE_ONLY,
-          identifying: false,
-          label: association.name.to_s
-        )
-      rescue StandardError => e
-        RailsLens.logger.debug do
-          "Warning: Could not add belongs_to relationship #{model.name} -> #{association.name}: #{e.message}"
-        end
-      end
+      def add_association_relationship(diagram, model, association, target_model)
+        cardinality1, cardinality2 = RELATIONSHIP_CARDINALITIES[association.macro]
+        return unless cardinality1
 
-      def add_has_one_relationship(diagram, model, association, target_model)
         diagram.add_relationship(
           entity1: model.name,
           entity2: target_model.name,
-          cardinality1: :ONE_ONLY,
-          cardinality2: :ZERO_OR_ONE,
+          cardinality1: cardinality1,
+          cardinality2: cardinality2,
           identifying: false,
           label: association.name.to_s
         )
       rescue StandardError => e
         RailsLens.logger.debug do
-          "Warning: Could not add has_one relationship #{model.name} -> #{association.name}: #{e.message}"
-        end
-      end
-
-      def add_has_many_relationship(diagram, model, association, target_model)
-        diagram.add_relationship(
-          entity1: model.name,
-          entity2: target_model.name,
-          cardinality1: :ONE_ONLY,
-          cardinality2: :ZERO_OR_MORE,
-          identifying: false,
-          label: association.name.to_s
-        )
-      rescue StandardError => e
-        RailsLens.logger.debug do
-          "Warning: Could not add has_many relationship #{model.name} -> #{association.name}: #{e.message}"
-        end
-      end
-
-      def add_habtm_relationship(diagram, model, association, target_model)
-        diagram.add_relationship(
-          entity1: model.name,
-          entity2: target_model.name,
-          cardinality1: :ZERO_OR_MORE,
-          cardinality2: :ZERO_OR_MORE,
-          identifying: false,
-          label: association.name.to_s
-        )
-      rescue StandardError => e
-        RailsLens.logger.debug do
-          "Warning: Could not add habtm relationship #{model.name} -> #{association.name}: #{e.message}"
+          "Warning: Could not add #{association.macro} relationship #{model.name} -> #{association.name}: #{e.message}"
         end
       end
 

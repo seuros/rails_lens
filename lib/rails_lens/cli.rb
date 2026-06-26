@@ -34,13 +34,13 @@ module RailsLens
         commands = Commands.new(self)
 
         # Annotate models (default behavior or when --all is specified)
-        results[:models] = commands.annotate_models(options) if should_annotate_models?
+        results[:models] = commands.annotate_models(options) if target_models?
 
         # Annotate routes
-        results[:routes] = commands.annotate_routes(options) if should_annotate_routes?
+        results[:routes] = commands.annotate_routes(options) if target_routes?
 
         # Annotate mailers
-        results[:mailers] = commands.annotate_mailers(options) if should_annotate_mailers?
+        results[:mailers] = commands.annotate_mailers(options) if target_mailers?
 
         results
       end
@@ -58,13 +58,13 @@ module RailsLens
         commands = Commands.new(self)
 
         # Remove model annotations (default behavior or when --all is specified)
-        results[:models] = commands.remove_models(options) if should_remove_models?
+        results[:models] = commands.remove_models(options) if target_models?
 
         # Remove route annotations
-        results[:routes] = commands.remove_routes(options) if should_remove_routes?
+        results[:routes] = commands.remove_routes(options) if target_routes?
 
         # Remove mailer annotations
-        results[:mailers] = commands.remove_mailers(options) if should_remove_mailers?
+        results[:mailers] = commands.remove_mailers(options) if target_mailers?
 
         results
       end
@@ -158,28 +158,17 @@ module RailsLens
       RailsLens.config.debug = options[:debug]
     end
 
-    # Helper methods to determine what to annotate/remove
-    def should_annotate_models?
+    # Helper methods to determine what to annotate/remove. The same targeting
+    # rules apply to both the annotate and remove commands.
+    def target_models?
       (!options[:routes] && !options[:mailers]) || options[:all]
     end
 
-    def should_annotate_routes?
+    def target_routes?
       options[:routes] || options[:all]
     end
 
-    def should_annotate_mailers?
-      options[:mailers] || options[:all]
-    end
-
-    def should_remove_models?
-      (!options[:routes] && !options[:mailers]) || options[:all]
-    end
-
-    def should_remove_routes?
-      options[:routes] || options[:all]
-    end
-
-    def should_remove_mailers?
+    def target_mailers?
       options[:mailers] || options[:all]
     end
   end

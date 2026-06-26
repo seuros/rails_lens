@@ -30,7 +30,7 @@ module RailsLens
 
           # Add schemas for PostgreSQL
           if adapter_name == 'PostgreSQL' && schemas.any?
-            lines << "schemas = [#{schemas.map { |s| "\"#{s}\"" }.join(', ')}]"
+            lines << "schemas = #{TomlFormat.quoted_array(schemas)}"
           end
 
           lines.join("\n")

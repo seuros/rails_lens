@@ -102,7 +102,7 @@ module RailsLens
       metadata = ViewMetadata.new(Trigger)
 
       assert_not metadata.view_exists?,
-        "ViewMetadata should not detect information_schema.triggers for Trigger model"
+                 'ViewMetadata should not detect information_schema.triggers for Trigger model'
       assert_nil metadata.view_type
     end
 

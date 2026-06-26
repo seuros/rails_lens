@@ -72,7 +72,7 @@ module RailsLens
       def validate_array_result(result, method_name = 'unknown')
         return [] unless result.is_a?(Array)
 
-        result.select { |item| item.is_a?(String) }
+        result.grep(String)
       rescue StandardError => e
         log_method_error(method_name, e)
         []

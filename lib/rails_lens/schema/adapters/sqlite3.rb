@@ -30,27 +30,6 @@ module RailsLens
           lines.join("\n")
         end
 
-        def generate_view_annotation(model_class)
-          lines = []
-          lines << "view = \"#{table_name}\""
-          lines << "database_dialect = \"#{database_dialect}\""
-
-          # Fetch all view metadata in a single query
-          view_info = fetch_view_metadata
-
-          if view_info
-            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
-            lines << "updatable = #{view_info[:updatable]}"
-          end
-
-          lines << ''
-
-          add_columns_toml(lines)
-          add_view_dependencies_toml(lines, view_info)
-
-          lines.join("\n")
-        end
-
         protected
 
         def format_column(column)
@@ -118,16 +97,6 @@ module RailsLens
             # SQLite specific errors (database locked, etc)
             RailsLens.logger.debug { "SQLite error fetching pragmas: #{e.message}" }
           end
-        end
-
-        def add_view_dependencies_toml(lines, view_info)
-          return unless view_info && view_info[:dependencies]
-
-          dependencies = view_info[:dependencies]
-          return if dependencies.empty?
-
-          lines << ''
-          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
         end
 
         # SQLite-specific view methods

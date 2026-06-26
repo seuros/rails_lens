@@ -46,27 +46,6 @@ module RailsLens
           lines.join("\n")
         end
 
-        def generate_view_annotation(model_class)
-          lines = []
-          lines << "view = \"#{table_name}\""
-          lines << "database_dialect = \"#{database_dialect}\""
-
-          # Fetch all view metadata in a single query
-          view_info = fetch_view_metadata
-
-          if view_info
-            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
-            lines << "updatable = #{view_info[:updatable]}"
-          end
-
-          lines << ''
-
-          add_columns_toml(lines)
-          add_view_dependencies_toml(lines, view_info)
-
-          lines.join("\n")
-        end
-
         protected
 
         def format_column(column)
@@ -107,19 +86,9 @@ module RailsLens
           when :string
             column.limit ? "varchar(#{column.limit})" : 'varchar'
           when :text
-            case column.limit
-            when 0..255 then 'tinytext'
-            when 256..65_535 then 'text'
-            when 65_536..16_777_215 then 'mediumtext'
-            else 'longtext'
-            end
+            sized_lob_type('text', column.limit)
           when :binary
-            case column.limit
-            when 0..255 then 'tinyblob'
-            when 256..65_535 then 'blob'
-            when 65_536..16_777_215 then 'mediumblob'
-            else 'longblob'
-            end
+            sized_lob_type('blob', column.limit)
           when :integer
             # MySQL integer types
             case column.limit
@@ -134,59 +103,46 @@ module RailsLens
           end
         end
 
-        def table_storage_engine
-          result = connection.execute("SHOW TABLE STATUS LIKE '#{table_name}'").first
-          return nil unless result
-
-          # Handle both hash and array results from different MySQL adapters
-          if result.is_a?(Hash)
-            result['Engine']
-          elsif result.is_a?(Array)
-            result[1] # Engine is typically the second column
+        # MySQL TEXT/BLOB family sizing shares the same length thresholds; +base+
+        # is 'text' or 'blob'.
+        def sized_lob_type(base, limit)
+          case limit
+          when 0..255 then "tiny#{base}"
+          when 256..65_535 then base
+          when 65_536..16_777_215 then "medium#{base}"
+          else "long#{base}"
           end
-        rescue ActiveRecord::StatementInvalid => e
-          RailsLens.logger.debug { "Failed to fetch storage engine for #{table_name}: #{e.message}" }
-          nil
-        rescue => e
-          RailsLens.logger.debug { "MySQL error fetching storage engine: #{e.message}" }
-          nil
+        end
+
+        def table_storage_engine
+          table_status_field('Engine', 1, 'storage engine')
         end
 
         def table_charset
-          result = connection.execute("SHOW TABLE STATUS LIKE '#{table_name}'").first
-          return nil unless result
-
-          # Handle both hash and array results from different MySQL adapters
-          collation = if result.is_a?(Hash)
-                        result['Collation']
-                      elsif result.is_a?(Array)
-                        result[14] # Collation is typically the 15th column
-                      end
-
-          collation&.split('_')&.first
-        rescue ActiveRecord::StatementInvalid => e
-          RailsLens.logger.debug { "Failed to fetch charset for #{table_name}: #{e.message}" }
-          nil
-        rescue => e
-          RailsLens.logger.debug { "MySQL error fetching charset: #{e.message}" }
-          nil
+          table_status_field('Collation', 14, 'charset')&.split('_')&.first
         end
 
         def table_collation
+          table_status_field('Collation', 14, 'collation')
+        end
+
+        # Read a single column from `SHOW TABLE STATUS`, handling both hash and
+        # array result shapes returned by different MySQL adapters. +array_index+
+        # is the positional fallback; +label+ is used in debug logging.
+        def table_status_field(hash_key, array_index, label)
           result = connection.execute("SHOW TABLE STATUS LIKE '#{table_name}'").first
           return nil unless result
 
-          # Handle both hash and array results from different MySQL adapters
           if result.is_a?(Hash)
-            result['Collation']
+            result[hash_key]
           elsif result.is_a?(Array)
-            result[14] # Collation is typically the 15th column
+            result[array_index]
           end
         rescue ActiveRecord::StatementInvalid => e
-          RailsLens.logger.debug { "Failed to fetch collation for #{table_name}: #{e.message}" }
+          RailsLens.logger.debug { "Failed to fetch #{label} for #{table_name}: #{e.message}" }
           nil
         rescue => e
-          RailsLens.logger.debug { "MySQL error fetching collation: #{e.message}" }
+          RailsLens.logger.debug { "MySQL error fetching #{label}: #{e.message}" }
           nil
         end
 
@@ -302,16 +258,6 @@ module RailsLens
         rescue => e
           # MySQL specific errors
           RailsLens.logger.debug { "MySQL error fetching partitions: #{e.message}" }
-        end
-
-        def add_view_dependencies_toml(lines, view_info)
-          return unless view_info && view_info[:dependencies]
-
-          dependencies = view_info[:dependencies]
-          return if dependencies.empty?
-
-          lines << ''
-          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
         end
 
         # MySQL-specific view methods

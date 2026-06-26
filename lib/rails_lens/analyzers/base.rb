@@ -30,6 +30,22 @@ module RailsLens
       def adapter_name
         @adapter_name ||= connection.adapter_name
       end
+
+      def indexed?(column)
+        connection.indexes(table_name).any? do |index|
+          index.columns.include?(column.name)
+        end
+      end
+
+      def needs_explicit_inverse_of?(association)
+        # Rails can auto-infer inverse_of for vanilla associations
+        # Only require explicit inverse_of when using custom options
+        association.options[:class_name].present? ||
+          association.options[:foreign_key].present? ||
+          association.options[:as].present? ||
+          association.options[:source].present? ||
+          association.options[:through].present?
+      end
     end
   end
 end

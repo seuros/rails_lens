@@ -205,22 +205,6 @@ module RailsLens
         File.write(path, content)
         @changed_files << path
       end
-
-      # Check if a mailer file exists and contains mailer classes
-      #
-      # @param path [String] File path
-      # @return [Boolean] Whether file exists and contains mailer classes
-      def mailer_file_exists?(path)
-        return false unless File.exist?(path)
-
-        begin
-          parser_result = RailsLens::Parsers::PrismParser.parse_file(path)
-          parser_result.classes.any? { |cls| cls.name.end_with?('Mailer') }
-        rescue RailsLens::ParseError, Errno::ENOENT, IOError
-          # Fallback to filename-based detection
-          File.basename(path).end_with?('_mailer.rb')
-        end
-      end
     end
   end
 end

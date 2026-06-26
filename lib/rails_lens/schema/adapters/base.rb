@@ -31,6 +31,29 @@ module RailsLens
           lines.join("\n")
         end
 
+        # Default view annotation shared by adapters without dialect-specific
+        # view metadata (overridden in PostgreSQL for schema/materialized views).
+        def generate_view_annotation(_model_class)
+          lines = []
+          lines << "view = \"#{table_name}\""
+          lines << "database_dialect = \"#{database_dialect}\""
+
+          # Fetch all view metadata in a single query
+          view_info = fetch_view_metadata
+
+          if view_info
+            lines << "view_type = \"#{view_info[:type]}\"" if view_info[:type]
+            lines << "updatable = #{view_info[:updatable]}"
+          end
+
+          lines << ''
+
+          add_columns_toml(lines)
+          add_view_dependencies_toml(lines, view_info)
+
+          lines.join("\n")
+        end
+
         delegate :adapter_name, to: :connection
 
         protected
@@ -310,7 +333,7 @@ module RailsLens
             line = '  { '
             attrs = []
             attrs << "name = \"#{index.name}\""
-            attrs << "columns = [#{Array(index.columns).map { |c| "\"#{c}\"" }.join(', ')}]"
+            attrs << "columns = #{TomlFormat.quoted_array(Array(index.columns))}"
             attrs << 'unique = true' if index.unique
             attrs << "type = \"#{index.type}\"" if index.respond_to?(:type) && index.type
             line += attrs.join(', ')
@@ -366,6 +389,16 @@ module RailsLens
             lines << line
           end
           lines << ']'
+        end
+
+        def add_view_dependencies_toml(lines, view_info)
+          return unless view_info && view_info[:dependencies]
+
+          dependencies = view_info[:dependencies]
+          return if dependencies.empty?
+
+          lines << ''
+          lines << "view_dependencies = #{TomlFormat.quoted_array(dependencies)}"
         end
 
         def format_toml_value(value)

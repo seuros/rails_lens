@@ -109,6 +109,39 @@ class AnnotationRakeTaskTest < ActiveSupport::TestCase
     RailsLens.config.annotations[:position] = original_position
   end
 
+  def test_annotation_manager_skips_file_when_annotation_is_unchanged
+    require 'rails_lens/schema/annotation_manager'
+
+    annotation = <<~ANNOTATION.chomp
+      # <rails-lens:schema:begin>
+      # table = "users"
+      # <rails-lens:schema:end>
+    ANNOTATION
+
+    content = <<~RUBY
+      # frozen_string_literal: true
+
+      #{annotation}
+      class User < ApplicationRecord
+      end
+    RUBY
+
+    file = Tempfile.new(['user', '.rb'])
+    file.write(content)
+    file.close
+
+    manager = RailsLens::Schema::AnnotationManager.new(User)
+
+    manager.stub(:generate_annotation, annotation) do
+      changed = manager.annotate_file(file.path, allow_external_files: true)
+
+      assert_not changed
+      assert_equal content, File.read(file.path)
+    end
+  ensure
+    file&.unlink
+  end
+
   def test_annotation_handles_models_without_tables_gracefully
     require 'rails_lens/schema/annotation_manager'
 

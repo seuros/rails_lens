@@ -263,31 +263,12 @@ module RailsLens
           base
         end
 
-        def add_columns(lines)
-          lines << 'Columns:'
-
-          # Group columns by type for better readability
-          columns.each do |column|
-            lines << format_column(column)
-          end
-        end
-
         def add_table_comment_toml(lines)
           comment = table_comment
           return unless comment
 
           lines << ''
           lines << "table_comment = \"#{comment.gsub('"', '\"')}\""
-        end
-
-        def add_view_dependencies_toml(lines, view_info)
-          return unless view_info && view_info[:dependencies]
-
-          dependencies = view_info[:dependencies]
-          return if dependencies.empty?
-
-          lines << ''
-          lines << "view_dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
         end
 
         # PostgreSQL-specific view methods

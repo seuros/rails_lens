@@ -15,14 +15,7 @@ module RailsLens
       results = Schema::AnnotationManager.annotate_all(options)
 
       output.say "Annotated #{results[:annotated].length} models", :green
-      output.say "Skipped #{results[:skipped].length} models", :yellow if results[:skipped].any?
-
-      if results[:failed].any?
-        output.say "Failed to annotate #{results[:failed].length} models:", :red
-        results[:failed].each do |failure|
-          output.say "  - #{failure[:model]}: #{failure[:error]}", :red
-        end
-      end
+      report_skipped_and_failed(results, 'models')
 
       # Also annotate database-level objects (functions, etc.)
       if options[:include_database_objects]
@@ -37,36 +30,17 @@ module RailsLens
       results = Schema::DatabaseAnnotator.annotate_all(options)
 
       output.say "Annotated #{results[:annotated].length} abstract base classes with database objects", :green
-      output.say "Skipped #{results[:skipped].length} abstract classes", :yellow if results[:skipped].any?
-
-      if results[:failed].any?
-        output.say "Failed to annotate #{results[:failed].length} abstract classes:", :red
-        results[:failed].each do |failure|
-          output.say "  - #{failure[:model]}: #{failure[:error]}", :red
-        end
-      end
+      report_skipped_and_failed(results, 'abstract classes')
 
       results
     end
 
     def annotate_routes(options = {})
-      annotator = Route::Annotator.new(dry_run: options[:dry_run])
-      changed_files = annotator.annotate_all
-
-      output.say "Annotated #{changed_files.length} controller files with routes", :green
-      changed_files.each { |file| output.say "  - #{file}", :blue } if options[:verbose] && changed_files.any?
-
-      { changed_files: changed_files }
+      annotate_files(Route::Annotator.new(dry_run: options[:dry_run]), 'controller files with routes', options)
     end
 
     def annotate_mailers(options = {})
-      annotator = Mailer::Annotator.new(dry_run: options[:dry_run])
-      changed_files = annotator.annotate_all
-
-      output.say "Annotated #{changed_files.length} mailer files", :green
-      changed_files.each { |file| output.say "  - #{file}", :blue } if options[:verbose] && changed_files.any?
-
-      { changed_files: changed_files }
+      annotate_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer files', options)
     end
 
     def remove_models(options = {})
@@ -76,17 +50,11 @@ module RailsLens
     end
 
     def remove_routes(options = {})
-      annotator = Route::Annotator.new(dry_run: options[:dry_run])
-      changed_files = annotator.remove_all
-      output.say "Removed route annotations from #{changed_files.length} controller files", :green
-      { changed_files: changed_files }
+      remove_files(Route::Annotator.new(dry_run: options[:dry_run]), 'route', 'controller files')
     end
 
     def remove_mailers(options = {})
-      annotator = Mailer::Annotator.new(dry_run: options[:dry_run])
-      changed_files = annotator.remove_all
-      output.say "Removed mailer annotations from #{changed_files.length} mailer files", :green
-      { changed_files: changed_files }
+      remove_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer', 'mailer files')
     end
 
     def generate_erd(options = {})
@@ -226,6 +194,30 @@ module RailsLens
     end
 
     private
+
+    # Report skipped/failed counts for a model-annotation results hash.
+    def report_skipped_and_failed(results, noun)
+      output.say "Skipped #{results[:skipped].length} #{noun}", :yellow if results[:skipped].any?
+      return unless results[:failed].any?
+
+      output.say "Failed to annotate #{results[:failed].length} #{noun}:", :red
+      results[:failed].each do |failure|
+        output.say "  - #{failure[:model]}: #{failure[:error]}", :red
+      end
+    end
+
+    def annotate_files(annotator, label, options)
+      changed_files = annotator.annotate_all
+      output.say "Annotated #{changed_files.length} #{label}", :green
+      changed_files.each { |file| output.say "  - #{file}", :blue } if options[:verbose] && changed_files.any?
+      { changed_files: changed_files }
+    end
+
+    def remove_files(annotator, kind, target)
+      changed_files = annotator.remove_all
+      output.say "Removed #{kind} annotations from #{changed_files.length} #{target}", :green
+      { changed_files: changed_files }
+    end
 
     def rake_task_template
       <<~RAKE

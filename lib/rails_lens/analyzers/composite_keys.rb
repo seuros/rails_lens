@@ -29,7 +29,7 @@ module RailsLens
 
       def format_composite_keys(keys)
         lines = ['[composite_pk]']
-        lines << "keys = [#{keys.map { |k| "\"#{k}\"" }.join(', ')}]"
+        lines << "keys = #{TomlFormat.quoted_array(keys)}"
         lines.join("\n")
       end
 
