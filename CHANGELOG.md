@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.3...rails_lens/v0.5.4) (2026-06-26)
+
+
+### Bug Fixes
+
+* prevent duplicate extension annotation blocks on re-annotate ([0e85197](https://github.com/seuros/rails_lens/commit/0e8519742c751eb26d225a3a9a8434a4da4053b1))
+
 ## [0.5.3](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.2...rails_lens/v0.5.3) (2026-02-17)
 
 
