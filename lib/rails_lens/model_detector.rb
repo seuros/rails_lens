@@ -58,6 +58,26 @@ module RailsLens
 
       private
 
+      # True when +model+ matches +pattern+ by class name (Regexp/String) or
+      # table name (String).
+      def model_matches_pattern?(model, pattern)
+        case pattern
+        when Regexp
+          model.name.match?(pattern)
+        when String
+          model.name == pattern || model.table_name == pattern
+        else
+          false
+        end
+      end
+
+      def log_filter_decision(model, should_exclude, reason, trace_filtering)
+        return unless trace_filtering
+
+        action = should_exclude ? 'Excluding' : 'Keeping'
+        RailsLens.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
+      end
+
       def check_view_existence(model_class)
         connection = model_class.connection
         table_name = model_class.table_name
@@ -86,9 +106,9 @@ module RailsLens
         else
           # Extract search_path schemas for unqualified table names
           search_path = connection.schema_search_path
-            .split(',')
-            .map(&:strip)
-            .reject { |s| s == '"$user"' || s.empty? }
+                                  .split(',')
+                                  .map(&:strip)
+                                  .reject { |s| s == '"$user"' || s.empty? }
 
           # Default to 'public' if search_path is empty
           search_path = ['public'] if search_path.empty?
@@ -171,16 +191,7 @@ module RailsLens
           exclude_patterns = Array(options[:exclude])
           before_count = models.size
           models = models.reject do |model|
-            excluded = exclude_patterns.any? do |pattern|
-              case pattern
-              when Regexp
-                model.name.match?(pattern)
-              when String
-                model.name == pattern || model.table_name == pattern
-              else
-                false
-              end
-            end
+            excluded = exclude_patterns.any? { |pattern| model_matches_pattern?(model, pattern) }
             if excluded && trace_filtering
               RailsLens.logger.debug do
                 "[ModelDetector] Excluding #{model.name}: matched exclude pattern"
@@ -196,16 +207,7 @@ module RailsLens
           include_patterns = Array(options[:include])
           before_count = models.size
           models = models.select do |model|
-            included = include_patterns.any? do |pattern|
-              case pattern
-              when Regexp
-                model.name.match?(pattern)
-              when String
-                model.name == pattern || model.table_name == pattern
-              else
-                false
-              end
-            end
+            included = include_patterns.any? { |pattern| model_matches_pattern?(model, pattern) }
             if included && trace_filtering
               RailsLens.logger.debug do
                 "[ModelDetector] Including #{model.name}: matched include pattern"
@@ -324,10 +326,7 @@ module RailsLens
             reason = "unexpected error checking model - #{e.message}"
           end
 
-          if trace_filtering
-            action = should_exclude ? 'Excluding' : 'Keeping'
-            RailsLens.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
-          end
+          log_filter_decision(model, should_exclude, reason, trace_filtering)
 
           { model: model, exclude: should_exclude }
         end
@@ -431,10 +430,7 @@ module RailsLens
           reason = "unexpected error checking model - #{e.message}"
         end
 
-        if trace_filtering
-          action = should_exclude ? 'Excluding' : 'Keeping'
-          RailsLens.logger.debug { "[ModelDetector] #{action} #{model.name}: #{reason}" }
-        end
+        log_filter_decision(model, should_exclude, reason, trace_filtering)
 
         { model: model, exclude: should_exclude }
       end

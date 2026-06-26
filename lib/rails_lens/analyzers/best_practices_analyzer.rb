@@ -71,22 +71,8 @@ module RailsLens
         model_class.column_names.include?(name)
       end
 
-      def indexed?(column)
-        connection.indexes(table_name).any? do |index|
-          index.columns.include?(column.name)
-        end
-      end
-
       def columns
         @columns ||= model_class.columns
-      end
-
-      def connection
-        model_class.connection
-      end
-
-      def table_name
-        model_class.table_name
       end
     end
   end

@@ -19,7 +19,7 @@ module RailsLens
                      else
                        Array(delegated_type_info[:types])
                      end
-        lines << "types = [#{types_list.map { |t| "\"#{t}\"" }.join(', ')}]"
+        lines << "types = #{TomlFormat.quoted_array(types_list)}"
 
         lines.join("\n")
       end

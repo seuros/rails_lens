@@ -33,7 +33,7 @@ module RailsLens
         # Dependencies
         dependencies = view_metadata.dependencies
         if dependencies.any?
-          lines << "dependencies = [#{dependencies.map { |d| "\"#{d}\"" }.join(', ')}]"
+          lines << "dependencies = #{TomlFormat.quoted_array(dependencies)}"
         end
 
         # Refresh strategy for materialized views

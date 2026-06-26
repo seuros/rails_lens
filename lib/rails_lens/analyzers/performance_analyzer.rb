@@ -27,23 +27,13 @@ module RailsLens
       end
 
       def analyze_query_performance
-        notes = []
+        # Flag commonly-queried and scoped columns that lack an index
+        index_notes_for(commonly_queried_columns) + index_notes_for(scoped_columns)
+      end
 
-        # Check for columns that are commonly used in WHERE clauses
-        commonly_queried_columns.each do |column|
-          next if indexed?(column)
-
-          notes << NoteCodes.note(column.name, NoteCodes::INDEX)
-        end
-
-        # Check for missing indexes on scoped columns
-        scoped_columns.each do |column|
-          next if indexed?(column)
-
-          notes << NoteCodes.note(column.name, NoteCodes::INDEX)
-        end
-
-        notes
+      def index_notes_for(columns)
+        columns.reject { |column| indexed?(column) }
+               .map { |column| NoteCodes.note(column.name, NoteCodes::INDEX) }
       end
 
       def uuid_columns
@@ -67,20 +57,6 @@ module RailsLens
           column.name.match?(/scope|tenant|company|organization|account|workspace/i) &&
             column.name.end_with?('_id')
         end
-      end
-
-      def indexed?(column)
-        connection.indexes(table_name).any? do |index|
-          index.columns.include?(column.name)
-        end
-      end
-
-      def connection
-        model_class.connection
-      end
-
-      def table_name
-        model_class.table_name
       end
     end
   end

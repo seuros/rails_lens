@@ -11,7 +11,7 @@ module RailsLens
 
         model_class.defined_enums.each do |name, values|
           # Format as TOML inline table: name = { key = "value", ... }
-          formatted_values = if values.values.all? { |v| v.is_a?(Integer) }
+          formatted_values = if values.values.all?(Integer)
                                # Integer-based enum
                                values.map { |k, v| "#{k} = #{v}" }.join(', ')
                              else

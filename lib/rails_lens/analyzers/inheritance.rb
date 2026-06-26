@@ -46,7 +46,7 @@ module RailsLens
         if model_class.base_class == model_class
           # This is the base class
           subclasses = find_sti_subclasses
-          lines << "subclasses = [#{subclasses.map { |s| "\"#{s}\"" }.join(', ')}]" if subclasses.any?
+          lines << "subclasses = #{TomlFormat.quoted_array(subclasses)}" if subclasses.any?
           lines << 'base = true'
         else
           # This is a subclass
@@ -55,7 +55,7 @@ module RailsLens
 
           # Find siblings
           siblings = find_sti_siblings
-          lines << "siblings = [#{siblings.map { |s| "\"#{s}\"" }.join(', ')}]" if siblings.any?
+          lines << "siblings = #{TomlFormat.quoted_array(siblings)}" if siblings.any?
         end
 
         lines.join("\n")
@@ -73,7 +73,7 @@ module RailsLens
 
         # Try to find known types
         types = find_delegated_types(reflection)
-        lines << "types = [#{types.map { |t| "\"#{t}\"" }.join(', ')}]" if types.any?
+        lines << "types = #{TomlFormat.quoted_array(types)}" if types.any?
 
         lines.join("\n")
       end
@@ -163,7 +163,7 @@ module RailsLens
                       []
                     end
             if types.any?
-              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\", types = [#{types.map { |t| "\"#{t}\"" }.join(', ')}] }"
+              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\", types = #{TomlFormat.quoted_array(types)} }"
             else
               "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\" }"
             end

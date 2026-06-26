@@ -20,6 +20,19 @@ module RailsLens
 
     delegate :clear, to: :@providers
 
+    # Route a single provider's result into the accumulator hash based on the
+    # provider's declared type. Shared by the pipeline and AnnotationManager.
+    def self.accumulate_result(results, provider, result)
+      case provider.type
+      when :schema
+        results[:schema] = result
+      when :section
+        results[:sections] << result if result
+      when :notes
+        results[:notes].concat(Array(result))
+      end
+    end
+
     def process(model_class)
       results = {
         schema: nil,
@@ -35,14 +48,7 @@ module RailsLens
           begin
             result = provider.process(model_class, connection)
 
-            case provider.type
-            when :schema
-              results[:schema] = result
-            when :section
-              results[:sections] << result if result
-            when :notes
-              results[:notes].concat(Array(result))
-            end
+            self.class.accumulate_result(results, provider, result)
           rescue ActiveRecord::StatementInvalid => e
             warn "Provider #{provider.class} database error for #{model_class}: #{e.message}"
           rescue ActiveRecord::ConnectionNotDefined => e

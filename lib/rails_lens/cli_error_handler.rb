@@ -31,32 +31,31 @@ module RailsLens
     end
 
     def handle_model_error(error)
-      say "Model Error: #{error.message}", :red
-      if options[:verbose]
-        say 'Make sure your Rails application is properly loaded', :yellow
-        say 'Try running: bundle exec rails_lens annotate', :yellow
-      end
-      exit 1
+      report_error('Model Error', error,
+                   'Make sure your Rails application is properly loaded',
+                   'Try running: bundle exec rails_lens annotate')
     end
 
     def handle_database_error(error)
-      say "Database Error: #{error.message}", :red
-      if options[:verbose]
-        say 'Possible causes:', :yellow
-        say '  - Database server is not running', :yellow
-        say '  - Invalid database credentials', :yellow
-        say '  - Table does not exist', :yellow
-        say '  - Permission denied', :yellow
-      end
-      exit 1
+      report_error('Database Error', error,
+                   'Possible causes:',
+                   '  - Database server is not running',
+                   '  - Invalid database credentials',
+                   '  - Table does not exist',
+                   '  - Permission denied')
     end
 
     def handle_annotation_error(error)
-      say "Annotation Error: #{error.message}", :red
-      if options[:verbose]
-        say 'Failed to annotate one or more files', :yellow
-        say 'Check file permissions and syntax', :yellow
-      end
+      report_error('Annotation Error', error,
+                   'Failed to annotate one or more files',
+                   'Check file permissions and syntax')
+    end
+
+    # Print a red "<label>: <message>", optional verbose-only yellow hints,
+    # then exit non-zero.
+    def report_error(label, error, *verbose_hints)
+      say "#{label}: #{error.message}", :red
+      verbose_hints.each { |hint| say hint, :yellow } if options[:verbose]
       exit 1
     end
 

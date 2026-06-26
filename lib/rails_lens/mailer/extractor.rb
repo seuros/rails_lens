@@ -180,14 +180,12 @@ module RailsLens
         def extract_defaults(mailer_class)
           defaults = {}
 
-          # Extract default from
-          if mailer_class.respond_to?(:default) && mailer_class.default[:from]
-            defaults[:from] = mailer_class.default[:from]
-          end
-
-          # Extract default reply_to
-          if mailer_class.respond_to?(:default) && mailer_class.default[:reply_to]
-            defaults[:reply_to] = mailer_class.default[:reply_to]
+          # Extract default from / reply_to
+          if mailer_class.respond_to?(:default)
+            %i[from reply_to].each do |key|
+              value = mailer_class.default[key]
+              defaults[key] = value if value
+            end
           end
 
           # Extract layout

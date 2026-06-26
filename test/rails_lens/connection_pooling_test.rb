@@ -6,20 +6,7 @@ module RailsLens
   module Schema
     class ConnectionPoolingTest < Minitest::Test
       def setup
-        @model_classes = [
-          Class.new(ApplicationRecord) do
-            self.table_name = 'users'
-            def self.name
-              'TestUser'
-            end
-          end,
-          Class.new(ApplicationRecord) do
-            self.table_name = 'posts'
-            def self.name
-              'TestPost'
-            end
-          end
-        ]
+        @model_classes = [User, Post]
       end
 
       def test_uses_single_connection_for_models_in_same_database

@@ -417,16 +417,6 @@ module RailsLens
         RailsLens.logger.debug { "Error checking view existence for #{view_name}: #{e.message}" }
         false
       end
-
-      def needs_explicit_inverse_of?(association)
-        # Rails can auto-infer inverse_of for vanilla associations
-        # Only require explicit inverse_of when using custom options
-        association.options[:class_name].present? ||
-          association.options[:foreign_key].present? ||
-          association.options[:as].present? ||
-          association.options[:source].present? ||
-          association.options[:through].present?
-      end
     end
   end
 end

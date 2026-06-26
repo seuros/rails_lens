@@ -178,18 +178,13 @@ module RailsLens
       def extract_options(callback)
         options = {}
 
-        # Extract :if condition
-        if callback.instance_variable_defined?(:@if) && callback.instance_variable_get(:@if).present?
-          conditions = callback.instance_variable_get(:@if)
-          formatted = format_conditions(conditions)
-          options[:if] = formatted if formatted.any?
-        end
+        # Extract :if / :unless conditions (stored as matching instance variables)
+        %i[if unless].each do |key|
+          ivar = :"@#{key}"
+          next unless callback.instance_variable_defined?(ivar) && callback.instance_variable_get(ivar).present?
 
-        # Extract :unless condition
-        if callback.instance_variable_defined?(:@unless) && callback.instance_variable_get(:@unless).present?
-          conditions = callback.instance_variable_get(:@unless)
-          formatted = format_conditions(conditions)
-          options[:unless] = formatted if formatted.any?
+          formatted = format_conditions(callback.instance_variable_get(ivar))
+          options[key] = formatted if formatted.any?
         end
 
         # Extract :on option (for validation and commit callbacks)
@@ -274,19 +269,12 @@ module RailsLens
         parts = []
         parts << "method = \"#{escape_toml(callback[:method])}\""
 
-        if callback[:options][:if]&.any?
-          if_values = callback[:options][:if].map { |v| "\"#{escape_toml(v)}\"" }.join(', ')
-          parts << "if = [#{if_values}]"
-        end
+        %i[if unless on].each do |key|
+          values = callback[:options][key]
+          next unless values&.any?
 
-        if callback[:options][:unless]&.any?
-          unless_values = callback[:options][:unless].map { |v| "\"#{escape_toml(v)}\"" }.join(', ')
-          parts << "unless = [#{unless_values}]"
-        end
-
-        if callback[:options][:on]&.any?
-          on_values = callback[:options][:on].map { |v| "\"#{escape_toml(v)}\"" }.join(', ')
-          parts << "on = [#{on_values}]"
+          escaped = values.map { |v| "\"#{escape_toml(v)}\"" }.join(', ')
+          parts << "#{key} = [#{escaped}]"
         end
 
         parts << 'prepend = true' if callback[:options][:prepend]

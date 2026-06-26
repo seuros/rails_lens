@@ -3,6 +3,8 @@
 module RailsLens
   module Schema
     class AnnotationManager
+      include AnnotationRemoval
+
       attr_reader :model_class
 
       def initialize(model_class)
@@ -31,97 +33,33 @@ module RailsLens
 
         annotation_text = generate_annotation
 
-        # First remove any existing annotations
-        content = File.read(file_path)
-        content = Annotation.remove(content) if Annotation.extract(content)
+        original_content = File.read(file_path)
+        content = Annotation.extract(original_content) ? Annotation.remove(original_content) : original_content
 
-        # Try AST-based insertion first
-        class_name = model_class.name.split('::').last
-
-        # Use Prism-based insertion
-        if FileInsertionHelper.insert_at_class_definition(file_path, class_name, annotation_text)
-          true
-        else
-          # Final fallback to old method
-          annotated_content = add_annotation(content, file_path)
-          if annotated_content == content
-            false
-          else
-            File.write(file_path, annotated_content)
-            true
-          end
-        end
-      end
-
-      def remove_annotations(file_path = nil)
-        file_path ||= model_file_path
-        return unless file_path && File.exist?(file_path)
-
-        content = File.read(file_path)
-        cleaned_content = Annotation.remove(content)
-
-        if cleaned_content == content
+        annotated_content = add_annotation(content, file_path, annotation_text)
+        if annotated_content == original_content
           false
         else
-          File.write(file_path, cleaned_content)
+          File.write(file_path, annotated_content)
           true
         end
       end
 
       def generate_annotation
-        pipeline = AnnotationPipeline.new
+        providers = AnnotationPipeline.new.instance_variable_get(:@providers)
 
         # If we have a connection set by annotate_all, use it to process all providers
-        if @connection
-          results = { schema: nil, sections: [], notes: [] }
+        results = if @connection
+                    collect_provider_results(providers, @connection)
+                  else
+                    # Fallback: Use the model's connection pool with proper management
+                    # This path is used when annotating individual models
+                    warn "Using fallback connection management for #{model_class.name}" if RailsLens.config.verbose
 
-          pipeline.instance_variable_get(:@providers).each do |provider|
-            next unless provider.applicable?(model_class)
-
-            begin
-              result = provider.process(model_class, @connection)
-
-              case provider.type
-              when :schema
-                results[:schema] = result
-              when :section
-                results[:sections] << result if result
-              when :notes
-                results[:notes].concat(Array(result))
-              end
-            rescue StandardError => e
-              warn "Provider #{provider.class} error for #{model_class}: #{e.message}"
-            end
-          end
-        else
-          # Fallback: Use the model's connection pool with proper management
-          # This path is used when annotating individual models
-          warn "Using fallback connection management for #{model_class.name}" if RailsLens.config.verbose
-
-          # Force connection management even in fallback mode
-          results = { schema: nil, sections: [], notes: [] }
-
-          model_class.connection_pool.with_connection do |connection|
-            pipeline.instance_variable_get(:@providers).each do |provider|
-              next unless provider.applicable?(model_class)
-
-              begin
-                result = provider.process(model_class, connection)
-
-                case provider.type
-                when :schema
-                  results[:schema] = result
-                when :section
-                  results[:sections] << result if result
-                when :notes
-                  results[:notes].concat(Array(result))
-                end
-              rescue StandardError => e
-                warn "Provider #{provider.class} error for #{model_class}: #{e.message}"
-              end
-            end
-          end
-        end
+                    model_class.connection_pool.with_connection do |connection|
+                      collect_provider_results(providers, connection)
+                    end
+                  end
 
         annotation = Annotation.new
 
@@ -141,7 +79,7 @@ module RailsLens
         # Add notes as TOML array (already in compact format from analyzers)
         if results[:notes].any?
           annotation.add_line('')
-          annotation.add_line("notes = [#{results[:notes].uniq.map { |n| "\"#{n}\"" }.join(', ')}]")
+          annotation.add_line("notes = #{TomlFormat.quoted_array(results[:notes].uniq)}")
         end
 
         annotation.to_s
@@ -155,7 +93,7 @@ module RailsLens
           puts "Annotating #{source.source_name} models..." if options[:verbose]
           source_results = annotate_source(source, options)
           results[:by_source][source.source_name] = source_results[:annotated].length
-          merge_results(results, source_results)
+          merge_results(results, source_results, :annotated)
         end
 
         results
@@ -170,15 +108,7 @@ module RailsLens
           puts "  Found #{models.size} #{source.source_name} models" if options[:verbose]
 
           models.each do |model|
-            result = source.annotate_model(model, options)
-            case result[:status]
-            when :annotated
-              results[:annotated] << result[:model]
-            when :skipped
-              results[:skipped] << result[:model]
-            when :failed
-              results[:failed] << { model: result[:model], error: result[:message] }
-            end
+            record_result(results, source.annotate_model(model, options))
           end
         rescue StandardError => e
           puts "  Error processing #{source.source_name} source: #{e.message}" if options[:verbose]
@@ -187,11 +117,24 @@ module RailsLens
         results
       end
 
-      # Merge source results into main results
-      def self.merge_results(main, source)
-        main[:annotated].concat(source[:annotated] || [])
+      # Merge source results into main results. +primary_key+ is the
+      # source-specific success bucket (:annotated or :removed).
+      def self.merge_results(main, source, primary_key)
+        main[primary_key].concat(source[primary_key] || [])
         main[:skipped].concat(source[:skipped] || [])
         main[:failed].concat(source[:failed] || [])
+      end
+
+      # Bucket a single per-model result into the aggregate results hash. The
+      # status symbol (:annotated/:removed/:skipped) doubles as the bucket key;
+      # :failed records carry the error message.
+      def self.record_result(results, result)
+        status = result[:status]
+        if status == :failed
+          results[:failed] << { model: result[:model], error: result[:message] }
+        elsif results.key?(status)
+          results[status] << result[:model]
+        end
       end
 
       # Original ActiveRecord-specific annotation logic (used by ActiveRecordSource)
@@ -240,21 +183,12 @@ module RailsLens
         models_by_connection_pool.each do |connection_pool, pool_models|
           if connection_pool
             # Process all models for this database using a single connection
-            connection_pool.with_connection do |connection|
-              pool_models.each do |model|
-                process_model_with_connection(model, connection, results, options)
-              end
-            end
+            process_models_on_pool(connection_pool, pool_models, results, options)
           else
             # This should not happen anymore since we assign orphaned models to primary pool
             # Use primary connection pool as fallback to avoid creating new connections
             begin
-              primary_pool = ApplicationRecord.connection_pool
-              primary_pool.with_connection do |connection|
-                pool_models.each do |model|
-                  process_model_with_connection(model, connection, results, options)
-                end
-              end
+              process_models_on_pool(ApplicationRecord.connection_pool, pool_models, results, options)
             rescue StandardError => e
               # Last resort: process without connection management (will create multiple connections)
               pool_models.each do |model|
@@ -265,6 +199,16 @@ module RailsLens
         end
 
         results
+      end
+
+      # Process every model in +pool_models+ over a single checked-out
+      # connection from +pool+.
+      def self.process_models_on_pool(pool, pool_models, results, options)
+        pool.with_connection do |connection|
+          pool_models.each do |model|
+            process_model_with_connection(model, connection, results, options)
+          end
+        end
       end
 
       def self.process_model_with_connection(model, connection, results, options)
@@ -320,7 +264,7 @@ module RailsLens
           puts "Removing annotations from #{source.source_name} models..." if options[:verbose]
           source_results = remove_source(source, options)
           results[:by_source][source.source_name] = source_results[:removed].length
-          merge_remove_results(results, source_results)
+          merge_results(results, source_results, :removed)
         end
 
         results
@@ -335,28 +279,13 @@ module RailsLens
           puts "  Found #{models.size} #{source.source_name} models" if options[:verbose]
 
           models.each do |model|
-            result = source.remove_annotation(model)
-            case result[:status]
-            when :removed
-              results[:removed] << result[:model]
-            when :skipped
-              results[:skipped] << result[:model]
-            when :failed
-              results[:failed] << { model: result[:model], error: result[:message] }
-            end
+            record_result(results, source.remove_annotation(model))
           end
         rescue StandardError => e
           puts "  Error removing from #{source.source_name} source: #{e.message}" if options[:verbose]
         end
 
         results
-      end
-
-      # Merge removal results into main results
-      def self.merge_remove_results(main, source)
-        main[:removed].concat(source[:removed] || [])
-        main[:skipped].concat(source[:skipped] || [])
-        main[:failed].concat(source[:failed] || [])
       end
 
       # Original filesystem-based removal (kept for backwards compatibility)
@@ -393,9 +322,27 @@ module RailsLens
 
       private
 
-      def add_annotation(content, _file_path = nil)
-        annotation_text = generate_annotation
+      # Run every applicable provider against the given connection and collect
+      # their output into a { schema:, sections:, notes: } result hash.
+      def collect_provider_results(providers, connection)
+        results = { schema: nil, sections: [], notes: [] }
 
+        providers.each do |provider|
+          next unless provider.applicable?(model_class)
+
+          begin
+            result = provider.process(model_class, connection)
+
+            AnnotationPipeline.accumulate_result(results, provider, result)
+          rescue StandardError => e
+            warn "Provider #{provider.class} error for #{model_class}: #{e.message}"
+          end
+        end
+
+        results
+      end
+
+      def add_annotation(content, _file_path = nil, annotation_text = generate_annotation)
         # First check if annotation already exists and remove it
         existing = Annotation.extract(content)
         content = Annotation.remove(content) if existing
