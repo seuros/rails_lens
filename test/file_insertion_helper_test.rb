@@ -179,6 +179,82 @@ class FileInsertionHelperTest < ActiveSupport::TestCase
     end
   end
 
+  def test_insert_at_class_definition_returns_false_when_content_is_unchanged
+    annotation = <<~ANNOTATION.chomp
+      # <rails-lens:schema:begin>
+      # table = "test_models"
+      # <rails-lens:schema:end>
+    ANNOTATION
+
+    content = <<~RUBY
+      # frozen_string_literal: true
+
+      #{annotation}
+      class TestModel
+      end
+    RUBY
+
+    with_temp_file(content) do |file_path|
+      success = RailsLens::FileInsertionHelper.insert_at_class_definition(
+        file_path,
+        'TestModel',
+        annotation
+      )
+
+      assert_not success
+      assert_equal content, File.read(file_path)
+    end
+  end
+
+  # Re-inserting an extension annotation (a non-schema "rails-lens:*" marker)
+  # must replace the existing block, not stack a duplicate one.
+  def test_reinserting_extension_annotation_replaces_existing_block
+    annotation = "# <rails-lens:graph:begin>\n# model_type = \"node\"\n# <rails-lens:graph:end>"
+    content = <<~RUBY
+      # frozen_string_literal: true
+
+      #{annotation}
+      class WidgetNode
+      end
+    RUBY
+
+    with_temp_file(content) do |file_path|
+      updated = "# <rails-lens:graph:begin>\n# model_type = \"node\"\n# labels = [\"Widget\"]\n# <rails-lens:graph:end>"
+
+      success = RailsLens::FileInsertionHelper.insert_at_class_definition(file_path, 'WidgetNode', updated)
+
+      assert success
+
+      result = File.read(file_path)
+
+      assert_equal 1, result.scan('<rails-lens:graph:begin>').size, 'should not stack duplicate graph blocks'
+      assert_includes result, 'labels = ["Widget"]'
+    end
+  end
+
+  def test_reinserting_schema_annotation_replaces_existing_block
+    annotation = "# <rails-lens:schema:begin>\n# old\n# <rails-lens:schema:end>"
+    content = <<~RUBY
+      # frozen_string_literal: true
+
+      #{annotation}
+      class TestModel
+      end
+    RUBY
+
+    with_temp_file(content) do |file_path|
+      updated = "# <rails-lens:schema:begin>\n# new\n# <rails-lens:schema:end>"
+
+      RailsLens::FileInsertionHelper.insert_at_class_definition(file_path, 'TestModel', updated)
+
+      result = File.read(file_path)
+
+      assert_equal 1, result.scan('<rails-lens:schema:begin>').size
+      assert_includes result, '# new'
+      assert_not_includes result, '# old'
+    end
+  end
+
   private
 
   def with_temp_file(content)

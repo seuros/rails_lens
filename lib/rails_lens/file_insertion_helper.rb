@@ -16,12 +16,15 @@ module RailsLens
       def insert_at_class_definition(file_path, _class_name, annotation)
         return false unless File.exist?(file_path)
 
-        content = File.read(file_path)
+        original_content = File.read(file_path)
+        content = original_content
 
-        # First remove any existing annotations
-        content = Schema::Annotation.remove(content) if Schema::Annotation.extract(content)
+        # First remove any existing annotations (schema + the marker we're inserting)
+        content = remove_existing_annotations(content, annotation)
 
         modified_content = insert_after_frozen_string_literal(content, annotation)
+        return false if modified_content == original_content
+
         File.write(file_path, modified_content)
         true
       rescue StandardError
@@ -35,10 +38,11 @@ module RailsLens
       # @param annotation [String] The annotation to insert
       # @return [Boolean] Whether insertion was successful
       def insert_at_line(file_path, line_number, annotation)
-        content = File.read(file_path)
+        original_content = File.read(file_path)
+        content = original_content
 
-        # First remove any existing annotations
-        content = Schema::Annotation.remove(content) if Schema::Annotation.extract(content)
+        # First remove any existing annotations (schema + the marker we're inserting)
+        content = remove_existing_annotations(content, annotation)
 
         lines = content.split("\n", -1) # Preserve trailing newlines
 
@@ -50,6 +54,7 @@ module RailsLens
         # Preserve original line ending
         result = lines.join("\n")
         result += "\n" if content.end_with?("\n") && !result.end_with?("\n")
+        return false if result == original_content
 
         File.write(file_path, result)
         true
@@ -100,6 +105,28 @@ module RailsLens
       end
 
       private
+
+      # Strip existing annotation blocks before re-inserting, so repeated runs
+      # don't stack duplicate blocks. Removes the legacy schema block and, when
+      # the annotation being inserted carries its own marker family (e.g. an
+      # extension's "rails-lens:graph"), an existing block of that same family.
+      #
+      # @param content [String] the current file content
+      # @param annotation [String] the annotation block about to be inserted
+      # @return [String] content with matching existing blocks removed
+      def remove_existing_annotations(content, annotation)
+        # Legacy behavior: always clear schema annotations.
+        content = Schema::Annotation.remove(content) if Schema::Annotation.extract(content)
+
+        # Clear an existing block of the same marker family (e.g. rails-lens:graph).
+        marker = annotation[/<(rails-lens:[\w-]+):begin>/, 1]
+        if marker && marker != Schema::Annotation::MARKER_FORMAT
+          content = remove_after_frozen_string_literal(content, "<#{marker}:begin>", "<#{marker}:end>")
+                    .gsub(/\n{3,}/, "\n\n")
+        end
+
+        content
+      end
 
       # Find the correct insertion point for a line, considering frozen_string_literal
       #
