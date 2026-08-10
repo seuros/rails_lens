@@ -104,17 +104,31 @@ module RailsLens
         results = { annotated: [], skipped: [], failed: [] }
 
         begin
-          models = source.models(options)
+          models = filter_models_by_names(source.models(options), options[:models])
           puts "  Found #{models.size} #{source.source_name} models" if options[:verbose]
 
           models.each do |model|
             record_result(results, source.annotate_model(model, options))
           end
         rescue StandardError => e
-          puts "  Error processing #{source.source_name} source: #{e.message}" if options[:verbose]
+          results[:failed] << { model: "#{source.source_name} (source)", error: e.message }
         end
 
         results
+      end
+
+      # Enforce the models filter for every source, including sources whose
+      # own #models implementation ignores options[:models].
+      def self.filter_models_by_names(models, names)
+        names = Array(names)
+        return models if names.empty?
+
+        models.select do |model|
+          names.any? do |name|
+            model.name == name ||
+              (model.respond_to?(:table_name) && model.table_name == name)
+          end
+        end
       end
 
       # Merge source results into main results. +primary_key+ is the

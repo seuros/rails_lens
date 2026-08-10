@@ -13,7 +13,7 @@ namespace :rails_lens do
 
     if results[:by_source]&.any?
       results[:by_source].each do |source_name, count|
-        puts "Annotated #{count} #{source_name} models" if count.positive?
+        puts "Annotated #{count} #{source_name} models"
       end
     else
       puts "Annotated #{results[:annotated].length} models"
@@ -24,6 +24,11 @@ namespace :rails_lens do
       results[:failed].each do |failure|
         puts "  - #{failure[:model]}: #{failure[:error]}"
       end
+    end
+    if options[:models] && results.values_at(:annotated, :skipped, :failed).all?(&:empty?)
+      warn "No models matched '#{options[:models].join(', ')}'. The task argument is a " \
+           'comma-separated list of model class names, e.g. rails_lens:annotate[User,Admin::Account]. ' \
+           'Run rails_lens:annotate without arguments to annotate everything.'
     end
   end
 
