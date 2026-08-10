@@ -51,9 +51,10 @@ class CrossDatabaseRelationshipsTest < ActiveSupport::TestCase
     assert_includes annotation, 'name = "commentable_type"'
     assert_includes annotation, 'name = "commentable_id"'
 
-    # Check for polymorphic association note
-    assert_includes annotation, '== Polymorphic Associations'
-    assert_includes annotation, '- commentable (commentable_type/commentable_id)'
+    # Check for polymorphic association section (TOML format)
+    assert_includes annotation, '[polymorphic]'
+    assert_includes annotation,
+                    'references = [{ name = "commentable", type_col = "commentable_type", id_col = "commentable_id" }]'
   end
 
   def test_erd_with_join_tables_across_databases
@@ -73,11 +74,11 @@ class CrossDatabaseRelationshipsTest < ActiveSupport::TestCase
     assert_includes output, 'SpaceshipCrewMember'
     assert_includes output, 'VehicleOwner'
 
-    # Check relationships are properly mapped
-    assert_match(/Spaceship.*SpaceshipCrewMember/, output)
-    assert_match(/CrewMember.*SpaceshipCrewMember/, output)
-    assert_match(/Vehicle.*VehicleOwner/, output)
-    assert_match(/Owner.*VehicleOwner/, output)
+    # Check relationships are properly mapped (mermaid relationship lines)
+    assert_match(/"SpaceshipCrewMember" \}o--\|\| "Spaceship" : "spaceship"/, output)
+    assert_match(/"SpaceshipCrewMember" \}o--\|\| "CrewMember" : "crew_member"/, output)
+    assert_match(/"VehicleOwner" \}o--\|\| "Vehicle" : "vehicle"/, output)
+    assert_match(/"VehicleOwner" \}o--\|\| "Owner" : "owner"/, output)
   end
 
   def test_connection_metadata_in_relationships
@@ -93,16 +94,16 @@ class CrossDatabaseRelationshipsTest < ActiveSupport::TestCase
       manager = RailsLens::Schema::AnnotationManager.new(model)
       annotation = manager.generate_annotation
 
-      # Should include relationship information in notes
-      # Note: belongs_to associations get counter cache suggestions, has_many get N+1 warnings
+      # Should include relationship information in notes (NoteCodes format:
+      # belongs_to gets COUNTER_CACHE suggestions, has_many gets N_PLUS_ONE)
       if model == Post
-        assert_includes annotation, "Consider adding counter cache for 'user'"
-        assert_includes annotation, "Association 'comments' has N+1 query risk"
+        assert_includes annotation, 'user:COUNTER_CACHE'
+        assert_includes annotation, 'comments:N_PLUS_ONE'
       elsif model == Vehicle
-        assert_includes annotation, "Consider adding counter cache for 'manufacturer'"
-        assert_includes annotation, "Association 'owners' has N+1 query risk"
+        assert_includes annotation, 'manufacturer:COUNTER_CACHE'
+        assert_includes annotation, 'owners:N_PLUS_ONE'
       elsif model == Dinosaur
-        assert_includes annotation, "Association 'fossil_discoveries' has N+1 query risk"
+        assert_includes annotation, 'fossil_discoveries:N_PLUS_ONE'
       end
 
       # Get the proper dialect name

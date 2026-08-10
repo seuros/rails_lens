@@ -41,8 +41,6 @@ class MultiDatabaseAnnotationRakeTaskTest < ActiveSupport::TestCase
     FileUtils.rm_rf(@temp_dir) if @temp_dir && File.exist?(@temp_dir)
   end
 
-  private
-
   def remove_existing_annotations(content)
     # Remove rails-lens annotation blocks
     content.gsub(/^# <rails-lens:schema:begin>.*?^# <rails-lens:schema:end>\n/m, '')

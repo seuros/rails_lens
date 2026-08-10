@@ -31,6 +31,9 @@ module RailsLens
   extend Configuration
 
   class << self
+    # Path of the loaded config file, nil when running on defaults.
+    attr_reader :config_file
+
     def logger
       @logger ||= config.logger || default_logger
     end
@@ -52,6 +55,7 @@ module RailsLens
     def load_config_file(path = '.rails-lens.yml')
       return unless File.exist?(path)
 
+      @config_file = path
       yaml = YAML.load_file(path)
 
       yaml.each do |section, settings|

@@ -201,6 +201,7 @@ module RailsLens
       # @return [void]
       def write_content_to_file(path:, content:)
         return if @dry_run
+        return if File.exist?(path) && File.read(path) == content
 
         File.write(path, content)
         @changed_files << path
