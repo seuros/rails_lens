@@ -24,7 +24,12 @@ module RailsLens
         when :binary then 'blob'
         when :json, :jsonb then 'json'
         else
-          @column.type.to_s
+          # column.type is nil for types the adapter can't resolve (e.g. a
+          # PostGIS geometry column without activerecord-postgis loaded);
+          # the diagram gem rejects empty attribute types.
+          fallback = @column.type.to_s
+          fallback = @column.sql_type.to_s if fallback.empty?
+          fallback.empty? ? 'unknown' : fallback
         end
       end
     end

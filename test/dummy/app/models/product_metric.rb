@@ -7,9 +7,9 @@
 # columns = [
 #   { name = "id", type = "integer", pk = true, null = false },
 #   { name = "product_id", type = "integer", null = false },
-#   { name = "views", type = "integer", null = false, default = "0" },
-#   { name = "purchases", type = "integer", null = false, default = "0" },
-#   { name = "revenue", type = "decimal", default = "0.0" },
+#   { name = "views", type = "integer", null = false, default = 0 },
+#   { name = "purchases", type = "integer", null = false, default = 0 },
+#   { name = "revenue", type = "decimal", default = 0.0 },
 #   { name = "created_at", type = "datetime", null = false },
 #   { name = "updated_at", type = "datetime", null = false },
 #   { name = "conversion_rate", type = "decimal" },

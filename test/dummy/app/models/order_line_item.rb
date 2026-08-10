@@ -7,7 +7,7 @@
 # columns = [
 #   { name = "order_id", type = "integer", pk = true, null = false },
 #   { name = "line_number", type = "integer", pk = true, null = false },
-#   { name = "quantity", type = "integer", null = false, default = "1" },
+#   { name = "quantity", type = "integer", null = false, default = 1 },
 #   { name = "unit_price", type = "decimal", null = false },
 #   { name = "total_price", type = "decimal" },
 #   { name = "product_name", type = "string" },

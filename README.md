@@ -120,7 +120,7 @@ erDiagram
 ## Requirements
 
 - Ruby >= 3.4.0
-- Rails >= 7.2.0
+- Rails >= 8.0.0
 
 ## Installation
 

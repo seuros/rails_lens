@@ -74,7 +74,8 @@ module RailsLens
             RailsLens.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
           end
 
-          add_model_relationships(diagram, model, models)
+          # Relationships require both entities to exist in the diagram
+          add_model_relationships(diagram, model, models) if diagram.entities.key?(model.name)
         end
 
         # Generate mermaid syntax using the gem
@@ -144,9 +145,9 @@ module RailsLens
 
           next unless target_model && models.include?(target_model)
 
-          # Skip relationships to abstract models
-          next if target_model.abstract_class?
-          next unless target_model.table_exists? && target_model.columns.present?
+          # Skip targets whose entity was not added to the diagram
+          # (abstract, unreachable connection, or add_entity failed)
+          next unless diagram.entities.key?(target_model.name)
 
           add_association_relationship(diagram, model, association, target_model)
         end

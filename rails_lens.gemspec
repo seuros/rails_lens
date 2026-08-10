@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ['terminale@gmail.com']
 
   spec.summary = 'Comprehensive Rails application visualization and annotation'
-  spec.description = 'Rails Lens provides unified visualization and annotation for Rails 7.2+ applications, ' \
+  spec.description = 'Rails Lens provides unified visualization and annotation for Rails 8.0+ applications, ' \
                      'integrating ERD generation and model annotations.'
   spec.homepage = 'https://github.com/seuros/rails_lens'
   spec.license = 'MIT'
@@ -27,8 +27,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Rails dependencies
-  spec.add_dependency 'activerecord', '>= 7.2.0'
-  spec.add_dependency 'railties', '>= 7.2.0'
+  spec.add_dependency 'activerecord', '>= 8.0.0'
+  spec.add_dependency 'railties', '>= 8.0.0'
 
   # CLI and utilities
   spec.add_dependency 'ostruct'
@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'zeitwerk', '~> 2.7'
 
   # Development dependencies
-  spec.add_development_dependency 'actionmailer', '>= 7.2.0'
+  spec.add_development_dependency 'actionmailer', '>= 8.0.0'
   spec.add_development_dependency 'dotenv', '~> 3.0'
   spec.add_development_dependency 'mysql2', '~> 0.5'
   spec.add_development_dependency 'pg', '~> 1.5'
