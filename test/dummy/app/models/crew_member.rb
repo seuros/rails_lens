@@ -27,7 +27,7 @@
 # before_update = [{ method = "prevent_status_change", if = ["deceased?"] }]
 # before_destroy = [{ method = "check_active_missions" }]
 #
-# notes = ["home_planet_id:INDEX", "home_planet_id:FK_CONSTRAINT", "spaceship_crew_members:INVERSE_OF", "home_planet:INVERSE_OF", "spaceship_crew_members:N_PLUS_ONE", "spaceships:N_PLUS_ONE", "name:NOT_NULL", "rank:NOT_NULL", "species:NOT_NULL", "birth_planet:NOT_NULL", "service_record:NOT_NULL", "active:NOT_NULL", "status:NOT_NULL", "specialization:NOT_NULL", "active:DEFAULT", "status:DEFAULT", "name:LIMIT", "rank:LIMIT", "species:LIMIT", "birth_planet:LIMIT", "specialization:LIMIT", "status:INDEX", "service_record:STORAGE"]
+# notes = ["home_planet_id:INDEX", "home_planet_id:FK_CONSTRAINT", "spaceship_crew_members:N_PLUS_ONE", "spaceships:N_PLUS_ONE", "name:NOT_NULL", "rank:NOT_NULL", "species:NOT_NULL", "birth_planet:NOT_NULL", "service_record:NOT_NULL", "active:NOT_NULL", "status:NOT_NULL", "specialization:NOT_NULL", "active:DEFAULT", "status:DEFAULT", "name:LIMIT", "rank:LIMIT", "species:LIMIT", "birth_planet:LIMIT", "specialization:LIMIT", "status:INDEX", "service_record:STORAGE"]
 # <rails-lens:schema:end>
 class CrewMember < ApplicationRecord
   # Enums

@@ -81,9 +81,9 @@ module RailsLens
 
           # Verify primary_key extraction works
           assert_nothing_raised do
-            pk = adapter.send(:primary_key_name)
+            pks = adapter.send(:primary_key_names)
 
-            assert_equal 'id', pk
+            assert_equal ['id'], pks
           end
         end
 

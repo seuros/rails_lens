@@ -11,18 +11,25 @@ gem 'rake', '~> 13.0'
 gem 'minitest', '~> 5.17'
 gem 'minitest-reporters', '~> 1.6'
 
-# Support testing against different Rails versions
-if ENV['RAILS_VERSION']
+# Support testing against different Rails versions ('edge' = rails/rails main)
+# rubocop:disable Bundler/DuplicatedGem -- branches are mutually exclusive
+if ENV['RAILS_VERSION'] == 'edge'
+  git 'https://github.com/rails/rails.git', branch: 'main' do
+    gem 'actionmailer'
+    gem 'activerecord'
+    gem 'railties'
+  end
+elsif ENV['RAILS_VERSION']
   rails_version = ENV['RAILS_VERSION']
   gem 'actionmailer', "~> #{rails_version}.0"
   gem 'activerecord', "~> #{rails_version}.0"
   gem 'railties', "~> #{rails_version}.0"
 else
-  gem 'actionmailer', '>= 7.2.0'
+  gem 'actionmailer', '>= 8.0.0'
 end
+# rubocop:enable Bundler/DuplicatedGem
 
-# PostGIS adapter only supports Rails 8+
-gem 'activerecord-postgis' if !ENV['RAILS_VERSION'] || ENV['RAILS_VERSION'].to_i >= 8
+gem 'activerecord-postgis'
 gem 'closure_tree'
 gem 'dotenv', '~> 3.0'
 gem 'rubocop', '~> 1.66'

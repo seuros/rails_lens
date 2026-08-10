@@ -39,8 +39,8 @@ class TriggerFunctionAnnotationTest < ActiveSupport::TestCase
     annotator = RailsLens::Schema::DatabaseAnnotator.new(ApplicationRecord)
     annotation = annotator.generate_annotation
 
-    # Verify functions section exists
-    assert_includes annotation, '== Database Functions'
+    # Verify functions section exists (TOML format)
+    assert_includes annotation, '[database_functions]'
     assert_includes annotation, 'functions = ['
 
     # Verify the trigger function from migration

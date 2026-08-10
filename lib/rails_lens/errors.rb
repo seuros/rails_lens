@@ -42,7 +42,7 @@ module RailsLens
   class ErrorReporter
     class << self
       def report(error, context = {})
-        return unless RailsLens.verbose || RailsLens.debug
+        return unless RailsLens.config.verbose || RailsLens.config.debug
 
         message = build_error_message(error, context)
 
@@ -50,7 +50,7 @@ module RailsLens
         RailsLens.logger.error message
 
         # Use kernel output for debug mode to ensure visibility
-        return unless RailsLens.debug
+        return unless RailsLens.config.debug
 
         RailsLens.logger.debug message
       end
@@ -59,7 +59,7 @@ module RailsLens
         yield
       rescue StandardError => e
         report(e, context)
-        raise if RailsLens.raise_on_error
+        raise if RailsLens.config.raise_on_error
 
         nil
       end

@@ -24,6 +24,32 @@ module RailsLens
         assert_equal 'LR', visualizer.config[:orientation]
       end
 
+      def test_determine_keys_marks_composite_primary_key_columns
+        pk_columns = %w[order_id line_number]
+
+        OrderLineItem.columns.each do |column|
+          keys = @visualizer.send(:determine_keys, OrderLineItem, column)
+
+          if pk_columns.include?(column.name)
+            assert_includes keys, :PK, "#{column.name} should be marked PK"
+          else
+            assert_not_includes keys, :PK, "#{column.name} should not be marked PK"
+          end
+        end
+      end
+
+      def test_determine_keys_marks_single_primary_key_column
+        id = User.columns_hash['id']
+
+        assert_includes @visualizer.send(:determine_keys, User, id), :PK
+      end
+
+      def test_determine_keys_marks_belongs_to_foreign_keys
+        user_id = Post.columns_hash['user_id']
+
+        assert_includes @visualizer.send(:determine_keys, Post, user_id), :FK
+      end
+
       def test_group_by_database_option
         visualizer = RailsLens::ERD::Visualizer.new(
           options: { group_by_database: true }

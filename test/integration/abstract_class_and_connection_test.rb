@@ -263,6 +263,10 @@ class AbstractClassAndConnectionTest < ActiveSupport::TestCase
   end
 
   def test_abstract_class_connection_specification
+    # Zeitwerk lazy-loads models: reference concrete subclasses so
+    # .descendants is populated regardless of test order.
+    [Dinosaur, Vehicle]
+
     # Test that abstract classes properly specify connections
     abstract_specs = {
       PrehistoricRecord => 'prehistoric',

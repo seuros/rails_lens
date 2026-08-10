@@ -8,18 +8,18 @@ require 'rails_lens/cli_error_handler'
 module RailsLens
   class ErrorHandlingTest < ActiveSupport::TestCase
     def setup
-      @original_verbose = RailsLens.verbose
-      @original_debug = RailsLens.debug
-      @original_raise_on_error = RailsLens.raise_on_error
-      RailsLens.verbose = true
-      RailsLens.debug = false
-      RailsLens.raise_on_error = false
+      @original_verbose = RailsLens.config.verbose
+      @original_debug = RailsLens.config.debug
+      @original_raise_on_error = RailsLens.config.raise_on_error
+      RailsLens.config.verbose = true
+      RailsLens.config.debug = false
+      RailsLens.config.raise_on_error = false
     end
 
     def teardown
-      RailsLens.verbose = @original_verbose
-      RailsLens.debug = @original_debug
-      RailsLens.raise_on_error = @original_raise_on_error
+      RailsLens.config.verbose = @original_verbose
+      RailsLens.config.debug = @original_debug
+      RailsLens.config.raise_on_error = @original_raise_on_error
     end
 
     def test_error_reporter_logs_with_context
@@ -31,7 +31,7 @@ module RailsLens
       real_logger = Logger.new(log_output)
       real_logger.level = Logger::ERROR
 
-      Rails.stub(:logger, real_logger) do
+      RailsLens.stub(:logger, real_logger) do
         RailsLens::ErrorReporter.report(error, context)
       end
 
@@ -57,7 +57,7 @@ module RailsLens
     end
 
     def test_error_reporter_handle_method_with_raise_on_error
-      RailsLens.raise_on_error = true
+      RailsLens.config.raise_on_error = true
 
       assert_raises(StandardError) do
         RailsLens::ErrorReporter.handle({}) do
@@ -65,7 +65,7 @@ module RailsLens
         end
       end
     ensure
-      RailsLens.raise_on_error = false
+      RailsLens.config.raise_on_error = false
     end
 
     def test_custom_error_hierarchy

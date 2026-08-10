@@ -5,11 +5,11 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "tenant_id", type = "integer", null = false },
-#   { name = "key", type = "string", null = false },
+#   { name = "tenant_id", type = "integer", pk = true, null = false },
+#   { name = "key", type = "string", pk = true, null = false },
 #   { name = "value", type = "text" },
 #   { name = "description", type = "text" },
-#   { name = "encrypted", type = "boolean", default = "false" },
+#   { name = "encrypted", type = "boolean" },
 #   { name = "created_at", type = "datetime", null = false },
 #   { name = "updated_at", type = "datetime", null = false }
 # ]

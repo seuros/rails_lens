@@ -31,7 +31,7 @@
 # after_create = [{ method = "notify_parent_of_new_child" }]
 # before_destroy = [{ method = "_ct_before_destroy" }, { method = "check_for_children" }]
 #
-# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "species:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "species:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "classification:NOT_NULL", "taxonomic_rank:NOT_NULL", "description:NOT_NULL", "name:LIMIT", "classification:LIMIT", "taxonomic_rank:LIMIT", "description:STORAGE", "family_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
+# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "self_and_ancestors:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "self_and_descendants:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "species:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "classification:NOT_NULL", "taxonomic_rank:NOT_NULL", "description:NOT_NULL", "name:LIMIT", "classification:LIMIT", "taxonomic_rank:LIMIT", "description:STORAGE", "family_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
 # <rails-lens:schema:end>
 class Family < PrehistoricRecord
   has_closure_tree order: 'name'

@@ -6,6 +6,10 @@ module RailsLens
   module Analyzers
     class InheritanceTest < ActiveSupport::TestCase
       def test_analyze_with_spaceship_sti_base_class
+        # Zeitwerk lazy-loads models: reference the subclasses so the
+        # analyzer can see them regardless of test order.
+        [CargoVessel, StarfleetBattleCruiser]
+
         # Spaceship is the STI base class with type column
         analyzer = Inheritance.new(Spaceship)
         result = analyzer.analyze

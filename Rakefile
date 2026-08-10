@@ -4,13 +4,16 @@ require 'bundler/gem_tasks'
 
 desc 'Run all tests'
 task :test do # rubocop:disable Rails/RakeEnvironment
-  test_files = Dir['test/**/*_test.rb'].reject { |f| f.include?('test/dummy/') }
+  # One process per file: `ruby file1 file2` only executes file1 (the rest
+  # become ARGV), and the multi-database tests assume a fresh boot anyway.
+  test_files = Dir['test/**/*_test.rb'].reject { |f| f.include?('test/dummy/') }.sort
 
-  # Run minitest directly to avoid rake test runner issues
-  cmd = "ruby -Ilib:test #{test_files.join(' ')}"
+  failed = test_files.reject do |file|
+    puts "== #{file}"
+    system(Gem.ruby, '-Ilib:test', file)
+  end
 
-  puts "Running tests with: #{cmd}"
-  system(cmd) || exit(1)
+  abort "\n#{failed.length} test file(s) failed:\n#{failed.join("\n")}" if failed.any?
 end
 
 task default: :test

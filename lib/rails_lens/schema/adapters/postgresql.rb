@@ -112,9 +112,9 @@ module RailsLens
           end
         end
 
-        def primary_key_name
-          @primary_key_name ||= with_schema_in_search_path do
-            connection.primary_key(unqualified_table_name)
+        def primary_key_names
+          @primary_key_names ||= with_schema_in_search_path do
+            connection.primary_keys(unqualified_table_name)
           end
         end
 

@@ -28,7 +28,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rails: ['7.2', '8.0', '8.1']
+        rails: ['8.0', '8.1', 'edge']
+
+    # Edge (rails/rails main, future 8.2) is informational, not blocking
+    continue-on-error: ${{ matrix.rails == 'edge' }}
 
     services:
       postgres:
@@ -102,9 +105,11 @@ jobs:
             echo 'Waiting for MySQL...'
             sleep 2
           done
-          # Create and migrate all databases in multi-database setup
+          # Create all databases and load the per-database schema dumps.
+          # There are no migration files, so db:migrate is a no-op; only
+          # Rails >= 8.1 test_help loads the schemas implicitly.
           bundle exec rails db:create:all RAILS_ENV=test
-          bundle exec rails db:migrate RAILS_ENV=test
+          bundle exec rails db:schema:load RAILS_ENV=test
 
       - name: Run tests
         run: bundle exec rake test

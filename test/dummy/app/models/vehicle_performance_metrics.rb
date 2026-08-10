@@ -7,7 +7,7 @@
 # updatable = false
 #
 # columns = [
-#   { name = "id", type = "integer", null = false, default = "0" },
+#   { name = "id", type = "integer", null = false, default = 0 },
 #   { name = "name", type = "string" },
 #   { name = "model", type = "string" },
 #   { name = "year", type = "integer" },
@@ -15,10 +15,10 @@
 #   { name = "fuel_type", type = "string" },
 #   { name = "price", type = "decimal" },
 #   { name = "mileage", type = "integer" },
-#   { name = "maintenance_events", type = "integer", null = false, default = "0" },
-#   { name = "total_maintenance_cost", type = "decimal", null = false, default = "0" },
-#   { name = "trip_count", type = "integer", null = false, default = "0" },
-#   { name = "total_distance", type = "decimal", null = false, default = "0" },
+#   { name = "maintenance_events", type = "integer", null = false, default = 0 },
+#   { name = "total_maintenance_cost", type = "decimal", null = false, default = 0 },
+#   { name = "trip_count", type = "integer", null = false, default = 0 },
+#   { name = "total_distance", type = "decimal", null = false, default = 0 },
 #   { name = "cost_per_mile", type = "decimal" },
 #   { name = "days_owned", type = "integer" },
 #   { name = "maintenance_category", type = "string", null = false, default = "" },

@@ -268,8 +268,8 @@ module RailsLens
             @cli.erd
             output = @stdout.string
 
-            # Verify the options were passed correctly
-            assert_equal 'output', captured_options[:options][:output_dir]
+            # No --output flag: output_dir is absent, the Visualizer default applies
+            assert_nil captured_options[:options][:output_dir]
 
             assert_match(/Entity Relationship Diagram generated at/, output)
             assert_match(%r{output/erd.mmd}, output)

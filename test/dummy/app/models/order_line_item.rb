@@ -5,9 +5,9 @@
 # database_dialect = "PostgreSQL"
 #
 # columns = [
-#   { name = "order_id", type = "integer", null = false },
-#   { name = "line_number", type = "integer", null = false },
-#   { name = "quantity", type = "integer", null = false, default = "1" },
+#   { name = "order_id", type = "integer", pk = true, null = false },
+#   { name = "line_number", type = "integer", pk = true, null = false },
+#   { name = "quantity", type = "integer", null = false, default = 1 },
 #   { name = "unit_price", type = "decimal", null = false },
 #   { name = "total_price", type = "decimal" },
 #   { name = "product_name", type = "string" },
@@ -33,17 +33,7 @@
 class OrderLineItem < ApplicationRecord
   include Trackable
 
-  # Composite primary key using PostgreSQL
-  self.primary_key = [:order_id, :line_number]
-
-  # This simulates what the composite_primary_keys gem would do
-  def self.primary_keys
-    primary_key
-  end
-
-  def self.respond_to_missing?(method_name, include_private = false)
-    method_name == :primary_keys || super
-  end
+  self.primary_key = %i[order_id line_number]
 
   # Associations would go here
   # belongs_to :order

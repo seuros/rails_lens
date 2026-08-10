@@ -9,10 +9,10 @@
 #   { name = "title", type = "string", null = false },
 #   { name = "content", type = "text" },
 #   { name = "user_id", type = "integer", null = false },
-#   { name = "published", type = "boolean", default = "false" },
+#   { name = "published", type = "boolean" },
 #   { name = "created_at", type = "datetime", null = false },
 #   { name = "updated_at", type = "datetime", null = false },
-#   { name = "comments_count", type = "integer", null = false, default = "0" }
+#   { name = "comments_count", type = "integer", null = false, default = 0 }
 # ]
 #
 # indexes = [

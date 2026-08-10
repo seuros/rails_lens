@@ -10,9 +10,9 @@
 #   { name = "description", type = "text" },
 #   { name = "price", type = "decimal", null = false },
 #   { name = "category", type = "string" },
-#   { name = "active", type = "boolean", null = false, default = "true" },
+#   { name = "active", type = "boolean", null = false, default = true },
 #   { name = "sku", type = "string" },
-#   { name = "stock_quantity", type = "integer", default = "0" },
+#   { name = "stock_quantity", type = "integer", default = 0 },
 #   { name = "created_at", type = "datetime", null = false },
 #   { name = "updated_at", type = "datetime", null = false }
 # ]
@@ -31,7 +31,7 @@
 # after_update = [{ method = "audit_update" }]
 # after_destroy = [{ method = "audit_destruction" }]
 #
-# notes = ["product_metrics:INVERSE_OF", "product_metrics:N_PLUS_ONE", "description:NOT_NULL", "category:NOT_NULL", "sku:NOT_NULL", "stock_quantity:NOT_NULL", "name:LIMIT", "category:LIMIT", "sku:LIMIT", "description:STORAGE"]
+# notes = ["product_metrics:N_PLUS_ONE", "description:NOT_NULL", "category:NOT_NULL", "sku:NOT_NULL", "stock_quantity:NOT_NULL", "name:LIMIT", "category:LIMIT", "sku:LIMIT", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Product < ApplicationRecord
   include Trackable

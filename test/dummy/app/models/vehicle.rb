@@ -19,7 +19,7 @@
 #   { name = "color", type = "string" },
 #   { name = "vin", type = "string" },
 #   { name = "description", type = "text" },
-#   { name = "available", type = "boolean", default = "1" },
+#   { name = "available", type = "boolean", default = true },
 #   { name = "purchase_date", type = "date" },
 #   { name = "service_time", type = "time" },
 #   { name = "image_data", type = "binary" },
@@ -28,7 +28,7 @@
 #   { name = "updated_at", type = "datetime", null = false },
 #   { name = "vehicle_type", type = "string" },
 #   { name = "status", type = "string" },
-#   { name = "maintenance_count", type = "integer", null = false, default = "0" }
+#   { name = "maintenance_count", type = "integer", null = false, default = 0 }
 # ]
 #
 # [enums]

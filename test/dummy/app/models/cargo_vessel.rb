@@ -32,7 +32,9 @@
 # cargo_type = { general = "general", refrigerated = "refrigerated", hazardous = "hazardous", livestock = "livestock" }
 #
 # [callbacks]
-# before_save = [{ method = "validate_cargo_weight" }]
+# before_validation = [{ method = "set_defaults" }]
+# before_save = [{ method = "calculate_crew_capacity" }, { method = "validate_cargo_weight" }]
+# after_update = [{ method = "notify_fleet_command" }]
 #
 # notes = ["spaceship_crew_members:N_PLUS_ONE", "crew_members:N_PLUS_ONE", "missions:N_PLUS_ONE", "spatial_coordinates:N_PLUS_ONE", "comments:N_PLUS_ONE", "name:NOT_NULL", "class_type:NOT_NULL", "warp_capability:NOT_NULL", "status:NOT_NULL", "type:NOT_NULL", "cargo_capacity:NOT_NULL", "cargo_type:NOT_NULL", "battle_status:NOT_NULL", "warp_capability:DEFAULT", "status:DEFAULT", "battle_status:DEFAULT", "name:LIMIT", "class_type:LIMIT", "status:LIMIT", "type:LIMIT", "cargo_type:LIMIT", "battle_status:LIMIT", "class_type:INDEX", "status:INDEX", "type:INDEX", "cargo_type:INDEX", "battle_status:INDEX", "type:STI_NOT_NULL"]
 # <rails-lens:schema:end>

@@ -25,12 +25,10 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
 
     # Get all models grouped by database
     models_by_database = {
-      'primary' => [],
-      'vehicles' => [],
-      'prehistoric' => []
+      'primary' => [User, Post, Comment, Product, Spaceship, CrewMember],
+      'vehicles' => [Vehicle, Manufacturer, Owner, Trip],
+      'prehistoric' => [Dinosaur, Species, Family, ExcavationSite]
     }
-
-    skip 'Skipping due to VehicleRecord connection issues in CI'
 
     # Annotate each database's models
     models_by_database.each do |db_name, models|
@@ -96,14 +94,18 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
     # Test handling when one database is temporarily unavailable
     # This tests resilience in multi-database environments
 
-    # Store original connection info
-    original_config = Vehicle.connection_db_config.configuration_hash.dup
-
     result = nil
 
+    # Load every model while the connection is still up: lazily loading one
+    # inside the outage window (closure_tree reads columns at class load)
+    # would fail for the wrong reason.
+    Rails.application.eager_load!
+
     begin
-      # Simulate database unavailability by removing connection
-      Vehicle.connection_handler.remove_connection_pool(Vehicle.connection_specification_name)
+      # Simulate database unavailability by removing the pool from its owner:
+      # Vehicle borrows VehicleRecord's connection, so remove (and later
+      # restore) on VehicleRecord or every sibling model stays disconnected.
+      VehicleRecord.connection_handler.remove_connection_pool(VehicleRecord.connection_specification_name)
 
       # Try to generate ERD with one database down
       visualizer = RailsLens::ERD::Visualizer.new(
@@ -126,8 +128,8 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
       assert_match(/User|Post|Comment/, result) # Primary database
       assert_match(/Dinosaur|Species/, result) # Prehistoric database
     ensure
-      # Restore connection
-      Vehicle.establish_connection(original_config)
+      # Restore connection on the owner, as test_helper set it up
+      VehicleRecord.establish_connection(:vehicles)
     end
   end
 
@@ -177,8 +179,6 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
         }
       end
     end
-
-    skip 'Skipping due to VehicleRecord connection issues in CI'
   end
 
   def test_bulk_operations_across_databases
@@ -334,7 +334,9 @@ class MultiDatabaseScenariosTest < ActiveSupport::TestCase
         schema_info[db_name][:version] = versions.last
       end
 
-      skip 'Skipping due to VehicleRecord connection issues in CI'
+      config[:models].each do |model|
+        schema_info[db_name][:tables][model.table_name] = model.column_names
+      end
     end
 
     # Verify we collected schema info from all databases

@@ -24,7 +24,7 @@
 #   { column = "family_id", references_table = "families", references_column = "id" }
 # ]
 #
-# notes = ["family:INVERSE_OF", "dinosaurs:N_PLUS_ONE", "family:COUNTER_CACHE", "name:NOT_NULL", "average_lifespan:NOT_NULL", "habitat:NOT_NULL", "danger_level:NOT_NULL", "locomotion:NOT_NULL", "name:LIMIT", "habitat:STORAGE"]
+# notes = ["dinosaurs:N_PLUS_ONE", "family:COUNTER_CACHE", "name:NOT_NULL", "average_lifespan:NOT_NULL", "habitat:NOT_NULL", "danger_level:NOT_NULL", "locomotion:NOT_NULL", "name:LIMIT", "habitat:STORAGE"]
 # <rails-lens:schema:end>
 class Species < PrehistoricRecord
   belongs_to :family
