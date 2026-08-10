@@ -59,9 +59,9 @@ module RailsLens
 
     def generate_erd(options = {})
       visualizer = ERD::Visualizer.new(options: options)
-      filename = visualizer.generate
-      output.say "Entity Relationship Diagram generated at #{filename}", :green
-      filename
+      filenames = Array(visualizer.generate)
+      filenames.each { |filename| output.say "Entity Relationship Diagram generated at #{filename}", :green }
+      filenames.length == 1 ? filenames.first : filenames
     end
 
     def lint(options = {})

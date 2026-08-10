@@ -20,7 +20,13 @@ module RailsLens
 
       def generate
         models = load_models
-        generate_mermaid(models)
+        if config[:group_by_database]
+          group_models_by_database(models).map do |db_name, group|
+            generate_mermaid(group, basename: "erd_#{db_name}")
+          end
+        else
+          generate_mermaid(models)
+        end
       end
 
       private
@@ -29,11 +35,15 @@ module RailsLens
         ModelDetector.detect_models(options)
       end
 
-      def generate_mermaid(models)
+      def group_models_by_database(models)
+        models.group_by { |model| model.connection_pool.db_config.name }
+      end
+
+      def generate_mermaid(models, basename: 'erd')
         if models.blank?
           # Still need to save the output even if no models found
           mermaid_output = "erDiagram\n  %% No models found"
-          return save_output(mermaid_output, 'mmd')
+          return save_output(mermaid_output, 'mmd', basename: basename)
         end
 
         # Create new ERDiagram using mermaid-ruby gem
@@ -41,25 +51,15 @@ module RailsLens
 
         # Process models and add them to the diagram
         models.each do |model|
-          # Skip abstract models
-          next if model.abstract_class?
-
-          # Skip models without valid tables/views or columns
-          is_view = ModelDetector.view_exists?(model)
-          has_data_source = is_view || (model.table_exists? && model.columns.present?)
-          next unless has_data_source
+          next unless renderable?(model)
 
           begin
             # Create attributes for the entity
-            attributes = []
-            model.columns.each do |column|
-              type_str = format_column_type(column)
-              keys = determine_keys(model, column)
-
-              attributes << {
-                type: type_str,
+            attributes = model.columns.map do |column|
+              {
+                type: format_column_type(column),
                 name: column.name,
-                keys: keys
+                keys: determine_keys(model, column)
               }
             end
 
@@ -74,13 +74,6 @@ module RailsLens
             RailsLens.logger.debug { "Warning: Could not add entity #{model.name}: #{e.message}" }
           end
 
-          # Add relationships
-          next if model.abstract_class?
-
-          is_view = ModelDetector.view_exists?(model)
-          has_data_source = is_view || (model.table_exists? && model.columns.present?)
-          next unless has_data_source
-
           add_model_relationships(diagram, model, models)
         end
 
@@ -88,10 +81,21 @@ module RailsLens
         mermaid_output = diagram.to_mermaid
 
         # Save output
-        filename = save_output(mermaid_output, 'mmd')
+        filename = save_output(mermaid_output, 'mmd', basename: basename)
 
         RailsLens.logger.debug 'ERD generated successfully!'
         filename # Return the filename instead of content
+      end
+
+      # A model renders when it is concrete and its table/view is reachable;
+      # an unavailable connection just drops the model from the diagram.
+      def renderable?(model)
+        return false if model.abstract_class?
+
+        ModelDetector.view_exists?(model) || (model.table_exists? && model.columns.present?)
+      rescue ActiveRecord::ActiveRecordError => e
+        RailsLens.logger.debug { "Skipping #{model.name}: #{e.message}" }
+        false
       end
 
       def format_column_type(column)
@@ -109,13 +113,10 @@ module RailsLens
 
       def determine_keys(model, column)
         keys = []
-        keys << :PK if column.name == model.primary_key
-
-        # Check foreign keys
-        if model.respond_to?(:reflect_on_all_associations)
-          model.reflect_on_all_associations(:belongs_to).each do |assoc|
-            keys << :FK if assoc.foreign_key.to_s == column.name
-          end
+        # primary_key and foreign_key are arrays for composite keys
+        keys << :PK if Array(model.primary_key).include?(column.name)
+        keys << :FK if model.reflect_on_all_associations(:belongs_to).any? do |assoc|
+          Array(assoc.foreign_key).map(&:to_s).include?(column.name)
         end
 
         # Check unique indexes - use UK which will be automatically quoted as comment
@@ -181,11 +182,11 @@ module RailsLens
         end
       end
 
-      def save_output(content, extension)
+      def save_output(content, extension, basename: 'erd')
         output_dir = config[:output_dir] || 'doc/erd'
         FileUtils.mkdir_p(output_dir)
 
-        filename = File.join(output_dir, "erd.#{extension}")
+        filename = File.join(output_dir, "#{basename}.#{extension}")
         File.write(filename, content)
 
         RailsLens.logger.debug { "ERD saved to: #{filename}" }
