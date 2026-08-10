@@ -27,7 +27,7 @@
 #   { column = "owner_id", references_table = "owners", references_column = "id", name = "fk_rails_f12ecc0d84" }
 # ]
 #
-# notes = ["vehicle:INVERSE_OF", "owner:INVERSE_OF", "ownership_start:NOT_NULL", "ownership_end:NOT_NULL"]
+# notes = ["ownership_start:NOT_NULL", "ownership_end:NOT_NULL"]
 # <rails-lens:schema:end>
 class VehicleOwner < VehicleRecord
   belongs_to :vehicle

@@ -27,7 +27,7 @@
 # before_destroy = [{ method = "archive_research_data" }, { method = "notify_researchers" }]
 # after_destroy = [{ method = "update_period_statistics" }, { method = "cleanup_external_references" }]
 #
-# notes = ["fossil_discoveries:INVERSE_OF", "fossil_discoveries:N_PLUS_ONE", "name:NOT_NULL", "species:NOT_NULL", "period:NOT_NULL", "diet:NOT_NULL", "length:NOT_NULL", "weight:NOT_NULL", "fossil_count:NOT_NULL", "name:LIMIT", "species:LIMIT", "period:LIMIT", "diet:LIMIT"]
+# notes = ["fossil_discoveries:N_PLUS_ONE", "name:NOT_NULL", "species:NOT_NULL", "period:NOT_NULL", "diet:NOT_NULL", "length:NOT_NULL", "weight:NOT_NULL", "fossil_count:NOT_NULL", "name:LIMIT", "species:LIMIT", "period:LIMIT", "diet:LIMIT"]
 # <rails-lens:schema:end>
 class Dinosaur < PrehistoricRecord
   # Enums

@@ -31,7 +31,7 @@
 # after_update = [{ method = "audit_update" }]
 # after_destroy = [{ method = "audit_destruction" }]
 #
-# notes = ["product_metrics:INVERSE_OF", "product_metrics:N_PLUS_ONE", "description:NOT_NULL", "category:NOT_NULL", "sku:NOT_NULL", "stock_quantity:NOT_NULL", "name:LIMIT", "category:LIMIT", "sku:LIMIT", "description:STORAGE"]
+# notes = ["product_metrics:N_PLUS_ONE", "description:NOT_NULL", "category:NOT_NULL", "sku:NOT_NULL", "stock_quantity:NOT_NULL", "name:LIMIT", "category:LIMIT", "sku:LIMIT", "description:STORAGE"]
 # <rails-lens:schema:end>
 class Product < ApplicationRecord
   include Trackable

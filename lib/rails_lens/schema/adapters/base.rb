@@ -164,11 +164,12 @@ module RailsLens
         end
 
         def primary_key?(column)
-          column.name == primary_key_name
+          primary_key_names.include?(column.name)
         end
 
-        def primary_key_name
-          @primary_key_name ||= connection.primary_key(unqualified_table_name)
+        # The singular connection.primary_key returns nil for composite keys.
+        def primary_key_names
+          @primary_key_names ||= connection.primary_keys(unqualified_table_name)
         end
 
         def column_name_width

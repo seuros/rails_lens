@@ -45,7 +45,7 @@
 #     ELSE (0)::numeric
 # END" }]
 #
-# notes = ["product:INVERSE_OF", "revenue:NOT_NULL", "conversion_rate:NOT_NULL", "average_order_value:NOT_NULL"]
+# notes = ["revenue:NOT_NULL", "conversion_rate:NOT_NULL", "average_order_value:NOT_NULL"]
 # <rails-lens:schema:end>
 class ProductMetric < ApplicationRecord
   # Associations

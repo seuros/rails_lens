@@ -336,7 +336,7 @@ class DatabaseSpecificFeaturesTest < ActiveSupport::TestCase
       adapter.send(:columns)
       adapter.send(:fetch_indexes)
       adapter.send(:fetch_foreign_keys)
-      adapter.send(:primary_key_name)
+      adapter.send(:primary_key_names)
     end
   end
 end

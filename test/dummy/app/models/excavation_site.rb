@@ -23,7 +23,7 @@
 # rock_formation = { morrison = "morrison", hell_creek = "hell_creek", tendaguru = "tendaguru", nemegt = "nemegt", judith_river = "judith_river", solnhofen = "solnhofen", burgess_shale = "burgess_shale" }
 # climate_ancient = { tropical = "tropical", subtropical = "subtropical", temperate = "temperate", arid = "arid", coastal = "coastal", swamp = "swamp" }
 #
-# notes = ["fossil_discoveries:INVERSE_OF", "fossil_discoveries:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "name:NOT_NULL", "location:NOT_NULL", "coordinates:NOT_NULL", "depth:NOT_NULL", "soil_type:NOT_NULL", "active:NOT_NULL", "rock_formation:NOT_NULL", "climate_ancient:NOT_NULL", "active:DEFAULT", "name:LIMIT", "location:LIMIT", "coordinates:LIMIT", "soil_type:LIMIT", "soil_type:INDEX"]
+# notes = ["fossil_discoveries:N_PLUS_ONE", "dinosaurs:N_PLUS_ONE", "name:NOT_NULL", "location:NOT_NULL", "coordinates:NOT_NULL", "depth:NOT_NULL", "soil_type:NOT_NULL", "active:NOT_NULL", "rock_formation:NOT_NULL", "climate_ancient:NOT_NULL", "active:DEFAULT", "name:LIMIT", "location:LIMIT", "coordinates:LIMIT", "soil_type:LIMIT", "soil_type:INDEX"]
 # <rails-lens:schema:end>
 class ExcavationSite < PrehistoricRecord
   # Enums

@@ -31,7 +31,7 @@
 #   { column = "spaceship_id", references_table = "spaceships", references_column = "id", name = "fk_rails_69751d644a" }
 # ]
 #
-# notes = ["spaceship:INVERSE_OF", "location:NOT_NULL", "coordinates:NOT_NULL", "sensor_data:NOT_NULL", "metadata:NOT_NULL", "ip_address:NOT_NULL", "altitude:NOT_NULL", "longitude:NOT_NULL", "latitude:NOT_NULL", "tracking_id:INDEX"]
+# notes = ["location:NOT_NULL", "coordinates:NOT_NULL", "sensor_data:NOT_NULL", "metadata:NOT_NULL", "ip_address:NOT_NULL", "altitude:NOT_NULL", "longitude:NOT_NULL", "latitude:NOT_NULL", "tracking_id:INDEX"]
 # <rails-lens:schema:end>
 class SpatialCoordinate < ApplicationRecord
   belongs_to :spaceship

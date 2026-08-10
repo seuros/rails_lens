@@ -38,7 +38,7 @@
 # after_save = [{ method = "_ct_after_save" }]
 # before_destroy = [{ method = "_ct_before_destroy" }]
 #
-# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "crew_members:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "galaxy:NOT_NULL", "coordinates:NOT_NULL", "habitability_score:NOT_NULL", "climate_type:NOT_NULL", "population:NOT_NULL", "classification:NOT_NULL", "hierarchy_type:NOT_NULL", "name:LIMIT", "galaxy:LIMIT", "climate_type:LIMIT", "climate_type:INDEX", "hierarchy_type:INDEX", "home_planet_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
+# notes = ["parent_id:INDEX", "parent_id:FK_CONSTRAINT", "ancestor_hierarchies:INVERSE_OF", "self_and_ancestors:INVERSE_OF", "descendant_hierarchies:INVERSE_OF", "self_and_descendants:INVERSE_OF", "children:N_PLUS_ONE", "ancestor_hierarchies:N_PLUS_ONE", "self_and_ancestors:N_PLUS_ONE", "descendant_hierarchies:N_PLUS_ONE", "self_and_descendants:N_PLUS_ONE", "crew_members:N_PLUS_ONE", "parent:COUNTER_CACHE", "name:NOT_NULL", "galaxy:NOT_NULL", "coordinates:NOT_NULL", "habitability_score:NOT_NULL", "climate_type:NOT_NULL", "population:NOT_NULL", "classification:NOT_NULL", "hierarchy_type:NOT_NULL", "name:LIMIT", "galaxy:LIMIT", "climate_type:LIMIT", "climate_type:INDEX", "hierarchy_type:INDEX", "home_planet_hierarchies:COMP_INDEX", "generations:INDEX", "children:COUNTER_CACHE"]
 # <rails-lens:schema:end>
 class HomePlanet < ApplicationRecord
   # ClosureTree for hierarchical structure
