@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.4...rails_lens/v0.10.0) (2026-08-10)
+
+
+### Features
+
+* composite primary keys ([#45](https://github.com/seuros/rails_lens/issues/45)) ([8d934b5](https://github.com/seuros/rails_lens/commit/8d934b51b310252ce42f3db9aa85894161d562f3))
+
 ## [0.5.4](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.3...rails_lens/v0.5.4) (2026-06-26)
 
 
