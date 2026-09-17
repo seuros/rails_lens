@@ -42,7 +42,7 @@ module RailsLens
 
             assert_equal mock_results, result[:models]
             assert_match(/Annotated 3 models/, output)
-            assert_match(/Skipped 1 models/, output)
+            assert_match(/Skipped 1 model$/, output)
           end
         end
       end

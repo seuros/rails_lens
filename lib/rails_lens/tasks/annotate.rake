@@ -11,16 +11,20 @@ namespace :rails_lens do
 
     results = RailsLens::Schema::AnnotationManager.annotate_all(options)
 
-    if results[:by_source]&.any?
-      results[:by_source].each do |source_name, count|
-        puts "Annotated #{count} #{source_name} models"
+    # Only report sources that actually produced annotations; a registered source with
+    # nothing to annotate is noise, not news.
+    annotated_by_source = (results[:by_source] || {}).select { |_source_name, count| count.positive? }
+
+    if annotated_by_source.any?
+      annotated_by_source.each do |source_name, count|
+        puts "Annotated #{count} #{source_name} #{'model'.pluralize(count)}"
       end
     else
-      puts "Annotated #{results[:annotated].length} models"
+      puts "Annotated #{results[:annotated].length} #{'model'.pluralize(results[:annotated].length)}"
     end
-    puts "Skipped #{results[:skipped].length} models" if results[:skipped].any?
+    puts "Skipped #{results[:skipped].length} #{'model'.pluralize(results[:skipped].length)}" if results[:skipped].any?
     if results[:failed].any?
-      puts "Failed to annotate #{results[:failed].length} models:"
+      puts "Failed to annotate #{results[:failed].length} #{'model'.pluralize(results[:failed].length)}:"
       results[:failed].each do |failure|
         puts "  - #{failure[:model]}: #{failure[:error]}"
       end
@@ -38,16 +42,20 @@ namespace :rails_lens do
 
     results = RailsLens::Schema::AnnotationManager.remove_all
 
-    if results[:by_source]&.any?
-      results[:by_source].each do |source_name, count|
-        puts "Removed annotations from #{count} #{source_name} models" if count.positive?
+    removed_by_source = (results[:by_source] || {}).select { |_source_name, count| count.positive? }
+
+    if removed_by_source.any?
+      removed_by_source.each do |source_name, count|
+        puts "Removed annotations from #{count} #{source_name} #{'model'.pluralize(count)}"
       end
     elsif results[:removed].any?
-      puts "Removed annotations from #{results[:removed].length} models"
+      puts "Removed annotations from #{results[:removed].length} #{'model'.pluralize(results[:removed].length)}"
     end
-    puts "Skipped #{results[:skipped].length} models (no annotations)" if results[:skipped].any?
+    if results[:skipped].any?
+      puts "Skipped #{results[:skipped].length} #{'model'.pluralize(results[:skipped].length)} (no annotations)"
+    end
     if results[:failed].any?
-      puts "Failed to remove annotations from #{results[:failed].length} models:"
+      puts "Failed to remove annotations from #{results[:failed].length} #{'model'.pluralize(results[:failed].length)}:"
       results[:failed].each do |failure|
         puts "  - #{failure[:model]}: #{failure[:error]}"
       end

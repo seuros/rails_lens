@@ -9,7 +9,7 @@ namespace :rails_lens do
       annotator = RailsLens::Mailer::Annotator.new
       changed_files = annotator.annotate_all
 
-      puts "Annotated #{changed_files.length} mailer files with mailer information"
+      puts "Annotated #{changed_files.length} #{'mailer file'.pluralize(changed_files.length)} with mailer information"
       changed_files.each { |file| puts "  - #{file}" }
     end
 
@@ -20,7 +20,7 @@ namespace :rails_lens do
       annotator = RailsLens::Mailer::Annotator.new
       changed_files = annotator.remove_all
 
-      puts "Removed mailer annotations from #{changed_files.length} mailer files"
+      puts "Removed mailer annotations from #{changed_files.length} #{'mailer file'.pluralize(changed_files.length)}"
       changed_files.each { |file| puts "  - #{file}" }
     end
   end
