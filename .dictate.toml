@@ -1,0 +1,36 @@
+# Dictator Configuration
+# Structural enforcement — runs in CI before (and instead of) the old RuboCop pass.
+# https://github.com/seuros/dictator
+
+[decree.supreme]
+# Universal structural rules (applies to ALL files unless a language decree overrides)
+trailing_whitespace = "deny"
+tabs_vs_spaces = "spaces"
+tab_width = 2
+final_newline = "require"
+line_endings = "lf"
+blank_line_whitespace = "deny"
+
+# Makefiles require tabs; Markdown code blocks may legitimately contain them.
+[decree.supreme.ignore.tab-character]
+filenames = ["Makefile", "GNUmakefile", "makefile"]
+extensions = ["md", "mdx"]
+
+[decree.ruby]
+max_line_length = 120
+# Ceiling, not a target: the worst offender today is 561 code lines. Ratchet this
+# down as the adapters and model_detector get split up.
+max_lines = 600
+ignore_comments = true
+ignore_blank_lines = true
+method_visibility_order = ["public", "protected", "private"]
+comment_spacing = true
+
+# Rails regenerates these on db:schema:dump — any hand-wrapping gets clobbered.
+[decree.ruby.ignore.line-too-long]
+filenames = ["schema.rb", "vehicles_schema.rb", "prehistoric_schema.rb"]
+
+# These build Ruby source inside heredocs, so a line starting with #{interpolation}
+# reads as a comment to the decree. Upstream bug, not a style choice.
+[decree.ruby.ignore.comment-space]
+filenames = ["file_insertion_helper_test.rb", "annotation_rake_task_test.rb"]

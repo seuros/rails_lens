@@ -32,7 +32,9 @@ module RailsLens
       end
 
       def sti_child_models
-        concrete_models.select { |model| model.superclass != ActiveRecord::Base && concrete_models.include?(model.superclass) }
+        concrete_models.select do |model|
+          model.superclass != ActiveRecord::Base && concrete_models.include?(model.superclass)
+        end
       end
 
       def view_backed_models
@@ -96,7 +98,6 @@ module RailsLens
         false # If we can't check, assume it's not a view
       end
 
-      # rubocop:disable Naming/PredicateMethod
       def check_postgresql_view(connection, table_name)
         # Handle schema-qualified table names (e.g., 'audit.audit_logs')
         if table_name.include?('.')
@@ -153,7 +154,6 @@ module RailsLens
         SQL
         result.rows.any?
       end
-      # rubocop:enable Naming/PredicateMethod
 
       def eager_load_models
         # Zeitwerk is always available in Rails 7+
