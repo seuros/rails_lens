@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.10.0...rails_lens/v0.10.1) (2026-09-17)
+
+
+### Bug Fixes
+
+* pluralize model/file counts in CLI and rake output ([#47](https://github.com/seuros/rails_lens/issues/47)) ([d870c6c](https://github.com/seuros/rails_lens/commit/d870c6c5128177a6324bc2db17f32be1538e73da))
+
 ## [0.10.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.4...rails_lens/v0.10.0) (2026-08-10)
 
 
