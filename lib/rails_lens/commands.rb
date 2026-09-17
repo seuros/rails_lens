@@ -14,8 +14,8 @@ module RailsLens
     def annotate_models(options = {})
       results = Schema::AnnotationManager.annotate_all(options)
 
-      output.say "Annotated #{results[:annotated].length} models", :green
-      report_skipped_and_failed(results, 'models')
+      output.say "Annotated #{count_of(results[:annotated], 'model')}", :green
+      report_skipped_and_failed(results, 'model')
 
       # Also annotate database-level objects (functions, etc.)
       if options[:include_database_objects]
@@ -29,32 +29,33 @@ module RailsLens
     def annotate_database_objects(options = {})
       results = Schema::DatabaseAnnotator.annotate_all(options)
 
-      output.say "Annotated #{results[:annotated].length} abstract base classes with database objects", :green
-      report_skipped_and_failed(results, 'abstract classes')
+      output.say "Annotated #{count_of(results[:annotated], 'abstract base class')} with database objects", :green
+      report_skipped_and_failed(results, 'abstract class')
 
       results
     end
 
     def annotate_routes(options = {})
-      annotate_files(Route::Annotator.new(dry_run: options[:dry_run]), 'controller files with routes', options)
+      annotate_files(Route::Annotator.new(dry_run: options[:dry_run]), 'controller file', options,
+                     suffix: 'with routes')
     end
 
     def annotate_mailers(options = {})
-      annotate_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer files', options)
+      annotate_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer file', options)
     end
 
     def remove_models(options = {})
       results = Schema::AnnotationManager.remove_all(options)
-      output.say "Removed annotations from #{results[:removed].length} models", :green
+      output.say "Removed annotations from #{count_of(results[:removed], 'model')}", :green
       results
     end
 
     def remove_routes(options = {})
-      remove_files(Route::Annotator.new(dry_run: options[:dry_run]), 'route', 'controller files')
+      remove_files(Route::Annotator.new(dry_run: options[:dry_run]), 'route', 'controller file')
     end
 
     def remove_mailers(options = {})
-      remove_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer', 'mailer files')
+      remove_files(Mailer::Annotator.new(dry_run: options[:dry_run]), 'mailer', 'mailer file')
     end
 
     def generate_erd(options = {})
@@ -195,27 +196,33 @@ module RailsLens
 
     private
 
+    # "1 model" / "0 models" — count plus the correctly inflected noun.
+    def count_of(countable, singular)
+      count = countable.respond_to?(:length) ? countable.length : countable
+      "#{count} #{singular.pluralize(count)}"
+    end
+
     # Report skipped/failed counts for a model-annotation results hash.
     def report_skipped_and_failed(results, noun)
-      output.say "Skipped #{results[:skipped].length} #{noun}", :yellow if results[:skipped].any?
+      output.say "Skipped #{count_of(results[:skipped], noun)}", :yellow if results[:skipped].any?
       return unless results[:failed].any?
 
-      output.say "Failed to annotate #{results[:failed].length} #{noun}:", :red
+      output.say "Failed to annotate #{count_of(results[:failed], noun)}:", :red
       results[:failed].each do |failure|
         output.say "  - #{failure[:model]}: #{failure[:error]}", :red
       end
     end
 
-    def annotate_files(annotator, label, options)
+    def annotate_files(annotator, singular, options, suffix: nil)
       changed_files = annotator.annotate_all
-      output.say "Annotated #{changed_files.length} #{label}", :green
+      output.say ["Annotated #{count_of(changed_files, singular)}", suffix].compact.join(' '), :green
       changed_files.each { |file| output.say "  - #{file}", :blue } if options[:verbose] && changed_files.any?
       { changed_files: changed_files }
     end
 
-    def remove_files(annotator, kind, target)
+    def remove_files(annotator, kind, singular)
       changed_files = annotator.remove_all
-      output.say "Removed #{kind} annotations from #{changed_files.length} #{target}", :green
+      output.say "Removed #{kind} annotations from #{count_of(changed_files, singular)}", :green
       { changed_files: changed_files }
     end
 
@@ -255,8 +262,10 @@ module RailsLens
               # Use RailsLens directly if available
               if defined?(RailsLens)
                 results = RailsLens::Schema::AnnotationManager.annotate_all
-                puts "Rails Lens: Annotated \#{results[:annotated].length} models"
-                puts "Rails Lens: Skipped \#{results[:skipped].length} models" if results[:skipped].any?
+                puts "Rails Lens: Annotated \#{results[:annotated].length} \#{'model'.pluralize(results[:annotated].length)}"
+                if results[:skipped].any?
+                  puts "Rails Lens: Skipped \#{results[:skipped].length} \#{'model'.pluralize(results[:skipped].length)}"
+                end
               else
                 # Fallback to CLI
                 system('bundle exec rails_lens annotate --quiet')

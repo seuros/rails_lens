@@ -12,7 +12,7 @@ gem 'minitest', '~> 5.17'
 gem 'minitest-reporters', '~> 1.6'
 
 # Support testing against different Rails versions ('edge' = rails/rails main)
-# rubocop:disable Bundler/DuplicatedGem -- branches are mutually exclusive
+# rubocop:disable-next Bundler/DuplicatedGem -- branches are mutually exclusive
 if ENV['RAILS_VERSION'] == 'edge'
   git 'https://github.com/rails/rails.git', branch: 'main' do
     gem 'actionmailer'
@@ -27,7 +27,6 @@ elsif ENV['RAILS_VERSION']
 else
   gem 'actionmailer', '>= 8.0.0'
 end
-# rubocop:enable Bundler/DuplicatedGem
 
 gem 'activerecord-postgis'
 gem 'closure_tree'

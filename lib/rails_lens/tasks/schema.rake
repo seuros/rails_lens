@@ -20,14 +20,16 @@ namespace :rails_lens do
       results = RailsLens.annotate_models(options)
 
       if results[:annotated].any?
-        puts "Annotated #{results[:annotated].length} models"
+        puts "Annotated #{results[:annotated].length} #{'model'.pluralize(results[:annotated].length)}"
         puts '(including abstract classes)' if options[:include_abstract]
       end
 
-      puts "\nSkipped #{results[:skipped].length} models (no changes needed)" if results[:skipped].any?
+      if results[:skipped].any?
+        puts "\nSkipped #{results[:skipped].length} #{'model'.pluralize(results[:skipped].length)} (no changes needed)"
+      end
 
       if results[:failed].any?
-        puts "\nFailed to annotate #{results[:failed].length} models:"
+        puts "\nFailed to annotate #{results[:failed].length} #{'model'.pluralize(results[:failed].length)}:"
         results[:failed].each do |failure|
           puts "  ✗ #{failure[:model]}: #{failure[:error]}"
         end
@@ -42,14 +44,17 @@ namespace :rails_lens do
       results = RailsLens.remove_annotations
 
       if results[:removed].any?
-        puts "Removed annotations from #{results[:removed].length} models:"
+        puts "Removed annotations from #{results[:removed].length} #{'model'.pluralize(results[:removed].length)}:"
         results[:removed].each { |model| puts "  ✓ #{model}" }
       end
 
-      puts "\nSkipped #{results[:skipped].length} models (no annotations found)" if results[:skipped].any?
+      if results[:skipped].any?
+        puts "\nSkipped #{results[:skipped].length} #{'model'.pluralize(results[:skipped].length)} " \
+             '(no annotations found)'
+      end
 
       if results[:failed].any?
-        puts "\nFailed to process #{results[:failed].length} models:"
+        puts "\nFailed to process #{results[:failed].length} #{'model'.pluralize(results[:failed].length)}:"
         results[:failed].each do |failure|
           puts "  ✗ #{failure[:model]}: #{failure[:error]}"
         end

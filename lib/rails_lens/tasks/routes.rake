@@ -9,7 +9,8 @@ namespace :rails_lens do
       annotator = RailsLens::Route::Annotator.new
       changed_files = annotator.annotate_all
 
-      puts "Annotated #{changed_files.length} controller files with route information"
+      puts "Annotated #{changed_files.length} #{'controller file'.pluralize(changed_files.length)} " \
+           'with route information'
       changed_files.each { |file| puts "  - #{file}" }
     end
 
@@ -20,7 +21,7 @@ namespace :rails_lens do
       annotator = RailsLens::Route::Annotator.new
       changed_files = annotator.remove_all
 
-      puts "Removed route annotations from #{changed_files.length} controller files"
+      puts "Removed route annotations from #{changed_files.length} #{'controller file'.pluralize(changed_files.length)}"
       changed_files.each { |file| puts "  - #{file}" }
     end
   end
