@@ -262,10 +262,10 @@ module RailsLens
               # Use RailsLens directly if available
               if defined?(RailsLens)
                 results = RailsLens::Schema::AnnotationManager.annotate_all
-                puts "Rails Lens: Annotated \#{results[:annotated].length} \#{'model'.pluralize(results[:annotated].length)}"
-                if results[:skipped].any?
-                  puts "Rails Lens: Skipped \#{results[:skipped].length} \#{'model'.pluralize(results[:skipped].length)}"
-                end
+                annotated = results[:annotated].length
+                skipped = results[:skipped].length
+                puts "Rails Lens: Annotated \#{annotated} \#{'model'.pluralize(annotated)}"
+                puts "Rails Lens: Skipped \#{skipped} \#{'model'.pluralize(skipped)}" if skipped.positive?
               else
                 # Fallback to CLI
                 system('bundle exec rails_lens annotate --quiet')

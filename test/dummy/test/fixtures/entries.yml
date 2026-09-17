@@ -4,10 +4,10 @@ one:
   title: MyString
   published: false
   entryable_type: MyString
-  entryable_id: 
+  entryable_id:
 
 two:
   title: MyString
   published: false
   entryable_type: MyString
-  entryable_id: 
+  entryable_id:

@@ -36,22 +36,22 @@
 class VehiclePerformanceMetrics < VehicleRecord
   self.table_name = 'vehicle_performance_metrics'
   self.primary_key = 'id'
-  
+
   readonly
-  
+
   # Association back to the vehicle
   belongs_to :vehicle, foreign_key: 'id'
-  
+
   # Scopes for filtering
   scope :premium_tier, -> { where(availability_tier: 'Premium') }
   scope :low_maintenance, -> { where(maintenance_category: 'Low Maintenance') }
   scope :fuel_efficient, -> { where(fuel_type: ['hybrid', 'electric']) }
   scope :cost_effective, -> { where('cost_per_mile < ?', 0.50) }
-  
+
   # Scopes by vehicle characteristics
   scope :recent_models, -> { where('year >= ?', 2020) }
   scope :high_mileage, -> { where('total_distance > ?', 50000) }
-  
+
   # Instance methods for business logic
   def efficiency_rating
     case cost_per_mile
@@ -61,16 +61,16 @@ class VehiclePerformanceMetrics < VehicleRecord
     else 'Poor'
     end
   end
-  
+
   def maintenance_frequency
     return 0 if days_owned.zero?
-    
+
     (maintenance_events.to_f / days_owned * 365).round(2)
   end
-  
+
   def daily_distance_average
     return 0 if days_owned.zero?
-    
+
     (total_distance.to_f / days_owned).round(2)
   end
 end

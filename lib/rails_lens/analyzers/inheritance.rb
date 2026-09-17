@@ -162,11 +162,10 @@ module RailsLens
                     else
                       []
                     end
-            if types.any?
-              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\", types = #{TomlFormat.quoted_array(types)} }"
-            else
-              "{ name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", id_col = \"#{reflection.foreign_key}\" }"
-            end
+            fields = "name = \"#{reflection.name}\", type_col = \"#{reflection.foreign_type}\", " \
+                     "id_col = \"#{reflection.foreign_key}\""
+            fields += ", types = #{TomlFormat.quoted_array(types)}" if types.any?
+            "{ #{fields} }"
           end
           lines << "references = [#{refs.join(', ')}]"
         end
