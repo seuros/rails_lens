@@ -25,22 +25,22 @@
 class CrewMissionStats < ApplicationRecord
   self.table_name = 'crew_mission_stats'
   self.primary_key = 'id'
-  
+
   readonly
-  
+
   # Scopes for different rank categories
   scope :officers, -> { where(rank_category: 'Officer') }
   scope :junior_officers, -> { where(rank_category: 'Junior Officer') }
   scope :crew, -> { where(rank_category: 'Crew') }
-  
+
   # Scope for active crew members with recent assignments
   scope :recently_active, -> { where('last_assignment > ?', 6.months.ago) }
-  
+
   # Validation to prevent accidental writes
   validate :prevent_writes
-  
+
   private
-  
+
   def prevent_writes
     errors.add(:base, 'This is a read-only view') if new_record? || changed?
   end

@@ -15,3 +15,4 @@ Gemfile.lock
 /test/dummy/log/*.log
 /test/dummy/tmp/
 /test/dummy/doc/
+.dictator/

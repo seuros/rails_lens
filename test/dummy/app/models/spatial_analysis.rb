@@ -30,33 +30,33 @@
 class SpatialAnalysis < ApplicationRecord
   self.table_name = 'spatial_analysis'
   self.primary_key = 'spaceship_id'
-  
+
   readonly
-  
+
   # Association back to the spaceship
   belongs_to :spaceship, foreign_key: 'spaceship_id'
-  
+
   # Scopes for analysis
   scope :long_missions, -> { where('mission_duration_hours > ?', 48) }
   scope :high_activity, -> { where('coordinate_records > ?', 100) }
   scope :recent_missions, -> { where('last_recorded > ?', 1.month.ago) }
-  
+
   # Class method to refresh the materialized view
   def self.refresh!
     connection.execute('REFRESH MATERIALIZED VIEW spatial_analysis')
   end
-  
+
   def self.refresh_concurrently!
     connection.execute('REFRESH MATERIALIZED VIEW CONCURRENTLY spatial_analysis')
   rescue ActiveRecord::StatementInvalid
     refresh!
   end
-  
+
   # Instance methods for data interpretation
   def mission_duration_days
     mission_duration_hours / 24.0 if mission_duration_hours
   end
-  
+
   def activity_level
     case coordinate_records
     when 0..10 then 'Low'

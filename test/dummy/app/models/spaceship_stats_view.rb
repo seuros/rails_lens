@@ -26,6 +26,6 @@
 class SpaceshipStatsView < ApplicationRecord
   self.table_name = 'spaceship_stats'
   self.primary_key = 'id'
-  
+
   readonly
 end

@@ -222,7 +222,8 @@ module RailsLens
         end
 
         # Check for STI without index
-        if model_class.inheritance_column && column_exists?(model_class.inheritance_column) && !has_index?(model_class.inheritance_column)
+        if model_class.inheritance_column && column_exists?(model_class.inheritance_column) &&
+           !has_index?(model_class.inheritance_column)
           notes << NoteCodes.note(model_class.inheritance_column, NoteCodes::STI_INDEX)
         end
 
@@ -327,7 +328,8 @@ module RailsLens
       def associations_needing_counter_cache
         belongs_to_associations.select do |association|
           # Check if the inverse association exists and is commonly counted
-          inverse = association.klass.reflect_on_association(association.inverse_of&.name || model_class.name.underscore.pluralize)
+          inverse_name = association.inverse_of&.name || model_class.name.underscore.pluralize
+          inverse = association.klass.reflect_on_association(inverse_name)
           inverse && inverse.macro == :has_many && !association.options[:counter_cache]
         rescue NameError => e
           RailsLens.logger.debug { "Failed to check counter cache for association: #{e.message}" }

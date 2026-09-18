@@ -13,13 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      # Structural enforcement only — no Ruby/bundle needed, decrees are native.
+      - name: Install Dictator
+        uses: seuros/dictator-setup@master
         with:
-          bundler-cache: true
+          version: '0.24.0'
 
-      - name: Run RuboCop
-        run: bundle exec rubocop --parallel
+      - name: Run Dictator
+        run: dictator lint .
 
   test:
     runs-on: ubuntu-latest

@@ -62,9 +62,13 @@ module RailsLens
         def database_encoding
           case adapter_name
           when 'PostgreSQL'
-            connection.select_value('SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname = current_database()')
+            connection.select_value(
+              'SELECT pg_encoding_to_char(encoding) FROM pg_database WHERE datname = current_database()'
+            )
           when 'Mysql2'
-            connection.select_value('SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()')
+            connection.select_value(
+              'SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()'
+            )
           end
         rescue StandardError
           nil
@@ -75,7 +79,9 @@ module RailsLens
           when 'PostgreSQL'
             connection.select_value('SELECT datcollate FROM pg_database WHERE datname = current_database()')
           when 'Mysql2'
-            connection.select_value('SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()')
+            connection.select_value(
+              'SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()'
+            )
           end
         rescue StandardError
           nil

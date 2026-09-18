@@ -21,7 +21,9 @@ module RailsLens
 
         # Monkey patch the annotation manager to capture connections
         original_process = AnnotationManager.method(:process_model_with_connection)
-        AnnotationManager.define_singleton_method(:process_model_with_connection) do |model, connection, results, _options|
+        AnnotationManager.define_singleton_method(
+          :process_model_with_connection
+        ) do |model, connection, results, _options|
           connection_ids << connection.object_id if connection
           results[:annotated] << model.name
         end

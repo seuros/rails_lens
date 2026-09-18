@@ -119,15 +119,18 @@ class MultiDatabaseAnnotationTest < ActiveSupport::TestCase
       annotation = manager.generate_annotation
 
       assert_not_empty annotation,
-                       "Annotation should not be empty for abstract class #{abstract_class.name}. Got: #{annotation.inspect}"
+                       "Annotation should not be empty for abstract class #{abstract_class.name}. " \
+                       "Got: #{annotation.inspect}"
       assert_includes annotation, 'database_dialect =',
                       "Expected database_dialect in annotation for #{abstract_class.name}. Got: #{annotation.inspect}"
       assert_includes annotation, 'abstract class',
-                      "Expected 'abstract class' text in annotation for #{abstract_class.name}. Got: #{annotation.inspect}"
+                      "Expected 'abstract class' text in annotation for #{abstract_class.name}. " \
+                      "Got: #{annotation.inspect}"
       assert_not_includes annotation, 'table =',
                           "Abstract class #{abstract_class.name} should not have table info. Got: #{annotation.inspect}"
       assert_not_includes annotation, 'columns =',
-                          "Abstract class #{abstract_class.name} should not have columns info. Got: #{annotation.inspect}"
+                          "Abstract class #{abstract_class.name} should not have columns info. " \
+                          "Got: #{annotation.inspect}"
     end
   end
 
