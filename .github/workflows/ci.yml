@@ -15,12 +15,9 @@ jobs:
 
       # Structural enforcement only — no Ruby/bundle needed, decrees are native.
       - name: Install Dictator
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/seuros/dictator/master/scripts/install.sh \
-            | bash -s -- --version "$DICTATOR_VERSION"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-        env:
-          DICTATOR_VERSION: '0.22.0'
+        uses: seuros/dictator-setup@master
+        with:
+          version: '0.24.0'
 
       - name: Run Dictator
         run: dictator lint .
