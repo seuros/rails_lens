@@ -27,12 +27,12 @@
 class ActiveCrewMembersView < ApplicationRecord
   self.table_name = 'active_crew_members'
   self.primary_key = 'id'
-  
+
   # This model is backed by a PostgreSQL view and should be read-only
   def readonly?
     true
   end
-  
+
   def self.readonly_model?
     true
   end

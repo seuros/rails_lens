@@ -3,7 +3,7 @@
 require 'bundler/gem_tasks'
 
 desc 'Run all tests'
-task :test do # rubocop:disable Rails/RakeEnvironment
+task :test do
   # One process per file: `ruby file1 file2` only executes file1 (the rest
   # become ARGV), and the multi-database tests assume a fresh boot anyway.
   test_files = Dir['test/**/*_test.rb'].reject { |f| f.include?('test/dummy/') }.sort

@@ -38,27 +38,27 @@
 class FossilDiscoveryTimeline < PrehistoricRecord
   self.table_name = 'fossil_discovery_timeline'
   self.primary_key = 'dinosaur_id'
-  
+
   readonly
-  
+
   # Associations
   belongs_to :dinosaur, foreign_key: 'dinosaur_id'
   belongs_to :excavation_site, foreign_key: 'site_id'
-  
+
   # Scopes for geological periods
   scope :mesozoic_era, -> { where(geological_era: ['Early Mesozoic', 'Middle Mesozoic', 'Late Mesozoic']) }
   scope :jurassic_period, -> { where(period: 'Jurassic') }
   scope :cretaceous_period, -> { where(period: 'Cretaceous') }
-  
+
   # Scopes for fossil quality
   scope :exceptional_finds, -> { where(completeness_grade: 'Exceptional') }
   scope :well_preserved, -> { where(completeness_grade: ['Exceptional', 'Excellent']) }
   scope :recent_discoveries, -> { where('fossil_discovered_date > ?', 5.years.ago) }
-  
+
   # Scopes for site analysis
   scope :first_discoveries_at_site, -> { where(discovery_sequence_at_site: 1) }
   scope :prolific_sites, -> { where('species_fossil_count > ?', 5) }
-  
+
   # Instance methods for interpretation
   def discovery_timeline_category
     case days_between_discoveries
@@ -70,22 +70,22 @@ class FossilDiscoveryTimeline < PrehistoricRecord
     else 'Long After'
     end
   end
-  
+
   def geological_significance
     score = 0
     score += 30 if completeness_grade == 'Exceptional'
     score += 20 if discovery_sequence_at_site == 1
     score += 15 if species_fossil_count < 3
     score += 10 if period == 'Triassic' # Rarer period
-    
+
     case score
     when 50..Float::INFINITY then 'Highly Significant'
-    when 30..49 then 'Very Significant' 
+    when 30..49 then 'Very Significant'
     when 15..29 then 'Moderately Significant'
     else 'Standard Significance'
     end
   end
-  
+
   def preservation_quality_score
     case completeness_grade
     when 'Exceptional' then 100
