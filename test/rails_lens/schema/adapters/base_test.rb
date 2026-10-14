@@ -67,6 +67,20 @@ module RailsLens
           assert_equal 'events', result1
         end
 
+        def test_partial_index_where_in_annotation
+          index = ActiveRecord::ConnectionAdapters::IndexDefinition.new(
+            'users', 'index_users_on_email_present', true, ['email'], where: '(email IS NOT NULL)'
+          )
+
+          @adapter.stub(:fetch_indexes, [index]) do
+            result = @adapter.generate_annotation(nil)
+
+            assert_includes result,
+                            '{ name = "index_users_on_email_present", columns = ["email"], unique = true, ' \
+                            'where = "(email IS NOT NULL)" }'
+          end
+        end
+
         def test_index_columns_array_handling
           # Test that Array() properly handles both string and array columns
           Base.new(@connection, 'users')
