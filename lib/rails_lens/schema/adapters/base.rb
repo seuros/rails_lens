@@ -337,6 +337,7 @@ module RailsLens
             attrs << "columns = #{TomlFormat.quoted_array(Array(index.columns))}"
             attrs << 'unique = true' if index.unique
             attrs << "type = \"#{index.type}\"" if index.respond_to?(:type) && index.type
+            attrs << "where = \"#{index.where}\"" if index.respond_to?(:where) && index.where
             line += attrs.join(', ')
             line += ' }'
             line += ',' if i < indexes.length - 1
