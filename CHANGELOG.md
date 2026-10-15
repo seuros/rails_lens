@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.10.0...rails_lens/v0.10.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* keep the WHERE clause of partial indexes in annotations ([#50](https://github.com/seuros/rails_lens/issues/50)) ([351476e](https://github.com/seuros/rails_lens/commit/351476e03d98e5fb0c506cf7c63e13680230a804))
+* pluralize model/file counts in CLI and rake output ([#47](https://github.com/seuros/rails_lens/issues/47)) ([d870c6c](https://github.com/seuros/rails_lens/commit/d870c6c5128177a6324bc2db17f32be1538e73da))
+
 ## [0.10.0](https://github.com/seuros/rails_lens/compare/rails_lens/v0.5.4...rails_lens/v0.10.0) (2026-08-10)
 
 
