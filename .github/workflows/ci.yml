@@ -15,7 +15,7 @@ jobs:
 
       # Structural enforcement only — no Ruby/bundle needed, decrees are native.
       - name: Install Dictator
-        uses: seuros/dictator-setup@master
+        uses: seuros/setup-dictator@master
         with:
           version: '0.24.0'
 
