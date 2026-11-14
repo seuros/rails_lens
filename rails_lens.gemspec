@@ -31,7 +31,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'railties', '>= 8.0.0'
 
   # CLI and utilities
-  spec.add_dependency 'ostruct'
   spec.add_dependency 'thor', '~> 1.3'
   spec.add_dependency 'zeitwerk', '~> 2.7'
 
