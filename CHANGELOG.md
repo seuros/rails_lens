@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.2](https://github.com/seuros/rails_lens/compare/rails_lens/v0.10.1...rails_lens/v0.10.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* drop the unused ostruct dependency ([#51](https://github.com/seuros/rails_lens/issues/51)) ([0e23b9e](https://github.com/seuros/rails_lens/commit/0e23b9e4e2b36659145dfc329fc7d159d25ffd53))
+
 ## [0.10.1](https://github.com/seuros/rails_lens/compare/rails_lens/v0.10.0...rails_lens/v0.10.1) (2026-10-15)
 
 
