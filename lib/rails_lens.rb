@@ -5,7 +5,6 @@ require 'rails'
 require 'active_record'
 require 'active_support'
 require 'thor'
-require 'ostruct'
 
 require_relative 'rails_lens/version'
 require_relative 'rails_lens/railtie' if defined?(Rails::Railtie)
